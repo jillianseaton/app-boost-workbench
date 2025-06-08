@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { Clock, DollarSign, TrendingUp, Smartphone, Users, CheckCircle, Bitcoin, Award, Star, Shield, Gift, RefreshCw } from "lucide-react";
+import { Clock, DollarSign, TrendingUp, Smartphone, Users, CheckCircle, Bitcoin, Award, Star, Shield, Gift, RefreshCw, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const Index = () => {
@@ -14,9 +15,10 @@ const Index = () => {
   const [creditScore, setCreditScore] = useState(100);
   const [vipLevel, setVipLevel] = useState(1);
   const [bitcoinAddress, setBitcoinAddress] = useState("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
-  const [isWorkHours, setIsWorkHours] = useState(false);
   const [canWithdraw, setCanWithdraw] = useState(false);
   const [hasWithdrawnToday, setHasWithdrawnToday] = useState(false);
+  const [showAdDialog, setShowAdDialog] = useState(false);
+  const [currentAd, setCurrentAd] = useState(null);
 
   // VIP levels configuration
   const vipLevels = [
@@ -26,9 +28,56 @@ const Index = () => {
     { level: 4, name: "VIP4", commission: 1.5, tasksPerDay: 50, color: "from-emerald-400 to-emerald-600" },
   ];
 
+  // Third-party app advertisements
+  const thirdPartyAds = [
+    { 
+      name: "GameMaster Pro", 
+      category: "Gaming App", 
+      price: 299, 
+      description: "Premium mobile gaming experience with exclusive content",
+      company: "GameTech Studios"
+    },
+    { 
+      name: "FitTracker Elite", 
+      category: "Health & Fitness", 
+      price: 199, 
+      description: "Advanced fitness tracking with AI-powered insights",
+      company: "HealthTech Solutions"
+    },
+    { 
+      name: "PhotoEdit Master", 
+      category: "Photography", 
+      price: 149, 
+      description: "Professional photo editing tools for mobile devices",
+      company: "Creative Apps Inc"
+    },
+    { 
+      name: "MusicStream Plus", 
+      category: "Entertainment", 
+      price: 99, 
+      description: "High-quality music streaming with offline capabilities",
+      company: "Audio Innovations"
+    },
+    { 
+      name: "StudyBoost AI", 
+      category: "Education", 
+      price: 249, 
+      description: "AI-powered learning assistant for academic success",
+      company: "EduTech Pro"
+    },
+    { 
+      name: "CryptoWallet Secure", 
+      category: "Finance", 
+      price: 179, 
+      description: "Advanced cryptocurrency wallet with multi-layer security",
+      company: "BlockChain Solutions"
+    }
+  ];
+
   const currentVIP = vipLevels.find(v => v.level === vipLevel) || vipLevels[0];
   const MINIMUM_WITHDRAWAL_USD = 10;
   const BTC_TO_USD_RATE = 45000; // Simulated BTC rate
+  const COMMISSION_RATE = 0.05; // 5% commission
 
   // Partnership services
   const partnershipServices = [
@@ -40,11 +89,7 @@ const Index = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      const now = new Date();
-      setCurrentTime(now);
-      
-      const hours = now.getHours();
-      setIsWorkHours(hours >= 11 && hours < 23);
+      setCurrentTime(new Date());
     }, 1000);
 
     return () => clearInterval(timer);
@@ -56,25 +101,34 @@ const Index = () => {
   }, [totalEarnings]);
 
   const handleStartOptimization = () => {
-    if (!isWorkHours) {
-      toast.error("Workstation is currently closed. Operating hours: 11:00 AM - 11:00 PM ET");
-      return;
-    }
-
     if (hasWithdrawnToday) {
       toast.error("Please complete withdrawal and reset your account to continue optimizing for the next day");
       return;
     }
 
-    // Individual task with minimum $10 USD value and VIP commission
-    const baseTaskValueUSD = 10;
-    const taskEarningsUSD = baseTaskValueUSD * (currentVIP.commission / 100);
-    const taskEarningsBTC = taskEarningsUSD / BTC_TO_USD_RATE;
+    if (completedTasks >= currentVIP.tasksPerDay) {
+      toast.error(`Daily task limit reached for ${currentVIP.name}. Maximum ${currentVIP.tasksPerDay} tasks per day.`);
+      return;
+    }
+
+    // Select a random third-party app advertisement
+    const randomAd = thirdPartyAds[Math.floor(Math.random() * thirdPartyAds.length)];
+    setCurrentAd(randomAd);
+    setShowAdDialog(true);
+  };
+
+  const handleAdInteraction = () => {
+    if (!currentAd) return;
+
+    // Calculate 5% commission from the ad price
+    const commissionUSD = currentAd.price * COMMISSION_RATE;
+    const commissionBTC = commissionUSD / BTC_TO_USD_RATE;
     
     setCompletedTasks(prev => prev + 1);
-    setTotalEarnings(prev => prev + taskEarningsBTC);
+    setTotalEarnings(prev => prev + commissionBTC);
+    setShowAdDialog(false);
     
-    toast.success(`Individual optimization task completed! Earned ${taskEarningsUSD.toFixed(2)} USD (${taskEarningsBTC.toFixed(6)} BTC)`);
+    toast.success(`Task completed! Earned $${commissionUSD.toFixed(2)} USD (${commissionBTC.toFixed(6)} BTC) from ${currentAd.name} advertisement`);
   };
 
   const handleWithdraw = () => {
@@ -134,8 +188,8 @@ const Index = () => {
                     hour12: true 
                   })} ET
                 </span>
-                <Badge variant={isWorkHours ? "default" : "secondary"} className="bg-purple-600">
-                  {isWorkHours ? "ONLINE" : "OFFLINE"}
+                <Badge className="bg-green-600 text-white">
+                  24/7 ONLINE
                 </Badge>
               </div>
             </div>
@@ -154,32 +208,41 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Individual Tasks Only Alert */}
-        <Card className="bg-orange-500/10 border-orange-500/20 mb-6">
+        {/* Optimization Info Alert */}
+        <Card className="bg-blue-500/10 border-blue-500/20 mb-6">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <Star className="h-6 w-6 text-orange-400" />
+              <Star className="h-6 w-6 text-blue-400" />
               <div>
-                <h3 className="text-white font-bold">Individual Optimization Tasks Only</h3>
-                <p className="text-orange-200 text-sm">
-                  • Each task is worth minimum $10 USD • No combo or group tasks • Complete daily withdrawal required • Reset account daily for next day tasks
+                <h3 className="text-white font-bold">Third-Party App Optimization</h3>
+                <p className="text-blue-200 text-sm">
+                  • Earn 5% commission from each third-party app advertisement • Complete daily withdrawal required • Reset account daily for next day tasks • Platform operates 24/7
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Start Optimization Button - Featured */}
+        <div className="text-center mb-8">
+          <Button 
+            onClick={handleStartOptimization}
+            disabled={hasWithdrawnToday || completedTasks >= currentVIP.tasksPerDay}
+            size="lg"
+            className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-xl px-12 py-6"
+          >
+            <Play className="h-6 w-6 mr-3" />
+            {hasWithdrawnToday ? "Reset Account to Continue" : 
+             completedTasks >= currentVIP.tasksPerDay ? "Daily Limit Reached" :
+             "Start Optimization Task"}
+          </Button>
+          <p className="text-purple-200 text-sm mt-2">
+            Click to interact with third-party app advertisements and earn 5% commission
+          </p>
+        </div>
+
         {/* Main Navigation Grid */}
         <div className="grid grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer" onClick={handleStartOptimization}>
-            <CardContent className="flex flex-col items-center justify-center p-6">
-              <div className="bg-blue-500/20 p-4 rounded-full mb-3">
-                <TrendingUp className="h-8 w-8 text-blue-400" />
-              </div>
-              <span className="text-white font-medium">Start Optimizing</span>
-            </CardContent>
-          </Card>
-
           <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer">
             <CardContent className="flex flex-col items-center justify-center p-6">
               <div className="bg-purple-500/20 p-4 rounded-full mb-3">
@@ -271,7 +334,7 @@ const Index = () => {
             <div className="bg-black/20 rounded-lg p-4">
               <h3 className="text-white font-bold text-lg mb-2">{currentVIP.name}</h3>
               <p className="text-gray-300 text-sm">
-                Up to {currentVIP.tasksPerDay} individual tasks per day, each task minimum $10 USD, commission rate {currentVIP.commission}%
+                Up to {currentVIP.tasksPerDay} optimization tasks per day, earn 5% commission from third-party app advertisements
               </p>
             </div>
           </CardContent>
@@ -286,7 +349,7 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">{completedTasks}/{currentVIP.tasksPerDay}</div>
-              <p className="text-xs text-purple-200">Individual optimization tasks</p>
+              <p className="text-xs text-purple-200">Third-party app interactions</p>
               <Progress value={(completedTasks / currentVIP.tasksPerDay) * 100} className="mt-2" />
             </CardContent>
           </Card>
@@ -317,14 +380,12 @@ const Index = () => {
 
           <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Account Status</CardTitle>
-              <RefreshCw className="h-4 w-4 text-blue-400" />
+              <CardTitle className="text-sm font-medium text-white">Platform Status</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-400">
-                {hasWithdrawnToday ? "Reset Required" : "Active"}
-              </div>
-              <p className="text-xs text-purple-200">Daily cycle</p>
+              <div className="text-2xl font-bold text-green-400">24/7 Online</div>
+              <p className="text-xs text-purple-200">Always available</p>
             </CardContent>
           </Card>
         </div>
@@ -393,21 +454,68 @@ const Index = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Start Optimization Button */}
-        <div className="text-center">
-          <Button 
-            onClick={handleStartOptimization}
-            disabled={!isWorkHours || hasWithdrawnToday}
-            size="lg"
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-8 py-4"
-          >
-            {hasWithdrawnToday ? "Reset Account to Continue" : 
-             !isWorkHours ? "Workstation Closed" : 
-             "Start Individual Optimization Task"}
-          </Button>
-        </div>
       </div>
+
+      {/* Third-Party App Advertisement Dialog */}
+      <Dialog open={showAdDialog} onOpenChange={setShowAdDialog}>
+        <DialogContent className="bg-gradient-to-br from-slate-900 to-purple-900 border-purple-500/20">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl">
+              Third-Party App Advertisement
+            </DialogTitle>
+            <DialogDescription className="text-purple-200">
+              Interact with this advertisement to earn 5% commission
+            </DialogDescription>
+          </DialogHeader>
+          
+          {currentAd && (
+            <div className="space-y-4">
+              <div className="bg-black/20 rounded-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-bold text-white">{currentAd.name}</h3>
+                  <Badge className="bg-blue-600 text-white">{currentAd.category}</Badge>
+                </div>
+                
+                <p className="text-purple-200 mb-4">{currentAd.description}</p>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-gray-300">by {currentAd.company}</span>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-400">${currentAd.price}</div>
+                    <div className="text-sm text-purple-200">Ad Value</div>
+                  </div>
+                </div>
+                
+                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-green-400 font-medium">Your Commission (5%)</span>
+                    <span className="text-green-400 text-xl font-bold">
+                      ${(currentAd.price * COMMISSION_RATE).toFixed(2)} USD
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex space-x-3">
+                <Button 
+                  onClick={handleAdInteraction}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Complete Task & Earn Commission
+                </Button>
+                <Button 
+                  onClick={() => setShowAdDialog(false)}
+                  variant="outline" 
+                  className="border-gray-500 text-gray-300 hover:bg-gray-600"
+                >
+                  Skip
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
