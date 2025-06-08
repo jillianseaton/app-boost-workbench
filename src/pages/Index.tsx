@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { LogOut, FileText } from 'lucide-react';
@@ -19,6 +19,13 @@ const EarnFlow = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Redirect to auth if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth', { replace: true });
+    }
+  }, [user, loading, navigate]);
+
   const handleLogout = async () => {
     try {
       await signOut();
@@ -26,7 +33,8 @@ const EarnFlow = () => {
         title: "Logged out successfully",
         description: "Your session has been ended securely.",
       });
-      navigate('/auth');
+      // Force navigation to auth page
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Logout error:', error);
       toast({
@@ -59,9 +67,8 @@ const EarnFlow = () => {
     );
   }
 
-  // Redirect to auth if no user
+  // Don't render anything if no user (will redirect)
   if (!user || !profile) {
-    navigate('/auth');
     return null;
   }
 
