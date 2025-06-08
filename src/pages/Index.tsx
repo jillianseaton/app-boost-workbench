@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Clock, DollarSign, TrendingUp, Smartphone, Users, CheckCircle } from "lucide-react";
+import { Clock, DollarSign, TrendingUp, Smartphone, Users, CheckCircle, Bitcoin, Award, Star, Shield, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,73 +11,34 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [completedTasks, setCompletedTasks] = useState(0);
   const [totalEarnings, setTotalEarnings] = useState(0);
+  const [creditScore, setCreditScore] = useState(100);
+  const [vipLevel, setVipLevel] = useState(1);
+  const [bitcoinAddress, setBitcoinAddress] = useState("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
   const [isWorkHours, setIsWorkHours] = useState(false);
 
-  // Mock data for available optimization tasks
-  const [tasks] = useState([
-    {
-      id: 1,
-      appName: "FitTracker Pro",
-      company: "HealthTech Solutions",
-      taskType: "Keyword Optimization",
-      reward: 125.50,
-      description: "Optimize app store keywords to improve search ranking",
-      category: "ASO",
-      difficulty: "Medium",
-      estimatedTime: "25-35 min"
-    },
-    {
-      id: 2,
-      appName: "CookMaster",
-      company: "Culinary Apps Inc",
-      taskType: "User Engagement Analysis",
-      reward: 89.75,
-      description: "Analyze user behavior patterns and suggest improvements",
-      category: "Analytics",
-      difficulty: "Easy",
-      estimatedTime: "15-25 min"
-    },
-    {
-      id: 3,
-      appName: "StudyBuddy",
-      company: "EduTech Global",
-      taskType: "Traffic Optimization",
-      reward: 156.25,
-      description: "Optimize app traffic flow and user acquisition funnel",
-      category: "Marketing",
-      difficulty: "Hard",
-      estimatedTime: "40-50 min"
-    },
-    {
-      id: 4,
-      appName: "PhotoEdit Pro",
-      company: "Creative Labs",
-      taskType: "App Store Optimization",
-      reward: 99.00,
-      description: "Improve app store listing for better visibility",
-      category: "ASO",
-      difficulty: "Medium",
-      estimatedTime: "30-40 min"
-    },
-    {
-      id: 5,
-      appName: "MusicStream",
-      company: "Audio Innovations",
-      taskType: "Ranking Enhancement",
-      reward: 134.80,
-      description: "Implement strategies to boost app store rankings",
-      category: "Ranking",
-      difficulty: "Medium",
-      estimatedTime: "35-45 min"
-    }
-  ]);
+  // VIP levels configuration
+  const vipLevels = [
+    { level: 1, name: "VIP1", commission: 0.5, tasksPerGroup: 40, groupsPerDay: 2, color: "from-blue-400 to-blue-600" },
+    { level: 2, name: "VIP2", commission: 0.8, tasksPerGroup: 50, groupsPerDay: 3, color: "from-purple-400 to-purple-600" },
+    { level: 3, name: "VIP3", commission: 1.2, tasksPerGroup: 60, groupsPerDay: 4, color: "from-gold-400 to-gold-600" },
+    { level: 4, name: "VIP4", commission: 1.5, tasksPerGroup: 80, groupsPerDay: 5, color: "from-emerald-400 to-emerald-600" },
+  ];
+
+  const currentVIP = vipLevels.find(v => v.level === vipLevel) || vipLevels[0];
+
+  // Partnership services
+  const partnershipServices = [
+    { name: "Premium Ads Network", type: "Advertisement", commission: "15%" },
+    { name: "AppStore Boost", type: "Ranking", commission: "12%" },
+    { name: "Social Media Push", type: "Marketing", commission: "10%" },
+    { name: "Influencer Connect", type: "Promotion", commission: "18%" }
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
       setCurrentTime(now);
       
-      // Check if current time is between 11 AM and 11 PM ET
       const hours = now.getHours();
       setIsWorkHours(hours >= 11 && hours < 23);
     }, 1000);
@@ -85,65 +46,56 @@ const Index = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleStartTask = (task: any) => {
+  const handleStartTask = () => {
     if (!isWorkHours) {
       toast.error("Workstation is currently closed. Operating hours: 11:00 AM - 11:00 PM ET");
       return;
     }
 
-    const earnings = task.reward * 0.05; // 5% commission
+    const earnings = 25.50 * (currentVIP.commission / 100);
     setCompletedTasks(prev => prev + 1);
     setTotalEarnings(prev => prev + earnings);
     
-    toast.success(`Task started! You'll earn $${earnings.toFixed(2)} upon completion.`);
+    toast.success(`Task completed! ${earnings.toFixed(4)} BTC will be sent to your wallet.`);
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy": return "bg-green-100 text-green-800";
-      case "Medium": return "bg-yellow-100 text-yellow-800";
-      case "Hard": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+  const handleWithdraw = () => {
+    if (totalEarnings === 0) {
+      toast.error("No earnings to withdraw");
+      return;
     }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "ASO": return <TrendingUp className="h-4 w-4" />;
-      case "Analytics": return <Users className="h-4 w-4" />;
-      case "Marketing": return <Smartphone className="h-4 w-4" />;
-      case "Ranking": return <CheckCircle className="h-4 w-4" />;
-      default: return <TrendingUp className="h-4 w-4" />;
-    }
+    
+    toast.success(`Withdrawal request submitted! ${totalEarnings.toFixed(4)} BTC will be sent to ${bitcoinAddress}`);
+    setTotalEarnings(0);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-black/20 backdrop-blur-lg border-b border-purple-500/20">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 rounded-lg">
+              <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg">
                 <TrendingUp className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">AppOptimize Pro</h1>
-                <p className="text-sm text-gray-600">International App Optimization Platform</p>
+                <h1 className="text-xl font-bold text-white">Rakuten</h1>
+                <p className="text-sm text-purple-200">tf.rakutenxx.org</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-gray-500" />
+              <div className="flex items-center space-x-2 text-white">
+                <Clock className="h-5 w-5 text-purple-400" />
                 <span className="text-sm font-medium">
                   {currentTime.toLocaleTimeString('en-US', { 
                     timeZone: 'America/New_York',
                     hour12: true 
                   })} ET
                 </span>
-                <Badge variant={isWorkHours ? "default" : "secondary"}>
-                  {isWorkHours ? "OPEN" : "CLOSED"}
+                <Badge variant={isWorkHours ? "default" : "secondary"} className="bg-purple-600">
+                  {isWorkHours ? "ONLINE" : "OFFLINE"}
                 </Badge>
               </div>
             </div>
@@ -152,133 +104,228 @@ const Index = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Available Tasks</CardTitle>
-              <Smartphone className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{20 - completedTasks}/20</div>
-              <p className="text-xs text-muted-foreground">
-                Optimization tasks ready
-              </p>
-              <Progress value={(completedTasks / 20) * 100} className="mt-2" />
+        {/* Welcome Section */}
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold text-white mb-2">Hi! Welcome</h2>
+          <div className="flex items-center justify-center space-x-4">
+            <span className="text-white">Rakuten</span>
+            <Shield className="h-8 w-8 text-blue-400" />
+            <span className="text-2xl font-bold text-white">Credit score: {creditScore}</span>
+          </div>
+        </div>
+
+        {/* Main Navigation Grid */}
+        <div className="grid grid-cols-4 gap-6 mb-8">
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer">
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="bg-blue-500/20 p-4 rounded-full mb-3">
+                <TrendingUp className="h-8 w-8 text-blue-400" />
+              </div>
+              <span className="text-white font-medium">Starting</span>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Tasks Completed</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{completedTasks}</div>
-              <p className="text-xs text-muted-foreground">
-                Successfully submitted today
-              </p>
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer">
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="bg-purple-500/20 p-4 rounded-full mb-3">
+                <Award className="h-8 w-8 text-purple-400" />
+              </div>
+              <span className="text-white font-medium">Cert</span>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">${totalEarnings.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">
-                5% commission per task
-              </p>
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer" onClick={handleWithdraw}>
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="bg-green-500/20 p-4 rounded-full mb-3">
+                <Bitcoin className="h-8 w-8 text-green-400" />
+              </div>
+              <span className="text-white font-medium">Withdraw</span>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer">
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="bg-orange-500/20 p-4 rounded-full mb-3">
+                <Users className="h-8 w-8 text-orange-400" />
+              </div>
+              <span className="text-white font-medium">Serve</span>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer">
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="bg-blue-500/20 p-4 rounded-full mb-3">
+                <DollarSign className="h-8 w-8 text-blue-400" />
+              </div>
+              <span className="text-white font-medium">TERMS</span>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer">
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="bg-yellow-500/20 p-4 rounded-full mb-3">
+                <Star className="h-8 w-8 text-yellow-400" />
+              </div>
+              <span className="text-white font-medium">EVENTS</span>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer">
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="bg-red-500/20 p-4 rounded-full mb-3">
+                <CheckCircle className="h-8 w-8 text-red-400" />
+              </div>
+              <span className="text-white font-medium">FAQ</span>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer">
+            <CardContent className="flex flex-col items-center justify-center p-6">
+              <div className="bg-indigo-500/20 p-4 rounded-full mb-3">
+                <Smartphone className="h-8 w-8 text-indigo-400" />
+              </div>
+              <span className="text-white font-medium">About Us</span>
             </CardContent>
           </Card>
         </div>
 
-        {/* Work Schedule Notice */}
-        <Card className="mb-8 border-l-4 border-l-blue-500">
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-blue-500" />
+        {/* VIP Level Section */}
+        <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 mb-8">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white text-xl">VIP Level</CardTitle>
+            <Button variant="ghost" className="text-blue-400 hover:text-blue-300">
+              View More →
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              {vipLevels.map((level) => (
+                <div key={level.level} className={`relative ${level.level === vipLevel ? 'ring-2 ring-blue-400' : ''}`}>
+                  <div className={`bg-gradient-to-br ${level.color} p-4 rounded-lg flex flex-col items-center`}>
+                    <Shield className="h-12 w-12 text-white mb-2" />
+                    {level.level === vipLevel && (
+                      <div className="absolute -top-2 -right-2 bg-blue-500 rounded-full p-1">
+                        <CheckCircle className="h-4 w-4 text-white" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="bg-black/20 rounded-lg p-4">
+              <h3 className="text-white font-bold text-lg mb-2">{currentVIP.name}</h3>
+              <p className="text-gray-300 text-sm">
+                {currentVIP.groupsPerDay} groups every day, each group has {currentVIP.tasksPerGroup}/{currentVIP.tasksPerGroup} orders, and the commission is {currentVIP.commission}%
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Available Tasks</CardTitle>
+              <Smartphone className="h-4 w-4 text-purple-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{currentVIP.tasksPerGroup - completedTasks}/{currentVIP.tasksPerGroup}</div>
+              <p className="text-xs text-purple-200">Optimization tasks ready</p>
+              <Progress value={(completedTasks / currentVIP.tasksPerGroup) * 100} className="mt-2" />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Bitcoin Earnings</CardTitle>
+              <Bitcoin className="h-4 w-4 text-orange-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-400">{totalEarnings.toFixed(4)} BTC</div>
+              <p className="text-xs text-purple-200">{currentVIP.commission}% commission per task</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Partnership Revenue</CardTitle>
+              <TrendingUp className="h-4 w-4 text-green-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-400">$1,247.80</div>
+              <p className="text-xs text-purple-200">From 3rd party services</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Partnership Services */}
+        <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 mb-8">
+          <CardHeader>
+            <CardTitle className="text-white">Third-Party Partnership Services</CardTitle>
+            <CardDescription className="text-purple-200">
+              Our certified partners provide comprehensive app promotion and monetization services
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {partnershipServices.map((service, index) => (
+                <div key={index} className="bg-black/20 rounded-lg p-4 flex items-center justify-between">
+                  <div>
+                    <h4 className="text-white font-medium">{service.name}</h4>
+                    <p className="text-purple-200 text-sm">{service.type}</p>
+                  </div>
+                  <Badge className="bg-green-600 text-white">{service.commission}</Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bitcoin Wallet Section */}
+        <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 mb-8">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center space-x-2">
+              <Bitcoin className="h-5 w-5 text-orange-400" />
+              <span>Bitcoin Wallet Configuration</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
               <div>
-                <p className="font-medium">Workstation Hours</p>
-                <p className="text-sm text-gray-600">
-                  Open daily from 11:00 AM to 11:00 PM Eastern Time. All tasks can be completed in under 1 hour.
-                </p>
+                <label className="text-white text-sm font-medium">Wallet Address</label>
+                <div className="mt-1 p-3 bg-black/20 rounded-lg text-orange-400 font-mono text-sm break-all">
+                  {bitcoinAddress}
+                </div>
+              </div>
+              <div className="flex space-x-4">
+                <Button 
+                  onClick={handleWithdraw}
+                  disabled={totalEarnings === 0}
+                  className="bg-gradient-to-r from-orange-600 to-yellow-600 hover:from-orange-700 hover:to-yellow-700"
+                >
+                  <Bitcoin className="h-4 w-4 mr-2" />
+                  Withdraw BTC
+                </Button>
+                <Button variant="outline" className="border-purple-500 text-purple-300 hover:bg-purple-600">
+                  Update Wallet
+                </Button>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Available Tasks */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">Available Optimization Tasks</h2>
-            <Badge variant="outline" className="text-sm">
-              {completedTasks}/{20} Completed Today
-            </Badge>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {tasks.map((task) => (
-              <Card key={task.id} className="hover:shadow-lg transition-shadow duration-200">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-2">
-                      {getCategoryIcon(task.category)}
-                      <div>
-                        <CardTitle className="text-lg">{task.appName}</CardTitle>
-                        <CardDescription>{task.company}</CardDescription>
-                      </div>
-                    </div>
-                    <Badge className={getDifficultyColor(task.difficulty)}>
-                      {task.difficulty}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h4 className="font-medium text-gray-900">{task.taskType}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Category: {task.category}</span>
-                    <span className="text-gray-600">Time: {task.estimatedTime}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <div>
-                      <p className="text-sm text-gray-600">App Value: ${task.reward.toFixed(2)}</p>
-                      <p className="font-bold text-green-600">Your Earning: ${(task.reward * 0.05).toFixed(2)}</p>
-                    </div>
-                    <Button 
-                      onClick={() => handleStartTask(task)}
-                      disabled={!isWorkHours || completedTasks >= 20}
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                    >
-                      {completedTasks >= 20 ? "Daily Limit Reached" : "Start Task"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        {/* Start Task Button */}
+        <div className="text-center">
+          <Button 
+            onClick={handleStartTask}
+            disabled={!isWorkHours || completedTasks >= currentVIP.tasksPerGroup}
+            size="lg"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-8 py-4"
+          >
+            {completedTasks >= currentVIP.tasksPerGroup ? "Daily Tasks Completed" : "Start Optimization Task"}
+          </Button>
         </div>
-
-        {/* Footer Info */}
-        <Card className="mt-8 bg-gradient-to-r from-green-50 to-blue-50">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <h3 className="font-bold text-lg mb-2">How It Works</h3>
-              <p className="text-gray-600 max-w-3xl mx-auto">
-                Help app developers optimize their applications for better user acquisition and engagement. 
-                Complete optimization tasks during business hours and earn 5% commission on each app's value. 
-                All tasks are designed to be completed within one hour and contribute to improving app store rankings and user traffic.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
