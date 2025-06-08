@@ -1,92 +1,54 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { LogOut, FileText } from 'lucide-react';
-import LoginSignup from '@/components/LoginSignup';
+import { useNavigate } from 'react-router-dom';
 import PrivacyPolicy from '@/components/PrivacyPolicy';
 import PartnerAgreement from '@/components/PartnerAgreement';
 import SubscriptionPurchase from '@/components/SubscriptionPurchase';
 import SubscriptionGate from '@/components/SubscriptionGate';
 import Dashboard from '@/components/Dashboard';
-
-interface User {
-  phoneNumber: string;
-  username: string;
-}
+import { useAuth } from '@/hooks/useAuth';
 
 const EarnFlow = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
-  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const { user, profile, loading, hasActiveSubscription, signOut } = useAuth();
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showPartnerAgreement, setShowPartnerAgreement] = useState(false);
   const [showSubscriptionPurchase, setShowSubscriptionPurchase] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  // Check for existing user session on component mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem('earnflow-user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      checkSubscriptionStatus(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
-  }, []);
-
-  const checkSubscriptionStatus = async (userData: User) => {
-    setSubscriptionLoading(true);
+  const handleLogout = async () => {
     try {
-      // Simulate subscription check - in production this would call your backend
-      const storedSubscription = localStorage.getItem(`subscription-${userData.phoneNumber}`);
-      if (storedSubscription) {
-        const subscription = JSON.parse(storedSubscription);
-        const now = new Date();
-        const expiryDate = new Date(subscription.expiryDate);
-        setHasActiveSubscription(now < expiryDate);
-      } else {
-        setHasActiveSubscription(false);
-      }
+      await signOut();
+      toast({
+        title: "Logged out successfully",
+        description: "Your session has been ended securely.",
+      });
+      navigate('/auth');
     } catch (error) {
-      console.error('Error checking subscription:', error);
-      setHasActiveSubscription(false);
-    } finally {
-      setSubscriptionLoading(false);
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
     }
-  };
-
-  const handleLogin = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem('earnflow-user', JSON.stringify(userData));
-    checkSubscriptionStatus(userData);
-    toast({
-      title: "Welcome to EarnFlow!",
-      description: `Hi ${userData.username}, checking your subscription status...`,
-    });
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    setHasActiveSubscription(false);
-    localStorage.removeItem('earnflow-user');
-    toast({
-      title: "Logged out successfully",
-      description: "Your session has been ended securely.",
-    });
   };
 
   const handleSubscriptionSuccess = () => {
-    setHasActiveSubscription(true);
     setShowSubscriptionPurchase(false);
     toast({
       title: "Subscription Activated!",
       description: "You now have access to the EarnFlow platform.",
     });
+    // Refresh the page to update subscription status
+    window.location.reload();
   };
 
   // Show loading screen while checking authentication
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
@@ -97,9 +59,10 @@ const EarnFlow = () => {
     );
   }
 
-  // Show login/signup if no user
-  if (!user) {
-    return <LoginSignup onLogin={handleLogin} />;
+  // Redirect to auth if no user
+  if (!user || !profile) {
+    navigate('/auth');
+    return null;
   }
 
   if (showPrivacyPolicy) {
@@ -113,7 +76,7 @@ const EarnFlow = () => {
   if (showSubscriptionPurchase) {
     return (
       <SubscriptionPurchase 
-        user={user}
+        user={{ phoneNumber: profile.phone_number || '', username: profile.username || '' }}
         onBack={() => setShowSubscriptionPurchase(false)}
         onSuccess={handleSubscriptionSuccess}
       />
@@ -121,24 +84,13 @@ const EarnFlow = () => {
   }
 
   // Show subscription required screen if no active subscription
-  if (!hasActiveSubscription && !subscriptionLoading) {
+  if (!hasActiveSubscription) {
     return (
       <SubscriptionGate 
-        user={user}
+        user={{ phoneNumber: profile.phone_number || '', username: profile.username || '' }}
         onPurchase={() => setShowSubscriptionPurchase(true)}
         onLogout={handleLogout}
       />
-    );
-  }
-
-  if (subscriptionLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Checking subscription status...</p>
-        </div>
-      </div>
     );
   }
 
@@ -149,7 +101,7 @@ const EarnFlow = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-4xl font-bold text-primary mb-2">EarnFlow</h1>
-            <p className="text-lg text-muted-foreground">Welcome back, {user.username}!</p>
+            <p className="text-lg text-muted-foreground">Welcome back, {profile.username}!</p>
             <div className="flex items-center gap-2 mt-1">
               <div className="h-2 w-2 bg-green-500 rounded-full"></div>
               <span className="text-sm text-green-600 font-medium">Operator License Active</span>
@@ -172,7 +124,7 @@ const EarnFlow = () => {
         </div>
 
         {/* Dashboard */}
-        <Dashboard user={user} />
+        <Dashboard user={{ phoneNumber: profile.phone_number || '', username: profile.username || '' }} />
       </div>
     </div>
   );

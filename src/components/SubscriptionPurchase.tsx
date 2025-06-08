@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CreditCard, Check, Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface User {
   phoneNumber: string;
@@ -24,6 +25,7 @@ const SubscriptionPurchase: React.FC<SubscriptionPurchaseProps> = ({ user, onBac
   const [cvv, setCvv] = useState('');
   const [cardName, setCardName] = useState('');
   const { toast } = useToast();
+  const { createSubscription } = useAuth();
 
   const handleSubscriptionPurchase = async () => {
     if (!cardNumber || !expiryDate || !cvv || !cardName) {
@@ -38,21 +40,11 @@ const SubscriptionPurchase: React.FC<SubscriptionPurchaseProps> = ({ user, onBac
     setIsProcessing(true);
 
     try {
-      // Simulate payment processing - in production this would integrate with Stripe
+      // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // Store subscription in localStorage (in production this would be in your database)
-      const subscription = {
-        userId: user.phoneNumber,
-        plan: 'operator-license',
-        amount: 9.99,
-        currency: 'USD',
-        startDate: new Date().toISOString(),
-        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-        status: 'active'
-      };
-      
-      localStorage.setItem(`subscription-${user.phoneNumber}`, JSON.stringify(subscription));
+      // Create subscription in database
+      await createSubscription();
       
       toast({
         title: "Subscription Activated!",
