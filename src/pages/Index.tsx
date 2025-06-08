@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Clock, Wallet, TrendingUp, Users, Star, LogOut } from 'lucide-react';
+import { Clock, Wallet, TrendingUp, Users, Star, LogOut, RotateCcw, FileText } from 'lucide-react';
 import LoginSignup from '@/components/LoginSignup';
+import PrivacyPolicy from '@/components/PrivacyPolicy';
+import PartnerAgreement from '@/components/PartnerAgreement';
 
 interface User {
   phoneNumber: string;
@@ -19,7 +21,11 @@ const EarnFlow = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentAppIndex, setCurrentAppIndex] = useState(0);
   const [showingApp, setShowingApp] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showPartnerAgreement, setShowPartnerAgreement] = useState(false);
   const { toast } = useToast();
+
+  const maxTasks = 20;
 
   // Third-party app advertisements with prices
   const thirdPartyApps = [
@@ -77,7 +83,7 @@ const EarnFlow = () => {
   };
 
   const startOptimization = () => {
-    if (showingApp) return;
+    if (showingApp || tasksCompleted >= maxTasks) return;
     
     const randomIndex = Math.floor(Math.random() * thirdPartyApps.length);
     setCurrentAppIndex(randomIndex);
@@ -95,7 +101,24 @@ const EarnFlow = () => {
         title: "Task Completed!",
         description: `Earned $${commission.toFixed(2)} from ${app.name}`,
       });
-    }, 3000); // Show app for 3 seconds
+    }, 3000);
+  };
+
+  const resetTasks = () => {
+    if (tasksCompleted < maxTasks) {
+      toast({
+        title: "Cannot reset tasks",
+        description: `Complete all ${maxTasks} tasks before resetting.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTasksCompleted(0);
+    toast({
+      title: "Tasks Reset Successfully",
+      description: `You can now complete ${maxTasks} more optimization tasks!`,
+    });
   };
 
   const handleWithdraw = () => {
@@ -143,7 +166,16 @@ const EarnFlow = () => {
     return <LoginSignup onLogin={handleLogin} />;
   }
 
+  if (showPrivacyPolicy) {
+    return <PrivacyPolicy onBack={() => setShowPrivacyPolicy(false)} />;
+  }
+
+  if (showPartnerAgreement) {
+    return <PartnerAgreement onBack={() => setShowPartnerAgreement(false)} />;
+  }
+
   const currentApp = thirdPartyApps[currentAppIndex];
+  const canStartTask = tasksCompleted < maxTasks && !showingApp && !hasWithdrawn;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
@@ -154,10 +186,20 @@ const EarnFlow = () => {
             <h1 className="text-4xl font-bold text-primary mb-2">EarnFlow</h1>
             <p className="text-lg text-muted-foreground">Welcome back, {user.username}!</p>
           </div>
-          <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2">
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowPrivacyPolicy(true)} variant="outline" size="sm">
+              <FileText className="h-4 w-4 mr-2" />
+              Privacy Policy
+            </Button>
+            <Button onClick={() => setShowPartnerAgreement(true)} variant="outline" size="sm">
+              <FileText className="h-4 w-4 mr-2" />
+              Partner Agreement
+            </Button>
+            <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2">
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
 
         {/* Current Time */}
@@ -199,7 +241,18 @@ const EarnFlow = () => {
               <Star className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{tasksCompleted}</div>
+              <div className="text-2xl font-bold">{tasksCompleted}/{maxTasks}</div>
+              {tasksCompleted >= maxTasks && (
+                <Button 
+                  onClick={resetTasks} 
+                  size="sm" 
+                  variant="outline" 
+                  className="mt-2 w-full"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Reset Tasks
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -239,14 +292,19 @@ const EarnFlow = () => {
               <>
                 <Button
                   onClick={startOptimization}
-                  disabled={showingApp}
+                  disabled={!canStartTask}
                   size="lg"
                   className="w-full md:w-auto px-12 py-6 text-xl"
                 >
-                  {showingApp ? "Processing..." : "Start Optimization Task"}
+                  {showingApp ? "Processing..." : 
+                   tasksCompleted >= maxTasks ? "Complete 20/20 - Reset to Continue" :
+                   `Start Optimization Task (${tasksCompleted}/${maxTasks})`}
                 </Button>
                 <p className="text-sm text-muted-foreground">
-                  Click start to interact with partner advertisements and earn 5% commission
+                  {tasksCompleted >= maxTasks ? 
+                    "You've completed all daily tasks. Reset to continue earning!" :
+                    "Click start to interact with partner advertisements and earn 5% commission"
+                  }
                 </p>
               </>
             ) : (
