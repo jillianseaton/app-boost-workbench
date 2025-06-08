@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Clock, DollarSign, TrendingUp, Smartphone, Users, CheckCircle, Bitcoin, Award, Star, Shield, Gift } from "lucide-react";
+import { Clock, DollarSign, TrendingUp, Smartphone, Users, CheckCircle, Bitcoin, Award, Star, Shield, Gift, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,8 @@ const Index = () => {
   const [vipLevel, setVipLevel] = useState(1);
   const [bitcoinAddress, setBitcoinAddress] = useState("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
   const [isWorkHours, setIsWorkHours] = useState(false);
+  const [canWithdraw, setCanWithdraw] = useState(false);
+  const [hasWithdrawnToday, setHasWithdrawnToday] = useState(false);
 
   // VIP levels configuration
   const vipLevels = [
@@ -25,6 +26,8 @@ const Index = () => {
   ];
 
   const currentVIP = vipLevels.find(v => v.level === vipLevel) || vipLevels[0];
+  const MINIMUM_WITHDRAWAL_USD = 10;
+  const BTC_TO_USD_RATE = 45000; // Simulated BTC rate
 
   // Partnership services
   const partnershipServices = [
@@ -46,17 +49,32 @@ const Index = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleStartTask = () => {
+  useEffect(() => {
+    const earningsInUSD = totalEarnings * BTC_TO_USD_RATE;
+    setCanWithdraw(earningsInUSD >= MINIMUM_WITHDRAWAL_USD);
+  }, [totalEarnings]);
+
+  const handleStartOptimization = () => {
     if (!isWorkHours) {
       toast.error("Workstation is currently closed. Operating hours: 11:00 AM - 11:00 PM ET");
       return;
     }
 
-    const earnings = 25.50 * (currentVIP.commission / 100);
-    setCompletedTasks(prev => prev + 1);
-    setTotalEarnings(prev => prev + earnings);
+    if (hasWithdrawnToday) {
+      toast.error("Please complete withdrawal and reset your account to continue optimizing for the next day");
+      return;
+    }
+
+    // Base task value of $10 minimum with VIP commission
+    const baseTaskValueUSD = 10;
+    const commissionMultiplier = 1 + (currentVIP.commission / 100);
+    const taskEarningsUSD = baseTaskValueUSD * (currentVIP.commission / 100);
+    const taskEarningsBTC = taskEarningsUSD / BTC_TO_USD_RATE;
     
-    toast.success(`Task completed! ${earnings.toFixed(4)} BTC will be sent to your wallet.`);
+    setCompletedTasks(prev => prev + 1);
+    setTotalEarnings(prev => prev + taskEarningsBTC);
+    
+    toast.success(`Optimization task completed! Earned ${taskEarningsUSD.toFixed(2)} USD (${taskEarningsBTC.toFixed(6)} BTC)`);
   };
 
   const handleWithdraw = () => {
@@ -64,9 +82,31 @@ const Index = () => {
       toast.error("No earnings to withdraw");
       return;
     }
+
+    const earningsInUSD = totalEarnings * BTC_TO_USD_RATE;
     
-    toast.success(`Withdrawal request submitted! ${totalEarnings.toFixed(4)} BTC will be sent to ${bitcoinAddress}`);
+    if (earningsInUSD < MINIMUM_WITHDRAWAL_USD) {
+      toast.error(`Minimum withdrawal amount is $${MINIMUM_WITHDRAWAL_USD} USD. Current earnings: $${earningsInUSD.toFixed(2)} USD`);
+      return;
+    }
+    
+    toast.success(`Withdrawal request submitted! ${totalEarnings.toFixed(6)} BTC ($${earningsInUSD.toFixed(2)} USD) will be sent to ${bitcoinAddress}`);
+    setHasWithdrawnToday(true);
+    toast.info("Daily withdrawal completed. Please reset your account to continue optimizing tomorrow.");
+  };
+
+  const handleResetAccount = () => {
+    if (!hasWithdrawnToday) {
+      toast.error("You must withdraw your daily earnings before resetting your account");
+      return;
+    }
+
     setTotalEarnings(0);
+    setCompletedTasks(0);
+    setHasWithdrawnToday(false);
+    setCanWithdraw(false);
+    
+    toast.success("Account reset successfully! You can now start optimizing tasks for the next day.");
   };
 
   return (
@@ -114,14 +154,29 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Optimization Requirements Alert */}
+        <Card className="bg-orange-500/10 border-orange-500/20 mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <Star className="h-6 w-6 text-orange-400" />
+              <div>
+                <h3 className="text-white font-bold">Optimization Requirements</h3>
+                <p className="text-orange-200 text-sm">
+                  • Minimum optimization task value: $10 USD • Complete daily withdrawal required • Reset account daily for next day tasks
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Main Navigation Grid */}
         <div className="grid grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer">
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer" onClick={handleStartOptimization}>
             <CardContent className="flex flex-col items-center justify-center p-6">
               <div className="bg-blue-500/20 p-4 rounded-full mb-3">
                 <TrendingUp className="h-8 w-8 text-blue-400" />
               </div>
-              <span className="text-white font-medium">Starting</span>
+              <span className="text-white font-medium">Start Optimizing</span>
             </CardContent>
           </Card>
 
@@ -143,12 +198,12 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer">
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20 hover:bg-white/20 transition-all cursor-pointer" onClick={handleResetAccount}>
             <CardContent className="flex flex-col items-center justify-center p-6">
               <div className="bg-orange-500/20 p-4 rounded-full mb-3">
-                <Users className="h-8 w-8 text-orange-400" />
+                <RefreshCw className="h-8 w-8 text-orange-400" />
               </div>
-              <span className="text-white font-medium">Serve</span>
+              <span className="text-white font-medium">Reset Account</span>
             </CardContent>
           </Card>
 
@@ -223,16 +278,16 @@ const Index = () => {
         </Card>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Available Tasks</CardTitle>
+              <CardTitle className="text-sm font-medium text-white">Completed Tasks</CardTitle>
               <Smartphone className="h-4 w-4 text-purple-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{currentVIP.tasksPerGroup - completedTasks}/{currentVIP.tasksPerGroup}</div>
-              <p className="text-xs text-purple-200">Optimization tasks ready</p>
-              <Progress value={(completedTasks / currentVIP.tasksPerGroup) * 100} className="mt-2" />
+              <div className="text-2xl font-bold text-white">{completedTasks}/20</div>
+              <p className="text-xs text-purple-200">Daily optimization tasks</p>
+              <Progress value={(completedTasks / 20) * 100} className="mt-2" />
             </CardContent>
           </Card>
 
@@ -242,19 +297,34 @@ const Index = () => {
               <Bitcoin className="h-4 w-4 text-orange-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-400">{totalEarnings.toFixed(4)} BTC</div>
-              <p className="text-xs text-purple-200">{currentVIP.commission}% commission per task</p>
+              <div className="text-2xl font-bold text-orange-400">{totalEarnings.toFixed(6)} BTC</div>
+              <p className="text-xs text-purple-200">${(totalEarnings * BTC_TO_USD_RATE).toFixed(2)} USD</p>
             </CardContent>
           </Card>
 
           <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-white">Partnership Revenue</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-400" />
+              <CardTitle className="text-sm font-medium text-white">Withdrawal Status</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-400">$1,247.80</div>
-              <p className="text-xs text-purple-200">From 3rd party services</p>
+              <div className="text-2xl font-bold text-green-400">
+                {canWithdraw ? "Ready" : "Pending"}
+              </div>
+              <p className="text-xs text-purple-200">Min: $10 USD</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/10 backdrop-blur-lg border-purple-500/20">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-white">Account Status</CardTitle>
+              <RefreshCw className="h-4 w-4 text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-400">
+                {hasWithdrawnToday ? "Reset Required" : "Active"}
+              </div>
+              <p className="text-xs text-purple-200">Daily cycle</p>
             </CardContent>
           </Card>
         </div>
@@ -301,11 +371,20 @@ const Index = () => {
               <div className="flex space-x-4">
                 <Button 
                   onClick={handleWithdraw}
-                  disabled={totalEarnings === 0}
+                  disabled={!canWithdraw}
                   className="bg-gradient-to-r from-orange-600 to-yellow-600 hover:from-orange-700 hover:to-yellow-700"
                 >
                   <Bitcoin className="h-4 w-4 mr-2" />
-                  Withdraw BTC
+                  Withdraw BTC {!canWithdraw && `(Min $${MINIMUM_WITHDRAWAL_USD})`}
+                </Button>
+                <Button 
+                  onClick={handleResetAccount}
+                  disabled={!hasWithdrawnToday}
+                  variant="outline" 
+                  className="border-blue-500 text-blue-300 hover:bg-blue-600"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Reset Account
                 </Button>
                 <Button variant="outline" className="border-purple-500 text-purple-300 hover:bg-purple-600">
                   Update Wallet
@@ -315,15 +394,17 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* Start Task Button */}
+        {/* Start Optimization Button */}
         <div className="text-center">
           <Button 
-            onClick={handleStartTask}
-            disabled={!isWorkHours || completedTasks >= currentVIP.tasksPerGroup}
+            onClick={handleStartOptimization}
+            disabled={!isWorkHours || hasWithdrawnToday}
             size="lg"
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-lg px-8 py-4"
           >
-            {completedTasks >= currentVIP.tasksPerGroup ? "Daily Tasks Completed" : "Start Optimization Task"}
+            {hasWithdrawnToday ? "Reset Account to Continue" : 
+             !isWorkHours ? "Workstation Closed" : 
+             "Start Optimization Rating Task"}
           </Button>
         </div>
       </div>
