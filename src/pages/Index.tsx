@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Clock, DollarSign, TrendingUp, Smartphone, Users, CheckCircle, Bitcoin, Award, Star, Shield, Gift, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,10 +20,10 @@ const Index = () => {
 
   // VIP levels configuration
   const vipLevels = [
-    { level: 1, name: "VIP1", commission: 0.5, tasksPerGroup: 40, groupsPerDay: 2, color: "from-blue-400 to-blue-600" },
-    { level: 2, name: "VIP2", commission: 0.8, tasksPerGroup: 50, groupsPerDay: 3, color: "from-purple-400 to-purple-600" },
-    { level: 3, name: "VIP3", commission: 1.2, tasksPerGroup: 60, groupsPerDay: 4, color: "from-gold-400 to-gold-600" },
-    { level: 4, name: "VIP4", commission: 1.5, tasksPerGroup: 80, groupsPerDay: 5, color: "from-emerald-400 to-emerald-600" },
+    { level: 1, name: "VIP1", commission: 0.5, tasksPerDay: 20, color: "from-blue-400 to-blue-600" },
+    { level: 2, name: "VIP2", commission: 0.8, tasksPerDay: 30, color: "from-purple-400 to-purple-600" },
+    { level: 3, name: "VIP3", commission: 1.2, tasksPerDay: 40, color: "from-gold-400 to-gold-600" },
+    { level: 4, name: "VIP4", commission: 1.5, tasksPerDay: 50, color: "from-emerald-400 to-emerald-600" },
   ];
 
   const currentVIP = vipLevels.find(v => v.level === vipLevel) || vipLevels[0];
@@ -65,16 +66,15 @@ const Index = () => {
       return;
     }
 
-    // Base task value of $10 minimum with VIP commission
+    // Individual task with minimum $10 USD value and VIP commission
     const baseTaskValueUSD = 10;
-    const commissionMultiplier = 1 + (currentVIP.commission / 100);
     const taskEarningsUSD = baseTaskValueUSD * (currentVIP.commission / 100);
     const taskEarningsBTC = taskEarningsUSD / BTC_TO_USD_RATE;
     
     setCompletedTasks(prev => prev + 1);
     setTotalEarnings(prev => prev + taskEarningsBTC);
     
-    toast.success(`Optimization task completed! Earned ${taskEarningsUSD.toFixed(2)} USD (${taskEarningsBTC.toFixed(6)} BTC)`);
+    toast.success(`Individual optimization task completed! Earned ${taskEarningsUSD.toFixed(2)} USD (${taskEarningsBTC.toFixed(6)} BTC)`);
   };
 
   const handleWithdraw = () => {
@@ -154,15 +154,15 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Optimization Requirements Alert */}
+        {/* Individual Tasks Only Alert */}
         <Card className="bg-orange-500/10 border-orange-500/20 mb-6">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
               <Star className="h-6 w-6 text-orange-400" />
               <div>
-                <h3 className="text-white font-bold">Optimization Requirements</h3>
+                <h3 className="text-white font-bold">Individual Optimization Tasks Only</h3>
                 <p className="text-orange-200 text-sm">
-                  • Minimum optimization task value: $10 USD • Complete daily withdrawal required • Reset account daily for next day tasks
+                  • Each task is worth minimum $10 USD • No combo or group tasks • Complete daily withdrawal required • Reset account daily for next day tasks
                 </p>
               </div>
             </div>
@@ -271,7 +271,7 @@ const Index = () => {
             <div className="bg-black/20 rounded-lg p-4">
               <h3 className="text-white font-bold text-lg mb-2">{currentVIP.name}</h3>
               <p className="text-gray-300 text-sm">
-                {currentVIP.groupsPerDay} groups every day, each group has {currentVIP.tasksPerGroup}/{currentVIP.tasksPerGroup} orders, and the commission is {currentVIP.commission}%
+                Up to {currentVIP.tasksPerDay} individual tasks per day, each task minimum $10 USD, commission rate {currentVIP.commission}%
               </p>
             </div>
           </CardContent>
@@ -285,9 +285,9 @@ const Index = () => {
               <Smartphone className="h-4 w-4 text-purple-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">{completedTasks}/20</div>
-              <p className="text-xs text-purple-200">Daily optimization tasks</p>
-              <Progress value={(completedTasks / 20) * 100} className="mt-2" />
+              <div className="text-2xl font-bold text-white">{completedTasks}/{currentVIP.tasksPerDay}</div>
+              <p className="text-xs text-purple-200">Individual optimization tasks</p>
+              <Progress value={(completedTasks / currentVIP.tasksPerDay) * 100} className="mt-2" />
             </CardContent>
           </Card>
 
@@ -404,7 +404,7 @@ const Index = () => {
           >
             {hasWithdrawnToday ? "Reset Account to Continue" : 
              !isWorkHours ? "Workstation Closed" : 
-             "Start Optimization Rating Task"}
+             "Start Individual Optimization Task"}
           </Button>
         </div>
       </div>
