@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseMetaMaskWithdrawalProps {
   earnings: number;
@@ -67,64 +68,102 @@ export const useMetaMaskWithdrawal = ({
       }
 
       const withdrawalAddress = accounts[0];
-      const ethPrice = 2000; // This should come from a real price API in production
-      const ethAmount = earnings / ethPrice;
 
-      console.log('Creating MetaMask withdrawal:', { 
+      // Get current user
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Initiating real MetaMask withdrawal:', { 
         address: withdrawalAddress, 
-        amountUSD: earnings, 
-        amountETH: ethAmount 
+        amountUSD: earnings,
+        userId: currentUser.id
       });
 
-      // Simulate sending ETH to the connected wallet
-      // In a real implementation, this would involve a smart contract or backend service
-      const transactionHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-      
+      // Create pending transaction record
       const transactionId = addTransaction({
         type: 'withdrawal',
         amount: withdrawalAmount,
         address: withdrawalAddress,
         status: 'pending',
-        txHash: transactionHash,
-        explorerUrl: `https://etherscan.io/tx/${transactionHash}`,
         network: 'ethereum',
-        fee: 0.001,
-        currency: 'ETH',
-        amountETH: ethAmount
+        currency: 'ETH'
       });
 
-      // Simulate transaction processing
-      setTimeout(() => {
-        updateTransaction(transactionId, { 
-          status: 'confirmed'
-        });
-        
-        toast({
-          title: "Withdrawal Confirmed!",
-          description: `$${withdrawalAmount.toFixed(2)} (${ethAmount.toFixed(4)} ETH) has been sent to your MetaMask wallet.`,
-        });
-        
-        // Update user balance
-        setEarnings(prev => prev - withdrawalAmount);
-        setHasWithdrawn(true);
-        setWithdrawalAmount(0);
-        setIsWithdrawing(false);
-      }, 3000);
+      // Call the real withdrawal edge function
+      const { data, error } = await supabase.functions.invoke('metamask-withdrawal', {
+        body: {
+          userId: currentUser.id,
+          userAddress: withdrawalAddress,
+          amountUSD: earnings,
+          transactionId
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Withdrawal failed');
+      }
+
+      // Update transaction with real blockchain data
+      updateTransaction(transactionId, {
+        status: 'broadcasted',
+        txHash: data.txHash,
+        explorerUrl: data.explorerUrl,
+        amountETH: data.ethAmount,
+        gasFeeETH: data.gasFeeETH,
+        ethPrice: data.ethPrice
+      });
 
       toast({
-        title: "Withdrawal Initiated",
-        description: `Processing withdrawal of $${withdrawalAmount.toFixed(2)} to MetaMask...`,
+        title: "Withdrawal Broadcasted!",
+        description: `$${withdrawalAmount.toFixed(2)} (${data.ethAmount.toFixed(6)} ETH) has been sent to the blockchain. Confirmation pending...`,
       });
+
+      // Update user balance immediately
+      setEarnings(prev => prev - withdrawalAmount);
+      setHasWithdrawn(true);
+      setWithdrawalAmount(0);
+
+      // Monitor for confirmation
+      setTimeout(async () => {
+        try {
+          // Check if transaction is confirmed
+          const response = await fetch(`https://api.etherscan.io/api?module=transaction&action=gettxreceiptstatus&txhash=${data.txHash}&apikey=demo`);
+          const txData = await response.json();
+          
+          if (txData.result?.status === '1') {
+            updateTransaction(transactionId, { status: 'confirmed' });
+            toast({
+              title: "Withdrawal Confirmed!",
+              description: `Transaction confirmed on Ethereum blockchain.`,
+            });
+          }
+        } catch (error) {
+          console.error('Error checking confirmation:', error);
+        }
+      }, 120000); // Check after 2 minutes
 
     } catch (error: any) {
       console.error('MetaMask withdrawal failed:', error);
       setWithdrawalAmount(0);
       setIsWithdrawing(false);
+      
       toast({
         title: "Withdrawal Failed",
         description: error.message || "Unable to process withdrawal. Please try again.",
         variant: "destructive",
       });
+      
+      // Restore earnings if withdrawal failed
+      setEarnings(prev => prev + withdrawalAmount);
+      setHasWithdrawn(false);
+    } finally {
+      setIsWithdrawing(false);
     }
   };
 

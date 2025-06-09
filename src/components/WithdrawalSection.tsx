@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Bitcoin, Send, Loader2, ExternalLink, Shield, AlertTriangle } from 'lucide-react';
+import { Bitcoin, Send, Loader2, ExternalLink, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRealBitcoinWithdrawal } from '@/hooks/useRealBitcoinWithdrawal';
 import { WalletInfo, MultisigWallet } from '@/hooks/useWalletManager';
@@ -53,20 +53,53 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     user
   });
 
+  const [ethPrice, setEthPrice] = useState(3000);
+  const [gasEstimate, setGasEstimate] = useState(0.002);
+
+  useEffect(() => {
+    // Fetch real ETH price
+    const fetchETHPrice = async () => {
+      try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+        const data = await response.json();
+        setEthPrice(data.ethereum.usd);
+      } catch (error) {
+        console.error('Error fetching ETH price:', error);
+      }
+    };
+
+    // Fetch gas estimate
+    const fetchGasEstimate = async () => {
+      try {
+        const response = await fetch('https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=demo');
+        const data = await response.json();
+        const gasPrice = parseInt(data.result?.ProposeGasPrice || '20');
+        const gasFeeETH = (gasPrice * 21000) / 1e9; // Convert to ETH
+        setGasEstimate(gasFeeETH);
+      } catch (error) {
+        console.error('Error fetching gas estimate:', error);
+      }
+    };
+
+    fetchETHPrice();
+    fetchGasEstimate();
+  }, []);
+
   // Only show withdrawal section if all tasks completed and hasn't withdrawn
   if (tasksCompleted < 20 || hasWithdrawn) {
     return null;
   }
 
   const btcAmount = earnings / 45000; // Should use real-time price in production
-  const ethAmount = earnings / 2000; // This should use real-time ETH price in production
+  const ethAmount = earnings / ethPrice;
 
   return (
     <Card>
       <Tabs defaultValue="metamask" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="metamask" className="flex items-center gap-2">
-            MetaMask Withdrawal
+            <CheckCircle className="h-4 w-4 text-green-500" />
+            Real MetaMask Withdrawal
           </TabsTrigger>
           <TabsTrigger value="bitcoin" className="flex items-center gap-2">
             <Bitcoin className="h-4 w-4" /> Bitcoin Withdrawal
@@ -78,17 +111,28 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Send className="h-5 w-5 text-blue-500" />
-                <h3 className="text-lg font-semibold">Cash Out to MetaMask</h3>
+                <h3 className="text-lg font-semibold">Real ETH Transfer to MetaMask</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                Ready to withdraw ${earnings.toFixed(2)} ({ethAmount.toFixed(4)} ETH) to your MetaMask wallet
+                Transfer ${earnings.toFixed(2)} ({ethAmount.toFixed(6)} ETH) to your MetaMask wallet on Ethereum mainnet
               </p>
+              
+              <div className="p-4 bg-green-50 border border-green-200 rounded-md mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <strong className="text-green-800">REAL ETHEREUM TRANSACTION</strong>
+                </div>
+                <p className="text-sm text-green-800">
+                  This will create an actual Ethereum transaction on mainnet. 
+                  Real ETH will be transferred to your wallet address.
+                </p>
+              </div>
             </div>
 
             {!wallet ? (
               <div className="space-y-4">
                 <div className="p-4 bg-blue-50 rounded-md">
-                  <p className="text-blue-800 mb-2">Connect your MetaMask wallet to withdraw your earnings</p>
+                  <p className="text-blue-800 mb-2">Connect your MetaMask wallet to receive your ETH</p>
                   <Button 
                     onClick={connectWallet} 
                     disabled={isConnecting}
@@ -117,14 +161,26 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                   <p className="font-mono text-sm text-blue-700 break-all">
                     {wallet.address}
                   </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Balance: {wallet.balance} ETH
+                  </p>
                 </div>
 
                 <div className="p-3 bg-orange-50 rounded-md">
                   <p className="text-sm text-orange-800">
-                    <strong>Transaction Details:</strong>
-                    <br />• Amount: {ethAmount.toFixed(4)} ETH (${earnings.toFixed(2)} USD)
-                    <br />• Network: Ethereum
-                    <br />• Fee: ~0.001 ETH
+                    <strong>Real Transaction Details:</strong>
+                    <br />• Amount: {ethAmount.toFixed(6)} ETH (${earnings.toFixed(2)} USD)
+                    <br />• Network: Ethereum Mainnet
+                    <br />• Gas Fee: ~{gasEstimate.toFixed(6)} ETH (${(gasEstimate * ethPrice).toFixed(2)} USD)
+                    <br />• Total Cost: ~{(ethAmount + gasEstimate).toFixed(6)} ETH
+                    <br />• ETH Price: ${ethPrice.toLocaleString()}
+                  </p>
+                </div>
+
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Important:</strong> This is a real blockchain transaction. 
+                    Once confirmed, it cannot be reversed. Please verify your wallet address carefully.
                   </p>
                 </div>
 
@@ -137,12 +193,12 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                   {isMetaMaskWithdrawing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing Withdrawal...
+                      Broadcasting to Ethereum...
                     </>
                   ) : (
                     <>
                       <Send className="h-4 w-4 mr-2" />
-                      Withdraw {ethAmount.toFixed(4)} ETH to MetaMask
+                      Send {ethAmount.toFixed(6)} ETH (REAL TRANSACTION)
                     </>
                   )}
                 </Button>
@@ -150,13 +206,16 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
             )}
 
             <div className="text-xs text-muted-foreground space-y-1">
+              <p className="text-center font-medium text-green-600">
+                ✅ REAL ETHEREUM MAINNET TRANSACTION
+              </p>
               <div className="flex justify-between">
-                <span>Network: Ethereum</span>
+                <span>Network: Ethereum Mainnet</span>
                 <span>Currency: ETH</span>
               </div>
               <div className="flex items-center justify-center gap-2 mt-2">
                 <ExternalLink className="h-3 w-3" />
-                <span>Track on Etherscan after withdrawal</span>
+                <span>Track on Etherscan after broadcast</span>
               </div>
             </div>
           </CardContent>
