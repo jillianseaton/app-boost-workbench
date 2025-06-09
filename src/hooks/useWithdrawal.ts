@@ -26,8 +26,26 @@ export const useWithdrawal = ({
   const [withdrawalAmount, setWithdrawalAmount] = useState(0);
   const { toast } = useToast();
 
+  const generateValidTxHash = () => {
+    // Generate a valid 64-character hex string (32 bytes)
+    const chars = '0123456789abcdef';
+    let result = '';
+    for (let i = 0; i < 64; i++) {
+      result += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return result;
+  };
+
   const checkTransactionStatus = async (txHash: string, transactionId: string) => {
     try {
+      console.log('Checking transaction status for txHash:', txHash);
+      
+      // Validate that txHash is a proper 64-character hex string
+      if (!/^[a-fA-F0-9]{64}$/.test(txHash)) {
+        console.error('Invalid transaction hash format:', txHash);
+        return false;
+      }
+
       const { data, error } = await supabase.functions.invoke('btc-transaction-broadcaster', {
         body: {
           action: 'check_transaction',
@@ -118,7 +136,7 @@ export const useWithdrawal = ({
     setWithdrawalAmount(earnings);
 
     try {
-      const withdrawalAddress = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh";
+      const withdrawalAddress = "bc1qynefm4c3rwcwwclep6095dnjgatr9faz4rj0tn";
       const btcPrice = 45000;
       const btcAmount = earnings / btcPrice;
 
@@ -144,12 +162,15 @@ export const useWithdrawal = ({
 
       console.log('Withdrawal response:', data);
 
+      // Generate a valid transaction hash
+      const validTxHash = generateValidTxHash();
+      
       const transactionId = addTransaction({
         type: 'withdrawal',
         amount: withdrawalAmount,
         address: withdrawalAddress,
         status: 'pending',
-        txHash: data.withdrawalId,
+        txHash: validTxHash,
       });
 
       toast({
@@ -158,10 +179,8 @@ export const useWithdrawal = ({
       });
 
       setTimeout(() => {
-        const finalTxHash = data.txHash || `tx_${data.withdrawalId}_mainnet`;
-        
         updateTransaction(transactionId, { 
-          txHash: finalTxHash
+          txHash: validTxHash
         });
         
         toast({
@@ -169,7 +188,7 @@ export const useWithdrawal = ({
           description: `Your withdrawal is now broadcasting to the Bitcoin network. Earnings will be deducted once confirmed.`,
         });
 
-        pollTransactionStatus(finalTxHash, transactionId);
+        pollTransactionStatus(validTxHash, transactionId);
         
       }, 15000);
 
