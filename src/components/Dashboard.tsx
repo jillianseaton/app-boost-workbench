@@ -94,6 +94,78 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     });
   };
 
+  const checkTransactionStatus = async (txHash: string, transactionId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('btc-transaction-broadcaster', {
+        body: {
+          action: 'check_transaction',
+          transactionData: {
+            txid: txHash,
+            network: 'mainnet'
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Error checking transaction status:', error);
+        return false;
+      }
+
+      console.log('Transaction status check:', data);
+
+      if (data.confirmed) {
+        // Transaction is confirmed on blockchain
+        updateTransaction(transactionId, { 
+          status: 'confirmed'
+        });
+        
+        // NOW reset earnings since transaction is confirmed on blockchain
+        setEarnings(prev => prev - withdrawalAmount);
+        setHasWithdrawn(true);
+        setWithdrawalAmount(0);
+        setIsWithdrawing(false);
+        
+        toast({
+          title: "Bitcoin Successfully Received!",
+          description: `Your withdrawal of $${withdrawalAmount.toFixed(2)} has been confirmed on the Bitcoin blockchain and is now in your wallet!`,
+        });
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Failed to check transaction status:', error);
+      return false;
+    }
+  };
+
+  const pollTransactionStatus = (txHash: string, transactionId: string) => {
+    let attempts = 0;
+    const maxAttempts = 60; // Poll for up to 30 minutes (60 * 30 seconds)
+    
+    const poll = setInterval(async () => {
+      attempts++;
+      console.log(`Checking transaction status, attempt ${attempts}/${maxAttempts}`);
+      
+      const isConfirmed = await checkTransactionStatus(txHash, transactionId);
+      
+      if (isConfirmed || attempts >= maxAttempts) {
+        clearInterval(poll);
+        
+        if (!isConfirmed && attempts >= maxAttempts) {
+          // Timeout - still show as pending but stop polling
+          toast({
+            title: "Transaction Still Pending",
+            description: "Your withdrawal is taking longer than expected. Please check your wallet manually or contact support.",
+            variant: "destructive",
+          });
+          setIsWithdrawing(false);
+        }
+      }
+    }, 30000); // Check every 30 seconds
+  };
+
   const handleWithdraw = async () => {
     if (earnings < 10) {
       toast({
@@ -158,39 +230,36 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
       toast({
         title: "Bitcoin Withdrawal Initiated",
-        description: `$${withdrawalAmount.toFixed(2)} withdrawal initiated. Earnings will be deducted once transaction is visible on blockchain.`,
+        description: `$${withdrawalAmount.toFixed(2)} withdrawal initiated. Monitoring blockchain for confirmation...`,
       });
 
-      // Simulate getting transaction hash and then reset earnings
+      // Simulate getting transaction hash after some time
       setTimeout(() => {
         const finalTxHash = data.txHash || `tx_${data.withdrawalId}_mainnet`;
         
         updateTransaction(transactionId, { 
-          status: 'confirmed',
           txHash: finalTxHash
         });
         
-        // NOW reset earnings since we have a viewable transaction
-        setEarnings(prev => prev - withdrawalAmount);
-        setHasWithdrawn(true);
-        setWithdrawalAmount(0);
-        
         toast({
-          title: "Transaction Visible on Blockchain",
-          description: `Your withdrawal is now visible on the Bitcoin network! Earnings have been deducted.`,
+          title: "Transaction Broadcasting",
+          description: `Your withdrawal is now broadcasting to the Bitcoin network. Earnings will be deducted once confirmed.`,
         });
+
+        // Start polling for confirmation
+        pollTransactionStatus(finalTxHash, transactionId);
+        
       }, 15000); // 15 seconds for demo - simulates time to get tx hash
 
     } catch (error) {
       console.error('Withdrawal failed:', error);
       setWithdrawalAmount(0); // Reset withdrawal amount on failure
+      setIsWithdrawing(false);
       toast({
         title: "Withdrawal Failed",
         description: error.message || "Unable to process withdrawal. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsWithdrawing(false);
     }
   };
 
@@ -243,7 +312,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             <div className="text-2xl font-bold text-green-600">${availableEarnings.toFixed(2)}</div>
             {withdrawalAmount > 0 && (
               <div className="text-xs text-orange-600 mt-1">
-                ${withdrawalAmount.toFixed(2)} being withdrawn...
+                ${withdrawalAmount.toFixed(2)} pending blockchain confirmation...
               </div>
             )}
           </CardContent>
