@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,7 +14,7 @@ const loadBitcoinLibs = async () => {
       import('@ledgerhq/hw-app-btc'),
     ]);
     
-    const ECPair = ECPairFactory.default(ecc.default);
+    const ECPair = ECPairFactory.default(ecc);
     
     return {
       bitcoin: bitcoin.default,
