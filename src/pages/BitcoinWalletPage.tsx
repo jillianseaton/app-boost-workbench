@@ -1,19 +1,50 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BitcoinWallet from '@/components/BitcoinWallet';
+import CashAppWallet from '@/components/CashAppWallet';
 
 const BitcoinWalletPage: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
       <div className="container mx-auto max-w-4xl space-y-6">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-primary mb-2">Bitcoin Testnet Wallet</h1>
-          <p className="text-lg text-muted-foreground">
-            Generate wallets, check balances, and send Bitcoin on testnet
-          </p>
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Bitcoin & Crypto Wallets</h1>
+            <p className="text-muted-foreground">Manage your Bitcoin wallets and integrations</p>
+          </div>
         </div>
-        
-        <BitcoinWallet />
+
+        {/* Wallet Tabs */}
+        <Tabs defaultValue="bitcoin" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="bitcoin">Bitcoin Wallet</TabsTrigger>
+            <TabsTrigger value="cashapp">CashApp Integration</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="bitcoin" className="mt-6">
+            <BitcoinWallet />
+          </TabsContent>
+          
+          <TabsContent value="cashapp" className="mt-6">
+            <CashAppWallet />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
