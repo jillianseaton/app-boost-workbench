@@ -20,6 +20,10 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   const [bitcoinAddress, setBitcoinAddress] = useState('');
   const [selectedWallet, setSelectedWallet] = useState('');
 
+  // Debug logging
+  console.log('WithdrawalSection - earnings:', earnings, 'hasWithdrawn:', hasWithdrawn);
+  console.log('WithdrawalSection - should show?', earnings >= 10 && !hasWithdrawn);
+
   // Predefined wallet addresses for dropdown
   const walletOptions = [
     { label: 'Primary Wallet', value: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' },
@@ -44,7 +48,8 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     onWithdraw();
   };
 
-  if (earnings < 10 || hasWithdrawn) {
+  // Temporarily show for testing - remove the earnings check
+  if (hasWithdrawn) {
     return null;
   }
 
@@ -58,6 +63,11 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Ready to withdraw ${earnings.toFixed(2)} to your Bitcoin wallet
+            {earnings < 10 && (
+              <span className="block text-orange-600 mt-1">
+                (Testing mode - normally requires $10.00 minimum)
+              </span>
+            )}
           </p>
         </div>
 
