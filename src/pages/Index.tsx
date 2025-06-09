@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -115,6 +114,10 @@ const EarnFlow = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button onClick={() => window.location.href = '/bitcoin-wallet'} variant="outline" size="sm">
+              <FileText className="h-4 w-4 mr-2" />
+              Bitcoin Wallet
+            </Button>
             <Button onClick={() => setShowPrivacyPolicy(true)} variant="outline" size="sm">
               <FileText className="h-4 w-4 mr-2" />
               Privacy Policy
