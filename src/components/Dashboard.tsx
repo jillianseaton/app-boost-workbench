@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTransactions } from '@/hooks/useTransactions';
-import { useWithdrawal } from '@/hooks/useWithdrawal';
+import { useWalletManager } from '@/hooks/useWalletManager';
 import CurrentTime from './CurrentTime';
 import EarningsCards from './EarningsCards';
 import TaskOptimization from './TaskOptimization';
@@ -28,16 +28,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const maxTasks = 20;
 
   const { transactions, addTransaction, updateTransaction } = useTransactions();
-  
-  const { isWithdrawing, withdrawalAmount, handleWithdraw } = useWithdrawal({
-    earnings,
-    tasksCompleted,
-    setEarnings,
-    setHasWithdrawn,
-    addTransaction,
-    updateTransaction,
-    user,
-  });
+  const { selectedWallet } = useWalletManager();
 
   const resetTasks = () => {
     if (tasksCompleted < maxTasks) {
@@ -77,15 +68,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     });
   };
 
-  const availableEarnings = earnings - withdrawalAmount;
-
   return (
     <div className="space-y-6">
       <CurrentTime />
 
       <EarningsCards
-        availableEarnings={availableEarnings}
-        withdrawalAmount={withdrawalAmount}
+        availableEarnings={earnings}
+        withdrawalAmount={0}
         tasksCompleted={tasksCompleted}
         maxTasks={maxTasks}
         resetTasks={resetTasks}
@@ -100,11 +89,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       />
 
       <WithdrawalSection 
-        earnings={availableEarnings}
+        earnings={earnings}
         tasksCompleted={tasksCompleted}
         hasWithdrawn={hasWithdrawn}
-        onWithdraw={handleWithdraw}
-        isWithdrawing={isWithdrawing}
+        selectedWallet={selectedWallet}
+        setEarnings={setEarnings}
+        setHasWithdrawn={setHasWithdrawn}
+        addTransaction={addTransaction}
+        updateTransaction={updateTransaction}
+        user={user}
       />
 
       <TransactionHistory transactions={transactions} />

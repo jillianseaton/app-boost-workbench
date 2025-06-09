@@ -1,11 +1,14 @@
-
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import * as bitcoin from 'bitcoinjs-lib';
 import * as bip32 from 'bip32';
 import * as bip39 from 'bip39';
+import ECPairFactory from 'ecpair';
+import * as ecc from '@bitcoin-js/tiny-secp256k1-asmjs';
 import TransportWebUSB from '@ledgerhq/hw-transport-webusb';
 import AppBtc from '@ledgerhq/hw-app-btc';
+
+const ECPair = ECPairFactory(ecc);
 
 export interface WalletInfo {
   address: string;
@@ -176,7 +179,7 @@ export const useWalletManager = () => {
 
   const importWallet = useCallback(async (privateKeyWIF: string) => {
     try {
-      const keyPair = bitcoin.ECPair.fromWIF(privateKeyWIF, bitcoin.networks.bitcoin);
+      const keyPair = ECPair.fromWIF(privateKeyWIF, bitcoin.networks.bitcoin);
       const { address } = bitcoin.payments.p2wpkh({ 
         pubkey: keyPair.publicKey, 
         network: bitcoin.networks.bitcoin 
