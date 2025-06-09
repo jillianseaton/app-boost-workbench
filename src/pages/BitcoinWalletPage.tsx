@@ -4,9 +4,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import BitcoinWallet from '@/components/BitcoinWallet';
+import MetaMaskWallet from '@/components/MetaMaskWallet';
 import KrakenWallet from '@/components/KrakenWallet';
-import WalletManager from '@/components/WalletManager';
 
 const BitcoinWalletPage: React.FC = () => {
   const navigate = useNavigate();
@@ -26,25 +25,20 @@ const BitcoinWalletPage: React.FC = () => {
             Back to Dashboard
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-primary">Bitcoin & Crypto Wallets</h1>
-            <p className="text-muted-foreground">Manage your Bitcoin wallets and exchange integrations</p>
+            <h1 className="text-3xl font-bold text-primary">Crypto Wallets</h1>
+            <p className="text-muted-foreground">Manage your MetaMask wallet and exchange integrations</p>
           </div>
         </div>
 
         {/* Wallet Tabs */}
-        <Tabs defaultValue="production" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="production">Production Wallets</TabsTrigger>
-            <TabsTrigger value="testnet">Testnet Wallet</TabsTrigger>
+        <Tabs defaultValue="metamask" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="metamask">MetaMask Wallet</TabsTrigger>
             <TabsTrigger value="kraken">Kraken Exchange</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="production" className="mt-6">
-            <WalletManager />
-          </TabsContent>
-          
-          <TabsContent value="testnet" className="mt-6">
-            <BitcoinWallet />
+          <TabsContent value="metamask" className="mt-6">
+            <MetaMaskWallet />
           </TabsContent>
           
           <TabsContent value="kraken" className="mt-6">
