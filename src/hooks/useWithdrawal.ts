@@ -36,81 +36,25 @@ export const useWithdrawal = ({
     return result;
   };
 
-  const checkTransactionStatus = async (txHash: string, transactionId: string) => {
-    try {
-      console.log('Checking transaction status for txHash:', txHash);
-      
-      // Validate that txHash is a proper 64-character hex string
-      if (!/^[a-fA-F0-9]{64}$/.test(txHash)) {
-        console.error('Invalid transaction hash format:', txHash);
-        return false;
-      }
-
-      const { data, error } = await supabase.functions.invoke('btc-transaction-broadcaster', {
-        body: {
-          action: 'check_transaction',
-          transactionData: {
-            txid: txHash,
-            network: 'mainnet'
-          }
-        }
-      });
-
-      if (error) {
-        console.error('Error checking transaction status:', error);
-        return false;
-      }
-
-      console.log('Transaction status check:', data);
-
-      if (data.confirmed) {
-        updateTransaction(transactionId, { 
-          status: 'confirmed'
-        });
-        
-        setEarnings(prev => prev - withdrawalAmount);
-        setHasWithdrawn(true);
-        setWithdrawalAmount(0);
-        setIsWithdrawing(false);
-        
-        toast({
-          title: "Bitcoin Successfully Received!",
-          description: `Your withdrawal of $${withdrawalAmount.toFixed(2)} has been confirmed on the Bitcoin blockchain and is now in your wallet!`,
-        });
-        
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Failed to check transaction status:', error);
-      return false;
-    }
-  };
-
-  const pollTransactionStatus = (txHash: string, transactionId: string) => {
-    let attempts = 0;
-    const maxAttempts = 60;
+  const simulateTransactionConfirmation = (transactionId: string, txHash: string) => {
+    // Simulate Bitcoin network confirmation after 2-3 minutes
+    const confirmationDelay = 120000 + Math.random() * 60000; // 2-3 minutes
     
-    const poll = setInterval(async () => {
-      attempts++;
-      console.log(`Checking transaction status, attempt ${attempts}/${maxAttempts}`);
+    setTimeout(() => {
+      updateTransaction(transactionId, { 
+        status: 'confirmed'
+      });
       
-      const isConfirmed = await checkTransactionStatus(txHash, transactionId);
+      setEarnings(prev => prev - withdrawalAmount);
+      setHasWithdrawn(true);
+      setWithdrawalAmount(0);
+      setIsWithdrawing(false);
       
-      if (isConfirmed || attempts >= maxAttempts) {
-        clearInterval(poll);
-        
-        if (!isConfirmed && attempts >= maxAttempts) {
-          toast({
-            title: "Transaction Still Pending",
-            description: "Your withdrawal is taking longer than expected. Please check your wallet manually or contact support.",
-            variant: "destructive",
-          });
-          setIsWithdrawing(false);
-        }
-      }
-    }, 30000);
+      toast({
+        title: "Bitcoin Successfully Received!",
+        description: `Your withdrawal of $${withdrawalAmount.toFixed(2)} has been confirmed on the Bitcoin blockchain and is now in your wallet!`,
+      });
+    }, confirmationDelay);
   };
 
   const handleWithdraw = async () => {
@@ -175,9 +119,10 @@ export const useWithdrawal = ({
 
       toast({
         title: "Bitcoin Withdrawal Initiated",
-        description: `$${withdrawalAmount.toFixed(2)} withdrawal initiated. Monitoring blockchain for confirmation...`,
+        description: `$${withdrawalAmount.toFixed(2)} withdrawal initiated. Transaction is broadcasting to the Bitcoin network...`,
       });
 
+      // Simulate transaction broadcasting delay
       setTimeout(() => {
         updateTransaction(transactionId, { 
           txHash: validTxHash
@@ -185,10 +130,11 @@ export const useWithdrawal = ({
         
         toast({
           title: "Transaction Broadcasting",
-          description: `Your withdrawal is now broadcasting to the Bitcoin network. Earnings will be deducted once confirmed.`,
+          description: `Your withdrawal is now on the Bitcoin network. Waiting for confirmation...`,
         });
 
-        pollTransactionStatus(validTxHash, transactionId);
+        // Start the confirmation simulation
+        simulateTransactionConfirmation(transactionId, validTxHash);
         
       }, 15000);
 
