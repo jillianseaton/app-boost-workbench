@@ -31,7 +31,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
   // Predefined wallet addresses for dropdown
   const walletOptions = [
-    { label: 'Primary BTC Wallet', value: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' },
+    { label: 'Primary BTC Wallet', value: 'bc1qynefm4c3rwcwwclep6095dnjgatr9faz4rj0tn' },
     { label: 'Secondary BTC Wallet', value: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4' },
     { label: 'Cold Storage BTC', value: 'bc1qrp33g013s6g2s4q6fqfqcbx8dfgfqd3xw8zhvc' },
     { label: 'Custom BTC Address', value: 'custom' }
