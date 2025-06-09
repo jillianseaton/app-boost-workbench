@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -48,14 +47,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
     }
   };
 
-  const generateMempoolUrl = (txHash: string, network: string = 'testnet') => {
+  const generateMempoolUrl = (txHash: string, network: string = 'mainnet') => {
     const isMainnet = network === 'mainnet';
     return isMainnet 
       ? `https://mempool.space/tx/${txHash}`
       : `https://mempool.space/testnet/tx/${txHash}`;
   };
 
-  const openInMempool = (txHash: string, network: string = 'testnet') => {
+  const openInMempool = (txHash: string, network: string = 'mainnet') => {
     window.open(generateMempoolUrl(txHash, network), '_blank');
   };
 
@@ -152,7 +151,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => openInMempool(transaction.txHash!, transaction.network)}
+                      onClick={() => openInMempool(transaction.txHash!, transaction.network || 'mainnet')}
                       className="flex items-center gap-1"
                     >
                       <ExternalLink className="h-3 w-3" />
@@ -170,7 +169,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
         {transactions.some(t => t.status === 'pending') && (
           <div className="mt-4 p-3 bg-blue-50 rounded-md">
             <p className="text-sm text-blue-800">
-              <strong>Pending Transactions:</strong> Bitcoin transactions typically take 10-20 minutes to confirm. 
+              <strong>Pending Transactions:</strong> Bitcoin mainnet transactions typically take 10-60 minutes to confirm. 
               You can track them in real-time on mempool.space.
             </p>
           </div>

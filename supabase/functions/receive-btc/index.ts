@@ -21,8 +21,8 @@ serve(async (req) => {
     
     console.log('Checking for incoming BTC transactions:', { address, confirmations });
     
-    // Get transaction history for the address
-    const txResponse = await fetch(`https://blockstream.info/testnet/api/address/${address}/txs`);
+    // Get transaction history for the address using mempool.space
+    const txResponse = await fetch(`https://mempool.space/api/address/${address}/txs`);
     if (!txResponse.ok) {
       throw new Error('Failed to fetch transaction history');
     }
@@ -58,14 +58,15 @@ serve(async (req) => {
               (transactions[0]?.status?.block_height || 0) - tx.status.block_height + 1 : 0,
             timestamp: new Date(tx.status.block_time * 1000),
             blockHeight: tx.status.block_height,
-            confirmed: tx.status.confirmed
+            confirmed: tx.status.confirmed,
+            network: 'mainnet'
           });
         }
       }
     }
     
-    // Get current balance
-    const balanceResponse = await fetch(`https://blockstream.info/testnet/api/address/${address}`);
+    // Get current balance using mempool.space
+    const balanceResponse = await fetch(`https://mempool.space/api/address/${address}`);
     const balanceData = await balanceResponse.json();
     
     const result = {
@@ -76,6 +77,7 @@ serve(async (req) => {
       currentBalanceBTC: balanceData.chain_stats.funded_txo_sum / 100000000,
       transactionCount: receivedTransactions.length,
       transactions: receivedTransactions,
+      network: 'mainnet',
       lastUpdated: new Date().toISOString()
     };
     

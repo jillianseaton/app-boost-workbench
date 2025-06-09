@@ -24,15 +24,15 @@ serve(async (req) => {
     // Import bitcoinjs-lib
     const bitcoin = await import('https://cdn.skypack.dev/bitcoinjs-lib@6.1.5');
     
-    // Create keypair from private key
-    const keyPair = bitcoin.ECPair.fromWIF(privateKeyWIF, bitcoin.networks.testnet);
+    // Create keypair from private key (mainnet)
+    const keyPair = bitcoin.ECPair.fromWIF(privateKeyWIF, bitcoin.networks.bitcoin);
     const { address: senderAddress } = bitcoin.payments.p2pkh({ 
       pubkey: keyPair.publicKey, 
-      network: bitcoin.networks.testnet 
+      network: bitcoin.networks.bitcoin 
     });
     
-    // Get UTXOs for the sender address
-    const utxoResponse = await fetch(`https://blockstream.info/testnet/api/address/${senderAddress}/utxo`);
+    // Get UTXOs for the sender address using mempool.space
+    const utxoResponse = await fetch(`https://mempool.space/api/address/${senderAddress}/utxo`);
     if (!utxoResponse.ok) {
       throw new Error('Failed to fetch UTXOs');
     }
@@ -47,22 +47,28 @@ serve(async (req) => {
     // Calculate total available balance
     const totalBalance = utxos.reduce((sum: number, utxo: any) => sum + utxo.value, 0);
     
-    // Estimate fee (simple calculation: 250 sats per input + 34 sats per output)
-    const estimatedFee = (utxos.length * 250) + (2 * 34); // 2 outputs (recipient + change)
+    // Get current fee rates from mempool.space
+    const feeResponse = await fetch('https://mempool.space/api/v1/fees/recommended');
+    const feeRates = await feeResponse.json();
+    const satPerByte = feeRates.hourFee || 10; // Use hourFee for reasonable confirmation time
+    
+    // Estimate transaction size and fee
+    const estimatedSize = (utxos.length * 148) + (2 * 34) + 10;
+    const estimatedFee = estimatedSize * satPerByte;
     
     if (totalBalance < amountSats + estimatedFee) {
       throw new Error(`Insufficient balance. Available: ${totalBalance} sats, Required: ${amountSats + estimatedFee} sats (including fee)`);
     }
     
     // Create transaction
-    const psbt = new bitcoin.Psbt({ network: bitcoin.networks.testnet });
+    const psbt = new bitcoin.Psbt({ network: bitcoin.networks.bitcoin });
     
     let inputValue = 0;
     
     // Add inputs
     for (const utxo of utxos) {
-      // Get transaction hex
-      const txResponse = await fetch(`https://blockstream.info/testnet/api/tx/${utxo.txid}/hex`);
+      // Get transaction hex from mempool.space
+      const txResponse = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`);
       const txHex = await txResponse.text();
       
       psbt.addInput({
@@ -106,21 +112,39 @@ serve(async (req) => {
     
     console.log('Transaction created:', txHex);
     
-    // Broadcast transaction
-    const broadcastResponse = await fetch('https://blockstream.info/testnet/api/tx', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain',
-      },
-      body: txHex,
-    });
-    
-    if (!broadcastResponse.ok) {
-      const errorText = await broadcastResponse.text();
-      throw new Error(`Failed to broadcast transaction: ${errorText}`);
+    // Broadcast transaction to mempool.space first
+    let txid;
+    try {
+      const broadcastResponse = await fetch('https://mempool.space/api/tx', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: txHex,
+      });
+      
+      if (broadcastResponse.ok) {
+        txid = await broadcastResponse.text();
+      } else {
+        throw new Error('Mempool.space broadcast failed');
+      }
+    } catch (error) {
+      // Fallback to Blockstream
+      const blockstreamResponse = await fetch('https://blockstream.info/api/tx', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: txHex,
+      });
+      
+      if (!blockstreamResponse.ok) {
+        const errorText = await blockstreamResponse.text();
+        throw new Error(`Failed to broadcast transaction: ${errorText}`);
+      }
+      
+      txid = await blockstreamResponse.text();
     }
-    
-    const txid = await broadcastResponse.text();
     
     console.log('Transaction broadcasted:', txid);
     
@@ -129,6 +153,8 @@ serve(async (req) => {
       amountSats,
       recipientAddress,
       fee: estimatedFee,
+      network: 'mainnet',
+      explorerUrl: `https://mempool.space/tx/${txid}`,
       success: true
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

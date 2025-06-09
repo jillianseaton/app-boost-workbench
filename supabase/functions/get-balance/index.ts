@@ -21,8 +21,8 @@ serve(async (req) => {
     
     console.log('Getting balance for address:', address);
     
-    // Fetch balance from Blockstream testnet API
-    const response = await fetch(`https://blockstream.info/testnet/api/address/${address}`);
+    // Fetch balance from mempool.space mainnet API
+    const response = await fetch(`https://mempool.space/api/address/${address}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch balance: ${response.statusText}`);
@@ -40,7 +40,8 @@ serve(async (req) => {
       balanceSats,
       balanceBTC,
       address,
-      transactions: data.chain_stats.tx_count
+      transactions: data.chain_stats.tx_count,
+      network: 'mainnet'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

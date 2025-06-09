@@ -21,7 +21,7 @@ serve(async (req) => {
     
     console.log('Processing Bitcoin withdrawal:', { address, amount, amountUSD, userId });
     
-    // Validate Bitcoin address format
+    // Validate Bitcoin address format for mainnet
     const addressRegex = /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/;
     if (!addressRegex.test(address)) {
       throw new Error('Invalid Bitcoin address format');
@@ -35,8 +35,8 @@ serve(async (req) => {
     // Generate a unique transaction ID for tracking
     const withdrawalId = `withdraw_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // Simulate Bitcoin network fee calculation (typical testnet fee)
-    const networkFee = 0.0001; // BTC
+    // Simulate Bitcoin network fee calculation (typical mainnet fee)
+    const networkFee = 0.0002; // BTC - higher fees on mainnet
     const networkFeeUSD = networkFee * 45000; // Assume $45k BTC price for demo
     
     const result = {
@@ -50,6 +50,7 @@ serve(async (req) => {
       estimatedConfirmationTime: '10-20 minutes',
       timestamp: new Date().toISOString(),
       txHash: null, // Will be populated when transaction is broadcast
+      network: 'mainnet',
       message: 'Withdrawal request submitted. Transaction will be processed shortly.'
     };
     

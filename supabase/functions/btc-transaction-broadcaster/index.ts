@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -70,7 +71,7 @@ async function createAndBroadcastTransaction(data: any) {
     privateKeyWIF, 
     recipientAddress, 
     amountSats, 
-    network = 'testnet',
+    network = 'mainnet',
     feeRate = 'medium'
   } = data;
   
@@ -185,7 +186,7 @@ async function createAndBroadcastTransaction(data: any) {
 }
 
 async function broadcastRawTransaction(data: any) {
-  const { txHex, network = 'testnet' } = data;
+  const { txHex, network = 'mainnet' } = data;
   
   console.log('Broadcasting raw transaction via mempool.space:', { network });
   
@@ -318,7 +319,7 @@ async function getMempoolFeeRates(network: string) {
 }
 
 async function estimateTransactionFees(data: any) {
-  const { address, network = 'testnet', outputs = 1 } = data;
+  const { address, network = 'mainnet', outputs = 1 } = data;
   
   const utxos = await fetchUTXOsFromMempool(address, network);
   const feeRates = await getMempoolFeeRates(network);
@@ -359,7 +360,7 @@ async function estimateTransactionFees(data: any) {
 }
 
 async function getAddressUTXOs(data: any) {
-  const { address, network = 'testnet' } = data;
+  const { address, network = 'mainnet' } = data;
   
   const utxos = await fetchUTXOsFromMempool(address, network);
   const totalBalance = utxos.reduce((sum: number, utxo: any) => sum + utxo.value, 0);
@@ -377,7 +378,7 @@ async function getAddressUTXOs(data: any) {
 }
 
 async function checkTransactionStatus(data: any) {
-  const { txid, network = 'testnet' } = data;
+  const { txid, network = 'mainnet' } = data;
   
   const isMainnet = network === 'mainnet';
   const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
@@ -408,7 +409,7 @@ async function checkTransactionStatus(data: any) {
 }
 
 async function getAddressInformation(data: any) {
-  const { address, network = 'testnet' } = data;
+  const { address, network = 'mainnet' } = data;
   
   const isMainnet = network === 'mainnet';
   const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
@@ -435,7 +436,7 @@ async function getAddressInformation(data: any) {
 }
 
 async function getBlockInformation(data: any) {
-  const { blockHash, network = 'testnet' } = data;
+  const { blockHash, network = 'mainnet' } = data;
   
   const isMainnet = network === 'mainnet';
   const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
@@ -466,7 +467,7 @@ async function getBlockInformation(data: any) {
 }
 
 async function getMempoolStats(data: any) {
-  const { network = 'testnet' } = data;
+  const { network = 'mainnet' } = data;
   
   const isMainnet = network === 'mainnet';
   const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
