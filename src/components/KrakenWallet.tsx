@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   TrendingUp, 
   Wallet, 
@@ -85,23 +86,27 @@ const KrakenWallet: React.FC = () => {
 
     setLoading(true);
     try {
-      // Call Kraken API to verify credentials and get account info
-      const response = await fetch('/api/kraken/connect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      console.log('Connecting to Kraken with API key:', apiKey.substring(0, 8) + '...');
+      
+      const { data, error } = await supabase.functions.invoke('kraken-api', {
+        body: {
+          action: 'connect',
           apiKey,
           apiSecret
-        })
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to connect to Kraken');
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to connect to Kraken');
       }
 
-      const data = await response.json();
+      if (data.error) {
+        console.error('Kraken API error:', data.error);
+        throw new Error(data.error);
+      }
+
+      console.log('Kraken connection successful:', data);
       
       setAccount({
         connected: true,
@@ -115,9 +120,10 @@ const KrakenWallet: React.FC = () => {
         description: "Successfully connected to your Kraken account",
       });
     } catch (error) {
+      console.error('Connection error:', error);
       toast({
         title: "Connection Failed",
-        description: "Unable to connect to Kraken. Please check your API credentials.",
+        description: error.message || "Unable to connect to Kraken. Please check your API credentials.",
         variant: "destructive",
       });
     } finally {
@@ -130,18 +136,21 @@ const KrakenWallet: React.FC = () => {
     
     setLoading(true);
     try {
-      const response = await fetch('/api/kraken/balances', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('kraken-api', {
+        body: {
+          action: 'balances',
           apiKey,
           apiSecret
-        })
+        }
       });
 
-      const data = await response.json();
+      if (error) {
+        throw new Error(error.message || 'Failed to refresh balances');
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
       
       setAccount(prev => prev ? {
         ...prev,
@@ -153,9 +162,10 @@ const KrakenWallet: React.FC = () => {
         description: "Account balances refreshed successfully",
       });
     } catch (error) {
+      console.error('Refresh balances error:', error);
       toast({
         title: "Error",
-        description: "Failed to refresh balances",
+        description: error.message || "Failed to refresh balances",
         variant: "destructive",
       });
     } finally {
@@ -186,25 +196,24 @@ const KrakenWallet: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/kraken/withdraw', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('kraken-api', {
+        body: {
+          action: 'withdraw',
           apiKey,
           apiSecret,
           asset: withdrawCurrency,
           amount: withdrawAmount,
           address: withdrawAddress,
           method: withdrawMethod
-        })
+        }
       });
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Withdrawal failed');
+      if (error) {
+        throw new Error(error.message || 'Withdrawal failed');
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       toast({
@@ -219,6 +228,7 @@ const KrakenWallet: React.FC = () => {
       // Refresh balances
       await refreshBalances();
     } catch (error) {
+      console.error('Withdrawal error:', error);
       toast({
         title: "Withdrawal Failed",
         description: error.message || "Unable to process withdrawal",
