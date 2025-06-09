@@ -8,6 +8,7 @@ import TaskOptimization from './TaskOptimization';
 import WithdrawalSection from './WithdrawalSection';
 import PartnerServices from './PartnerServices';
 import TransactionHistory from './TransactionHistory';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   phoneNumber: string;
@@ -34,6 +35,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [hasWithdrawn, setHasWithdrawn] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
   const { toast } = useToast();
 
   const maxTasks = 20;
@@ -70,6 +72,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       timestamp: new Date(),
     };
     setTransactions(prev => [newTransaction, ...prev]);
+    return newTransaction.id;
+  };
+
+  const updateTransaction = (id: string, updates: Partial<Transaction>) => {
+    setTransactions(prev => 
+      prev.map(tx => tx.id === id ? { ...tx, ...updates } : tx)
+    );
   };
 
   const handleTaskComplete = (commission: number) => {
@@ -84,7 +93,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     });
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     if (earnings < 10) {
       toast({
         title: "Minimum withdrawal not met",
@@ -94,45 +103,96 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       return;
     }
 
-    // Generate a mock Bitcoin address for demonstration
-    const mockAddress = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh";
-    
-    // Add withdrawal transaction as pending
-    addTransaction({
-      type: 'withdrawal',
-      amount: earnings,
-      address: mockAddress,
-      status: 'pending',
-      txHash: `tx${Math.random().toString(36).substr(2, 9)}`,
-    });
-
-    toast({
-      title: "Withdrawal Initiated",
-      description: `$${earnings.toFixed(2)} withdrawal sent to Bitcoin address. Please allow 10-20 minutes for blockchain confirmation.`,
-    });
-    
-    setHasWithdrawn(true);
-
-    // Simulate transaction confirmation after 2 minutes (for demo purposes)
-    setTimeout(() => {
-      setTransactions(prev => 
-        prev.map(tx => 
-          tx.type === 'withdrawal' && tx.status === 'pending' 
-            ? { ...tx, status: 'confirmed' as const }
-            : tx
-        )
-      );
+    if (isWithdrawing) {
       toast({
-        title: "Transaction Confirmed",
-        description: "Your Bitcoin withdrawal has been confirmed on the blockchain!",
+        title: "Withdrawal in progress",
+        description: "Please wait for the current withdrawal to complete.",
+        variant: "destructive",
       });
-    }, 120000); // 2 minutes
+      return;
+    }
+
+    setIsWithdrawing(true);
+
+    try {
+      // Use a predefined Bitcoin address for demonstration
+      const withdrawalAddress = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh";
+      
+      // Calculate Bitcoin amount (assuming $45,000 per BTC for demo)
+      const btcPrice = 45000;
+      const btcAmount = earnings / btcPrice;
+
+      console.log('Initiating Bitcoin withdrawal:', { 
+        address: withdrawalAddress, 
+        amountUSD: earnings, 
+        amountBTC: btcAmount 
+      });
+
+      // Call the withdraw-btc edge function
+      const { data, error } = await supabase.functions.invoke('withdraw-btc', {
+        body: {
+          address: withdrawalAddress,
+          amount: btcAmount,
+          amountUSD: earnings,
+          userId: user.phoneNumber
+        }
+      });
+
+      if (error) {
+        console.error('Withdrawal error:', error);
+        throw new Error(error.message || 'Withdrawal failed');
+      }
+
+      console.log('Withdrawal response:', data);
+
+      // Add withdrawal transaction
+      const transactionId = addTransaction({
+        type: 'withdrawal',
+        amount: earnings,
+        address: withdrawalAddress,
+        status: 'pending',
+        txHash: data.withdrawalId,
+      });
+
+      // Reset earnings and mark as withdrawn
+      setEarnings(0);
+      setHasWithdrawn(true);
+
+      toast({
+        title: "Bitcoin Withdrawal Initiated",
+        description: `$${earnings.toFixed(2)} withdrawal to Bitcoin address. Withdrawal ID: ${data.withdrawalId}`,
+      });
+
+      // Simulate confirmation after delay (in real app, this would be handled by webhooks)
+      setTimeout(() => {
+        updateTransaction(transactionId, { 
+          status: 'confirmed',
+          txHash: data.txHash || `confirmed_${data.withdrawalId}`
+        });
+        
+        toast({
+          title: "Withdrawal Confirmed",
+          description: "Your Bitcoin withdrawal has been processed successfully!",
+        });
+      }, 60000); // 1 minute for demo
+
+    } catch (error) {
+      console.error('Withdrawal failed:', error);
+      toast({
+        title: "Withdrawal Failed",
+        description: error.message || "Unable to process withdrawal. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsWithdrawing(false);
+    }
   };
 
   const resetAccount = () => {
     setEarnings(0);
     setTasksCompleted(0);
     setHasWithdrawn(false);
+    setIsWithdrawing(false);
     toast({
       title: "Account Reset",
       description: "Ready for a new day of earning!",
@@ -171,6 +231,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">${earnings.toFixed(2)}</div>
+            {isWithdrawing && (
+              <div className="text-xs text-orange-600 mt-1">Processing withdrawal...</div>
+            )}
           </CardContent>
         </Card>
 
@@ -201,7 +264,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xs text-muted-foreground break-all">1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</div>
+            <div className="text-xs text-muted-foreground break-all">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</div>
           </CardContent>
         </Card>
       </div>
@@ -220,6 +283,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         earnings={earnings}
         hasWithdrawn={hasWithdrawn}
         onWithdraw={handleWithdraw}
+        isWithdrawing={isWithdrawing}
       />
 
       {/* Transaction History */}

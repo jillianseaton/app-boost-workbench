@@ -4,18 +4,20 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bitcoin, Send, Download } from 'lucide-react';
+import { Bitcoin, Send, Download, Loader2 } from 'lucide-react';
 
 interface WithdrawalSectionProps {
   earnings: number;
   hasWithdrawn: boolean;
   onWithdraw: () => void;
+  isWithdrawing?: boolean;
 }
 
 const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({ 
   earnings, 
   hasWithdrawn, 
-  onWithdraw 
+  onWithdraw,
+  isWithdrawing = false
 }) => {
   const [bitcoinAddress, setBitcoinAddress] = useState('');
   const [selectedWallet, setSelectedWallet] = useState('');
@@ -23,7 +25,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   const [currencyType] = useState('Bitcoin');
 
   // Debug logging
-  console.log('WithdrawalSection - earnings:', earnings, 'hasWithdrawn:', hasWithdrawn);
+  console.log('WithdrawalSection - earnings:', earnings, 'hasWithdrawn:', hasWithdrawn, 'isWithdrawing:', isWithdrawing);
 
   // Predefined wallet addresses for dropdown
   const walletOptions = [
@@ -63,14 +65,14 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
         <div className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Bitcoin className="h-5 w-5 text-orange-500" />
-            <h3 className="text-lg font-semibold">Bitcoin Withdrawal (ERC-20)</h3>
+            <h3 className="text-lg font-semibold">Bitcoin Withdrawal (Mainnet)</h3>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Ready to withdraw ${earnings.toFixed(2)} to your Bitcoin wallet
           </p>
           <div className="p-3 bg-blue-50 rounded-md mb-4">
             <p className="text-sm text-blue-800">
-              <strong>Processing Time:</strong> Bitcoin transactions typically take 10-20 minutes to confirm on the blockchain. 
+              <strong>Processing Time:</strong> Bitcoin mainnet transactions typically take 10-60 minutes to confirm. 
               Your withdrawal will appear in your wallet once confirmed by the network.
             </p>
           </div>
@@ -140,17 +142,26 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
         <div className="flex gap-2">
           <Button 
             onClick={handleWithdraw} 
-            disabled={!bitcoinAddress.trim() || earnings < 10}
+            disabled={!bitcoinAddress.trim() || earnings < 10 || isWithdrawing}
             className="flex-1"
             variant="default"
           >
-            <Send className="h-4 w-4 mr-2" />
-            Withdraw ${earnings.toFixed(2)} BTC
+            {isWithdrawing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                Withdraw ${earnings.toFixed(2)} BTC
+              </>
+            )}
           </Button>
           <Button 
             variant="outline"
             className="flex-1"
-            disabled={!bitcoinAddress.trim()}
+            disabled={!bitcoinAddress.trim() || isWithdrawing}
           >
             <Download className="h-4 w-4 mr-2" />
             Receive
