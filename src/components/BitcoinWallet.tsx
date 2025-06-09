@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Wallet, RefreshCw, Send, Copy } from 'lucide-react';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface WalletData {
@@ -185,7 +184,7 @@ const BitcoinWallet: React.FC = () => {
                 </div>
                 
                 <div className="flex justify-center">
-                  <QRCode value={wallet.address} size={120} />
+                  <QRCodeSVG value={wallet.address} size={120} />
                 </div>
               </div>
               
