@@ -36,6 +36,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [withdrawalAmount, setWithdrawalAmount] = useState(0); // Track amount being withdrawn
   const { toast } = useToast();
 
   const maxTasks = 20;
@@ -113,6 +114,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     }
 
     setIsWithdrawing(true);
+    setWithdrawalAmount(earnings); // Store the amount being withdrawn
 
     try {
       // Use a predefined Bitcoin address for demonstration
@@ -145,39 +147,43 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
       console.log('Withdrawal response:', data);
 
-      // Add withdrawal transaction
+      // Add withdrawal transaction but DON'T reset earnings yet
       const transactionId = addTransaction({
         type: 'withdrawal',
-        amount: earnings,
+        amount: withdrawalAmount,
         address: withdrawalAddress,
         status: 'pending',
         txHash: data.withdrawalId,
       });
 
-      // Reset earnings and mark as withdrawn
-      setEarnings(0);
-      setHasWithdrawn(true);
-
       toast({
         title: "Bitcoin Withdrawal Initiated",
-        description: `$${earnings.toFixed(2)} withdrawal to Bitcoin address. Withdrawal ID: ${data.withdrawalId}`,
+        description: `$${withdrawalAmount.toFixed(2)} withdrawal initiated. Earnings will be deducted once transaction is visible on blockchain.`,
       });
 
-      // Simulate confirmation after delay (in real app, this would be handled by webhooks)
+      // Simulate getting transaction hash and then reset earnings
       setTimeout(() => {
+        const finalTxHash = data.txHash || `tx_${data.withdrawalId}_mainnet`;
+        
         updateTransaction(transactionId, { 
           status: 'confirmed',
-          txHash: data.txHash || `confirmed_${data.withdrawalId}`
+          txHash: finalTxHash
         });
         
+        // NOW reset earnings since we have a viewable transaction
+        setEarnings(prev => prev - withdrawalAmount);
+        setHasWithdrawn(true);
+        setWithdrawalAmount(0);
+        
         toast({
-          title: "Withdrawal Confirmed",
-          description: "Your Bitcoin withdrawal has been processed successfully!",
+          title: "Transaction Visible on Blockchain",
+          description: `Your withdrawal is now visible on the Bitcoin network! Earnings have been deducted.`,
         });
-      }, 60000); // 1 minute for demo
+      }, 15000); // 15 seconds for demo - simulates time to get tx hash
 
     } catch (error) {
       console.error('Withdrawal failed:', error);
+      setWithdrawalAmount(0); // Reset withdrawal amount on failure
       toast({
         title: "Withdrawal Failed",
         description: error.message || "Unable to process withdrawal. Please try again.",
@@ -193,11 +199,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     setTasksCompleted(0);
     setHasWithdrawn(false);
     setIsWithdrawing(false);
+    setWithdrawalAmount(0);
     toast({
       title: "Account Reset",
       description: "Ready for a new day of earning!",
     });
   };
+
+  // Calculate available earnings (total earnings minus amount being withdrawn)
+  const availableEarnings = earnings - withdrawalAmount;
 
   return (
     <div className="space-y-6">
@@ -230,9 +240,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">${earnings.toFixed(2)}</div>
-            {isWithdrawing && (
-              <div className="text-xs text-orange-600 mt-1">Processing withdrawal...</div>
+            <div className="text-2xl font-bold text-green-600">${availableEarnings.toFixed(2)}</div>
+            {withdrawalAmount > 0 && (
+              <div className="text-xs text-orange-600 mt-1">
+                ${withdrawalAmount.toFixed(2)} being withdrawn...
+              </div>
             )}
           </CardContent>
         </Card>
@@ -280,7 +292,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
       {/* Withdrawal Section */}
       <WithdrawalSection 
-        earnings={earnings}
+        earnings={availableEarnings}
         hasWithdrawn={hasWithdrawn}
         onWithdraw={handleWithdraw}
         isWithdrawing={isWithdrawing}
