@@ -8,6 +8,7 @@ import TaskOptimization from './TaskOptimization';
 import WithdrawalSection from './WithdrawalSection';
 import PartnerServices from './PartnerServices';
 import TransactionHistory from './TransactionHistory';
+import MetaMaskWallet from './MetaMaskWallet';
 
 interface User {
   phoneNumber: string;
@@ -80,6 +81,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         maxTasks={maxTasks}
         resetTasks={resetTasks}
       />
+
+      <MetaMaskWallet />
 
       <TaskOptimization 
         tasksCompleted={tasksCompleted}
