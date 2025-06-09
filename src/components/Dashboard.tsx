@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useTransactions } from '@/hooks/useTransactions';
-import { useWalletManager } from '@/hooks/useWalletManager';
 import CurrentTime from './CurrentTime';
 import EarningsCards from './EarningsCards';
 import TaskOptimization from './TaskOptimization';
@@ -28,7 +27,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const maxTasks = 20;
 
   const { transactions, addTransaction, updateTransaction } = useTransactions();
-  const { selectedWallet } = useWalletManager();
+
+  // Initialize selectedWallet as null to avoid Bitcoin library issues
+  const selectedWallet = null;
 
   const resetTasks = () => {
     if (tasksCompleted < maxTasks) {

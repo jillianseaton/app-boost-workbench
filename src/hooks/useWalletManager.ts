@@ -1,14 +1,35 @@
+
 import { useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import * as bitcoin from 'bitcoinjs-lib';
-import * as bip32 from 'bip32';
-import * as bip39 from 'bip39';
-import ECPairFactory from 'ecpair';
-import * as ecc from '@bitcoin-js/tiny-secp256k1-asmjs';
-import TransportWebUSB from '@ledgerhq/hw-transport-webusb';
-import AppBtc from '@ledgerhq/hw-app-btc';
 
-const ECPair = ECPairFactory(ecc);
+// Lazy import Bitcoin libraries to avoid blocking the app
+const loadBitcoinLibs = async () => {
+  try {
+    const [bitcoin, bip32, bip39, ECPairFactory, ecc, TransportWebUSB, AppBtc] = await Promise.all([
+      import('bitcoinjs-lib'),
+      import('bip32'),
+      import('bip39'),
+      import('ecpair'),
+      import('@bitcoin-js/tiny-secp256k1-asmjs'),
+      import('@ledgerhq/hw-transport-webusb'),
+      import('@ledgerhq/hw-app-btc'),
+    ]);
+    
+    const ECPair = ECPairFactory.default(ecc.default);
+    
+    return {
+      bitcoin: bitcoin.default,
+      bip32: bip32.default,
+      bip39: bip39.default,
+      ECPair,
+      TransportWebUSB: TransportWebUSB.default,
+      AppBtc: AppBtc.default,
+    };
+  } catch (error) {
+    console.error('Failed to load Bitcoin libraries:', error);
+    throw error;
+  }
+};
 
 export interface WalletInfo {
   address: string;
@@ -35,6 +56,8 @@ export const useWalletManager = () => {
 
   const generateNewWallet = useCallback(async () => {
     try {
+      const { bitcoin, bip32, bip39 } = await loadBitcoinLibs();
+      
       const mnemonic = bip39.generateMnemonic();
       const seed = await bip39.mnemonicToSeed(mnemonic);
       const root = bip32.fromSeed(seed, bitcoin.networks.bitcoin);
@@ -76,7 +99,7 @@ export const useWalletManager = () => {
       console.error('Error generating wallet:', error);
       toast({
         title: "Wallet Generation Failed",
-        description: "Failed to generate new wallet",
+        description: "Failed to generate new wallet. Bitcoin libraries may not be available.",
         variant: "destructive",
       });
       throw error;
@@ -86,6 +109,8 @@ export const useWalletManager = () => {
   const connectLedgerWallet = useCallback(async () => {
     setIsConnecting(true);
     try {
+      const { TransportWebUSB, AppBtc } = await loadBitcoinLibs();
+      
       const transport = await TransportWebUSB.create();
       const btcApp = new AppBtc({ transport });
 
@@ -134,8 +159,10 @@ export const useWalletManager = () => {
     }
   }, [toast]);
 
-  const createMultisigWallet = useCallback((publicKeys: string[], requiredSigs: number) => {
+  const createMultisigWallet = useCallback(async (publicKeys: string[], requiredSigs: number) => {
     try {
+      const { bitcoin } = await loadBitcoinLibs();
+      
       if (publicKeys.length < 2 || requiredSigs > publicKeys.length) {
         throw new Error('Invalid multisig configuration');
       }
@@ -179,6 +206,8 @@ export const useWalletManager = () => {
 
   const importWallet = useCallback(async (privateKeyWIF: string) => {
     try {
+      const { bitcoin, ECPair } = await loadBitcoinLibs();
+      
       const keyPair = ECPair.fromWIF(privateKeyWIF, bitcoin.networks.bitcoin);
       const { address } = bitcoin.payments.p2wpkh({ 
         pubkey: keyPair.publicKey, 
