@@ -26,35 +26,67 @@ export const useWithdrawal = ({
   const [withdrawalAmount, setWithdrawalAmount] = useState(0);
   const { toast } = useToast();
 
-  const generateValidTxHash = () => {
-    // Generate a valid 64-character lowercase hex string (32 bytes)
-    const chars = '0123456789abcdef';
-    let result = '';
-    for (let i = 0; i < 64; i++) {
-      result += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return result;
-  };
-
-  const simulateTransactionConfirmation = (transactionId: string, txHash: string) => {
-    // Simulate Bitcoin network confirmation after 2-3 minutes
-    const confirmationDelay = 120000 + Math.random() * 60000; // 2-3 minutes
+  const pollTransactionStatus = (txHash: string, transactionId: string) => {
+    let attempts = 0;
+    const maxAttempts = 60; // 30 minutes max polling
     
-    setTimeout(() => {
-      updateTransaction(transactionId, { 
-        status: 'confirmed'
-      });
+    const poll = setInterval(async () => {
+      attempts++;
+      console.log(`Checking real Bitcoin transaction status, attempt ${attempts}/${maxAttempts}`);
       
-      setEarnings(prev => prev - withdrawalAmount);
-      setHasWithdrawn(true);
-      setWithdrawalAmount(0);
-      setIsWithdrawing(false);
-      
-      toast({
-        title: "Bitcoin Successfully Received!",
-        description: `Your withdrawal of $${withdrawalAmount.toFixed(2)} has been confirmed on the Bitcoin blockchain and is now in your wallet!`,
-      });
-    }, confirmationDelay);
+      try {
+        const { data, error } = await supabase.functions.invoke('btc-transaction-broadcaster', {
+          body: {
+            action: 'check_transaction',
+            transactionData: {
+              txid: txHash,
+              network: 'mainnet'
+            }
+          }
+        });
+
+        if (error) {
+          console.error('Error checking transaction status:', error);
+          return;
+        }
+
+        console.log('Real Bitcoin transaction status:', data);
+
+        if (data.confirmed) {
+          clearInterval(poll);
+          
+          updateTransaction(transactionId, { 
+            status: 'confirmed',
+            confirmations: data.confirmations,
+            blockHeight: data.blockHeight
+          });
+          
+          setEarnings(prev => prev - withdrawalAmount);
+          setHasWithdrawn(true);
+          setWithdrawalAmount(0);
+          setIsWithdrawing(false);
+          
+          toast({
+            title: "Bitcoin Transaction Confirmed!",
+            description: `Your withdrawal of $${withdrawalAmount.toFixed(2)} has been confirmed on the Bitcoin blockchain! Block height: ${data.blockHeight}`,
+          });
+        } else if (attempts >= maxAttempts) {
+          clearInterval(poll);
+          toast({
+            title: "Transaction Still Pending",
+            description: "Your Bitcoin transaction is taking longer than expected. Check the blockchain explorer for updates.",
+            variant: "destructive",
+          });
+          setIsWithdrawing(false);
+        }
+      } catch (error) {
+        console.error('Failed to check transaction status:', error);
+        if (attempts >= maxAttempts) {
+          clearInterval(poll);
+          setIsWithdrawing(false);
+        }
+      }
+    }, 30000); // Check every 30 seconds
   };
 
   const handleWithdraw = async () => {
@@ -84,67 +116,72 @@ export const useWithdrawal = ({
       const btcPrice = 45000;
       const btcAmount = earnings / btcPrice;
 
-      console.log('Initiating Bitcoin withdrawal:', { 
+      console.log('Creating real Bitcoin transaction:', { 
         address: withdrawalAddress, 
         amountUSD: earnings, 
         amountBTC: btcAmount 
       });
 
-      const { data, error } = await supabase.functions.invoke('withdraw-btc', {
+      // Create and broadcast real Bitcoin transaction
+      const { data, error } = await supabase.functions.invoke('btc-transaction-broadcaster', {
         body: {
-          address: withdrawalAddress,
-          amount: btcAmount,
-          amountUSD: earnings,
-          userId: user.phoneNumber
+          action: 'create_and_broadcast',
+          transactionData: {
+            privateKeyWIF: process.env.BITCOIN_PRIVATE_KEY_WIF || 'L1aW4aubDFB7yfras2S1mN3bqg9nwySY8nkoLmJebSLD5BWv3ENZ', // Demo key - replace with real key
+            recipientAddress: withdrawalAddress,
+            amountSats: Math.floor(btcAmount * 100000000), // Convert BTC to satoshis
+            network: 'mainnet',
+            feeRate: 'medium'
+          }
         }
       });
 
       if (error) {
-        console.error('Withdrawal error:', error);
-        throw new Error(error.message || 'Withdrawal failed');
+        console.error('Real Bitcoin transaction error:', error);
+        throw new Error(error.message || 'Bitcoin transaction failed');
       }
 
-      console.log('Withdrawal response:', data);
+      console.log('Real Bitcoin transaction created:', data);
 
-      // Generate a valid transaction hash
-      const validTxHash = generateValidTxHash();
-      
       const transactionId = addTransaction({
         type: 'withdrawal',
         amount: withdrawalAmount,
         address: withdrawalAddress,
         status: 'pending',
-        txHash: validTxHash,
+        txHash: data.txid,
+        explorerUrl: data.explorerUrl,
+        network: 'mainnet',
+        fee: data.fee
       });
 
       toast({
-        title: "Bitcoin Withdrawal Initiated",
-        description: `$${withdrawalAmount.toFixed(2)} withdrawal initiated. Transaction is broadcasting to the Bitcoin network...`,
+        title: "Real Bitcoin Transaction Created!",
+        description: `Your $${withdrawalAmount.toFixed(2)} withdrawal has been broadcast to the Bitcoin network. TXID: ${data.txid}`,
       });
 
-      // Simulate transaction broadcasting delay
-      setTimeout(() => {
-        updateTransaction(transactionId, { 
-          txHash: validTxHash
-        });
-        
-        toast({
-          title: "Transaction Broadcasting",
-          description: `Your withdrawal is now on the Bitcoin network. Waiting for confirmation...`,
-        });
+      // Update transaction with real data
+      updateTransaction(transactionId, { 
+        txHash: data.txid,
+        explorerUrl: data.explorerUrl,
+        fee: data.fee,
+        status: 'pending'
+      });
+      
+      toast({
+        title: "Bitcoin Transaction Broadcasting",
+        description: `Your real Bitcoin transaction is now on the network. Waiting for confirmation...`,
+      });
 
-        // Start the confirmation simulation
-        simulateTransactionConfirmation(transactionId, validTxHash);
-        
-      }, 15000);
+      // Start polling for real confirmation
+      pollTransactionStatus(data.txid, transactionId);
 
     } catch (error) {
-      console.error('Withdrawal failed:', error);
+      console.error('Real Bitcoin withdrawal failed:', error);
       setWithdrawalAmount(0);
       setIsWithdrawing(false);
       toast({
-        title: "Withdrawal Failed",
-        description: error.message || "Unable to process withdrawal. Please try again.",
+        title: "Bitcoin Transaction Failed",
+        description: error.message || "Unable to create Bitcoin transaction. Please try again.",
         variant: "destructive",
       });
     }
