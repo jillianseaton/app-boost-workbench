@@ -24,7 +24,6 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
   // Debug logging
   console.log('WithdrawalSection - earnings:', earnings, 'hasWithdrawn:', hasWithdrawn);
-  console.log('WithdrawalSection - should show?', earnings >= 10 && !hasWithdrawn);
 
   // Predefined wallet addresses for dropdown
   const walletOptions = [
@@ -47,11 +46,14 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     if (!bitcoinAddress.trim()) {
       return;
     }
+    if (earnings < 10) {
+      return;
+    }
     onWithdraw();
   };
 
-  // Temporarily show for testing - remove the earnings check
-  if (hasWithdrawn) {
+  // Only show withdrawal section if minimum threshold is met and hasn't withdrawn
+  if (earnings < 10 || hasWithdrawn) {
     return null;
   }
 
@@ -65,12 +67,13 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Ready to withdraw ${earnings.toFixed(2)} to your Bitcoin wallet
-            {earnings < 10 && (
-              <span className="block text-orange-600 mt-1">
-                (Testing mode - normally requires $10.00 minimum)
-              </span>
-            )}
           </p>
+          <div className="p-3 bg-blue-50 rounded-md mb-4">
+            <p className="text-sm text-blue-800">
+              <strong>Processing Time:</strong> Bitcoin transactions typically take 10-20 minutes to confirm on the blockchain. 
+              Your withdrawal will appear in your wallet once confirmed by the network.
+            </p>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -137,7 +140,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
         <div className="flex gap-2">
           <Button 
             onClick={handleWithdraw} 
-            disabled={!bitcoinAddress.trim()}
+            disabled={!bitcoinAddress.trim() || earnings < 10}
             className="flex-1"
             variant="default"
           >

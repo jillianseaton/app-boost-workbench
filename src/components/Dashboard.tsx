@@ -7,6 +7,7 @@ import { Clock, Wallet, TrendingUp, Users, Star, RotateCcw } from 'lucide-react'
 import TaskOptimization from './TaskOptimization';
 import WithdrawalSection from './WithdrawalSection';
 import PartnerServices from './PartnerServices';
+import TransactionHistory from './TransactionHistory';
 
 interface User {
   phoneNumber: string;
@@ -17,11 +18,22 @@ interface DashboardProps {
   user: User;
 }
 
+interface Transaction {
+  id: string;
+  type: 'withdrawal' | 'earning';
+  amount: number;
+  address?: string;
+  status: 'pending' | 'confirmed' | 'failed';
+  timestamp: Date;
+  txHash?: string;
+}
+
 const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [earnings, setEarnings] = useState(0);
   const [tasksCompleted, setTasksCompleted] = useState(0);
   const [hasWithdrawn, setHasWithdrawn] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const { toast } = useToast();
 
   const maxTasks = 20;
@@ -51,9 +63,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     });
   };
 
+  const addTransaction = (transaction: Omit<Transaction, 'id' | 'timestamp'>) => {
+    const newTransaction: Transaction = {
+      ...transaction,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: new Date(),
+    };
+    setTransactions(prev => [newTransaction, ...prev]);
+  };
+
   const handleTaskComplete = (commission: number) => {
     setEarnings(prev => prev + commission);
     setTasksCompleted(prev => prev + 1);
+    
+    // Add earning transaction
+    addTransaction({
+      type: 'earning',
+      amount: commission,
+      status: 'confirmed',
+    });
   };
 
   const handleWithdraw = () => {
@@ -66,12 +94,39 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       return;
     }
 
+    // Generate a mock Bitcoin address for demonstration
+    const mockAddress = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh";
+    
+    // Add withdrawal transaction as pending
+    addTransaction({
+      type: 'withdrawal',
+      amount: earnings,
+      address: mockAddress,
+      status: 'pending',
+      txHash: `tx${Math.random().toString(36).substr(2, 9)}`,
+    });
+
     toast({
       title: "Withdrawal Initiated",
-      description: `$${earnings.toFixed(2)} sent to your Bitcoin wallet!`,
+      description: `$${earnings.toFixed(2)} withdrawal sent to Bitcoin address. Please allow 10-20 minutes for blockchain confirmation.`,
     });
     
     setHasWithdrawn(true);
+
+    // Simulate transaction confirmation after 2 minutes (for demo purposes)
+    setTimeout(() => {
+      setTransactions(prev => 
+        prev.map(tx => 
+          tx.type === 'withdrawal' && tx.status === 'pending' 
+            ? { ...tx, status: 'confirmed' as const }
+            : tx
+        )
+      );
+      toast({
+        title: "Transaction Confirmed",
+        description: "Your Bitcoin withdrawal has been confirmed on the blockchain!",
+      });
+    }, 120000); // 2 minutes
   };
 
   const resetAccount = () => {
@@ -166,6 +221,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         hasWithdrawn={hasWithdrawn}
         onWithdraw={handleWithdraw}
       />
+
+      {/* Transaction History */}
+      <TransactionHistory transactions={transactions} />
 
       {/* Partner Services */}
       <PartnerServices />
