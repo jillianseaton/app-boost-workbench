@@ -29,7 +29,7 @@ serve(async (req) => {
   try {
     const { to, amount, tokenAddress }: TransferRequest = await req.json();
     
-    console.log('Processing transfer request:', { to, amount, tokenAddress });
+    console.log('Processing Arbitrum transfer request:', { to, amount, tokenAddress });
 
     // Validate input
     if (!to || !amount) {
@@ -40,26 +40,26 @@ serve(async (req) => {
       throw new Error('Invalid recipient address');
     }
 
-    // Get secrets
+    // Get secrets - using ARBITRUM_RPC_URL instead of INFURA_RPC_URL
     const privateKey = Deno.env.get('HOT_WALLET_PRIVATE_KEY');
     const hotWalletAddress = Deno.env.get('HOT_WALLET_ADDRESS');
-    const rpcUrl = Deno.env.get('INFURA_RPC_URL');
+    const rpcUrl = Deno.env.get('ARBITRUM_RPC_URL');
 
     if (!privateKey || !hotWalletAddress || !rpcUrl) {
       throw new Error('Missing required environment variables');
     }
 
-    // Initialize provider and wallet
+    // Initialize provider and wallet for Arbitrum
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const wallet = new ethers.Wallet(privateKey, provider);
 
-    console.log('Wallet connected:', wallet.address);
+    console.log('Wallet connected to Arbitrum:', wallet.address);
 
     let txHash: string;
 
     if (tokenAddress) {
-      // ERC-20 token transfer
-      console.log('Performing ERC-20 token transfer');
+      // ERC-20 token transfer on Arbitrum
+      console.log('Performing ERC-20 token transfer on Arbitrum');
       
       if (!ethers.isAddress(tokenAddress)) {
         throw new Error('Invalid token contract address');
@@ -86,11 +86,11 @@ serve(async (req) => {
       const tx = await tokenContract.transfer(to, tokenAmount);
       txHash = tx.hash;
       
-      console.log('ERC-20 transfer transaction sent:', txHash);
+      console.log('ERC-20 transfer transaction sent on Arbitrum:', txHash);
 
     } else {
-      // ETH transfer
-      console.log('Performing ETH transfer');
+      // ETH transfer on Arbitrum
+      console.log('Performing ETH transfer on Arbitrum');
       
       const ethAmount = ethers.parseEther(amount);
       
@@ -109,7 +109,7 @@ serve(async (req) => {
       });
       txHash = tx.hash;
       
-      console.log('ETH transfer transaction sent:', txHash);
+      console.log('ETH transfer transaction sent on Arbitrum:', txHash);
     }
 
     // Wait for transaction to be mined (optional)
@@ -120,14 +120,14 @@ serve(async (req) => {
       success: true,
       txHash,
       blockNumber: receipt?.blockNumber,
-      explorerUrl: `https://etherscan.io/tx/${txHash}`,
-      message: tokenAddress ? 'ERC-20 token transfer successful' : 'ETH transfer successful'
+      explorerUrl: `https://arbiscan.io/tx/${txHash}`,
+      message: tokenAddress ? 'ERC-20 token transfer successful on Arbitrum' : 'ETH transfer successful on Arbitrum'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error: any) {
-    console.error('Transfer error:', error);
+    console.error('Arbitrum transfer error:', error);
     
     return new Response(JSON.stringify({
       error: error.message,
