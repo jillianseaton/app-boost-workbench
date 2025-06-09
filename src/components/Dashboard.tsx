@@ -82,8 +82,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         resetTasks={resetTasks}
       />
 
-      <MetaMaskWallet />
-
       <TaskOptimization 
         tasksCompleted={tasksCompleted}
         maxTasks={maxTasks}
