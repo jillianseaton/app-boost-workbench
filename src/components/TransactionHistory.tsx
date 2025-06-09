@@ -3,7 +3,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Bitcoin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Bitcoin, Clock, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 
 interface Transaction {
   id: string;
@@ -13,6 +14,7 @@ interface Transaction {
   status: 'pending' | 'confirmed' | 'failed';
   timestamp: Date;
   txHash?: string;
+  network?: 'mainnet' | 'testnet';
 }
 
 interface TransactionHistoryProps {
@@ -46,6 +48,17 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
     }
   };
 
+  const generateMempoolUrl = (txHash: string, network: string = 'testnet') => {
+    const isMainnet = network === 'mainnet';
+    return isMainnet 
+      ? `https://mempool.space/tx/${txHash}`
+      : `https://mempool.space/testnet/tx/${txHash}`;
+  };
+
+  const openInMempool = (txHash: string, network: string = 'testnet') => {
+    window.open(generateMempoolUrl(txHash, network), '_blank');
+  };
+
   if (transactions.length === 0) {
     return (
       <Card>
@@ -74,6 +87,9 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
         <CardTitle className="flex items-center gap-2">
           <Bitcoin className="h-5 w-5" />
           Transaction History
+          <span className="text-sm font-normal text-muted-foreground ml-auto">
+            Powered by mempool.space
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -85,6 +101,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
               <TableHead>Address/Details</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Explorer</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -130,6 +147,21 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
                     </div>
                   </div>
                 </TableCell>
+                <TableCell>
+                  {transaction.txHash ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openInMempool(transaction.txHash!, transaction.network)}
+                      className="flex items-center gap-1"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      View
+                    </Button>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">-</span>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -139,10 +171,25 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
           <div className="mt-4 p-3 bg-blue-50 rounded-md">
             <p className="text-sm text-blue-800">
               <strong>Pending Transactions:</strong> Bitcoin transactions typically take 10-20 minutes to confirm. 
-              Please allow time for blockchain confirmation.
+              You can track them in real-time on mempool.space.
             </p>
           </div>
         )}
+        
+        <div className="mt-4 p-3 bg-gray-50 rounded-md">
+          <p className="text-sm text-gray-700">
+            <strong>Block Explorer:</strong> All transactions can be viewed on{' '}
+            <a 
+              href="https://mempool.space" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              mempool.space
+            </a>
+            {' '}for detailed blockchain information including fees, confirmations, and network stats.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

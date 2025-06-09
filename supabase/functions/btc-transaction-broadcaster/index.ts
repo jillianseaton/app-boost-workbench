@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -37,6 +36,12 @@ serve(async (req) => {
         break;
       case 'get_address_info':
         result = await getAddressInformation(transactionData);
+        break;
+      case 'get_block_info':
+        result = await getBlockInformation(transactionData);
+        break;
+      case 'get_mempool_stats':
+        result = await getMempoolStats(transactionData);
         break;
       default:
         throw new Error(`Unknown action: ${action}`);
@@ -88,8 +93,8 @@ async function createAndBroadcastTransaction(data: any) {
     network: btcNetwork 
   });
   
-  // Get UTXOs for the sender address
-  const utxos = await fetchUTXOs(senderAddress, network);
+  // Get UTXOs for the sender address using mempool.space
+  const utxos = await fetchUTXOsFromMempool(senderAddress, network);
   
   if (utxos.length === 0) {
     throw new Error('No UTXOs available for this address');
@@ -98,8 +103,8 @@ async function createAndBroadcastTransaction(data: any) {
   // Calculate total available balance
   const totalBalance = utxos.reduce((sum: number, utxo: any) => sum + utxo.value, 0);
   
-  // Get current fee rates
-  const feeRates = await getFeeRates(network);
+  // Get current fee rates from mempool.space
+  const feeRates = await getMempoolFeeRates(network);
   const satPerByte = feeRates[feeRate] || feeRates.medium;
   
   // Estimate transaction size (inputs * 148 + outputs * 34 + 10)
@@ -117,7 +122,7 @@ async function createAndBroadcastTransaction(data: any) {
   
   // Add inputs
   for (const utxo of utxos) {
-    const txResponse = await fetchTransactionHex(utxo.txid, network);
+    const txResponse = await fetchTransactionHexFromMempool(utxo.txid, network);
     
     psbt.addInput({
       hash: utxo.txid,
@@ -160,8 +165,8 @@ async function createAndBroadcastTransaction(data: any) {
   
   console.log('Transaction created:', { txid, txHex });
   
-  // Broadcast transaction using multiple APIs for redundancy
-  const broadcastResult = await broadcastWithRedundancy(txHex, network);
+  // Broadcast transaction using mempool.space first, then fallback
+  const broadcastResult = await broadcastToMempool(txHex, network);
   
   return {
     success: true,
@@ -174,7 +179,7 @@ async function createAndBroadcastTransaction(data: any) {
     change,
     network,
     broadcastResults: broadcastResult,
-    explorerUrl: generateExplorerUrl(txid, network),
+    explorerUrl: generateMempoolExplorerUrl(txid, network),
     timestamp: new Date().toISOString()
   };
 }
@@ -182,9 +187,9 @@ async function createAndBroadcastTransaction(data: any) {
 async function broadcastRawTransaction(data: any) {
   const { txHex, network = 'testnet' } = data;
   
-  console.log('Broadcasting raw transaction:', { network });
+  console.log('Broadcasting raw transaction via mempool.space:', { network });
   
-  const broadcastResult = await broadcastWithRedundancy(txHex, network);
+  const broadcastResult = await broadcastToMempool(txHex, network);
   
   // Extract txid from hex
   const bitcoin = await import('https://cdn.skypack.dev/bitcoinjs-lib@6.1.5');
@@ -196,189 +201,100 @@ async function broadcastRawTransaction(data: any) {
     txid,
     network,
     broadcastResults: broadcastResult,
-    explorerUrl: generateExplorerUrl(txid, network),
+    explorerUrl: generateMempoolExplorerUrl(txid, network),
     timestamp: new Date().toISOString()
   };
 }
 
-async function broadcastWithRedundancy(txHex: string, network: string) {
-  const apis = getBlockchainAPIs(network);
-  const results = [];
+async function broadcastToMempool(txHex: string, network: string) {
+  const isMainnet = network === 'mainnet';
+  const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
   
-  for (const api of apis) {
+  try {
+    console.log('Broadcasting to mempool.space...');
+    
+    const response = await fetch(`${baseUrl}/api/tx`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: txHex,
+    });
+    
+    if (response.ok) {
+      const txid = await response.text();
+      return {
+        success: true,
+        txid,
+        api: 'mempool.space',
+        timestamp: new Date().toISOString()
+      };
+    } else {
+      const errorText = await response.text();
+      throw new Error(`Mempool.space broadcast failed: ${errorText}`);
+    }
+    
+  } catch (error) {
+    console.error('Mempool.space broadcast error:', error.message);
+    
+    // Fallback to Blockstream
     try {
-      console.log(`Attempting broadcast via ${api.name}...`);
-      
-      const response = await fetch(api.broadcastUrl, {
+      const blockstreamUrl = isMainnet 
+        ? 'https://blockstream.info/api/tx' 
+        : 'https://blockstream.info/testnet/api/tx';
+        
+      const response = await fetch(blockstreamUrl, {
         method: 'POST',
-        headers: api.headers,
-        body: api.bodyFormat === 'json' ? JSON.stringify({ tx: txHex }) : txHex,
+        headers: { 'Content-Type': 'text/plain' },
+        body: txHex,
       });
       
       if (response.ok) {
-        const result = api.responseFormat === 'json' ? await response.json() : await response.text();
-        
-        results.push({
-          api: api.name,
+        const txid = await response.text();
+        return {
           success: true,
-          response: result,
+          txid,
+          api: 'blockstream (fallback)',
           timestamp: new Date().toISOString()
-        });
-        
-        console.log(`✅ Broadcast successful via ${api.name}`);
-        break; // Success with first API, no need to try others
-        
-      } else {
-        const errorText = await response.text();
-        results.push({
-          api: api.name,
-          success: false,
-          error: errorText,
-          status: response.status,
-          timestamp: new Date().toISOString()
-        });
-        
-        console.log(`❌ Broadcast failed via ${api.name}: ${errorText}`);
+        };
       }
-      
-    } catch (error) {
-      results.push({
-        api: api.name,
-        success: false,
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-      
-      console.log(`❌ Broadcast error via ${api.name}: ${error.message}`);
+    } catch (fallbackError) {
+      console.error('Fallback broadcast also failed:', fallbackError.message);
     }
+    
+    throw new Error(`Failed to broadcast transaction: ${error.message}`);
   }
-  
-  const successfulBroadcasts = results.filter(r => r.success);
-  
-  if (successfulBroadcasts.length === 0) {
-    throw new Error(`Failed to broadcast transaction via all APIs: ${JSON.stringify(results)}`);
-  }
-  
-  return {
-    successful: successfulBroadcasts.length,
-    total: results.length,
-    results
-  };
 }
 
-function getBlockchainAPIs(network: string) {
+async function fetchUTXOsFromMempool(address: string, network: string) {
   const isMainnet = network === 'mainnet';
+  const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
   
-  return [
-    {
-      name: 'Blockstream',
-      broadcastUrl: isMainnet 
-        ? 'https://blockstream.info/api/tx' 
-        : 'https://blockstream.info/testnet/api/tx',
-      headers: { 'Content-Type': 'text/plain' },
-      bodyFormat: 'raw',
-      responseFormat: 'text'
-    },
-    {
-      name: 'Mempool.space',
-      broadcastUrl: isMainnet 
-        ? 'https://mempool.space/api/tx' 
-        : 'https://mempool.space/testnet/api/tx',
-      headers: { 'Content-Type': 'text/plain' },
-      bodyFormat: 'raw',
-      responseFormat: 'text'
-    },
-    {
-      name: 'BlockCypher',
-      broadcastUrl: isMainnet 
-        ? 'https://api.blockcypher.com/v1/btc/main/txs/push' 
-        : 'https://api.blockcypher.com/v1/btc/test3/txs/push',
-      headers: { 'Content-Type': 'application/json' },
-      bodyFormat: 'json',
-      responseFormat: 'json'
-    }
-  ];
+  const response = await fetch(`${baseUrl}/api/address/${address}/utxo`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch UTXOs from mempool.space: ${response.statusText}`);
+  }
+  
+  return await response.json();
 }
 
-async function fetchUTXOs(address: string, network: string) {
+async function fetchTransactionHexFromMempool(txid: string, network: string) {
   const isMainnet = network === 'mainnet';
+  const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
   
-  // Try Blockstream first
-  try {
-    const url = isMainnet 
-      ? `https://blockstream.info/api/address/${address}/utxo`
-      : `https://blockstream.info/testnet/api/address/${address}/utxo`;
-      
-    const response = await fetch(url);
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    console.log('Blockstream UTXO fetch failed:', error.message);
+  const response = await fetch(`${baseUrl}/api/tx/${txid}/hex`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch transaction hex from mempool.space: ${response.statusText}`);
   }
   
-  // Fallback to Mempool.space
-  try {
-    const url = isMainnet 
-      ? `https://mempool.space/api/address/${address}/utxo`
-      : `https://mempool.space/testnet/api/address/${address}/utxo`;
-      
-    const response = await fetch(url);
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    console.log('Mempool.space UTXO fetch failed:', error.message);
-  }
-  
-  throw new Error('Failed to fetch UTXOs from all APIs');
+  const hex = await response.text();
+  return { hex };
 }
 
-async function fetchTransactionHex(txid: string, network: string) {
+async function getMempoolFeeRates(network: string) {
   const isMainnet = network === 'mainnet';
-  
-  // Try Blockstream first
-  try {
-    const url = isMainnet 
-      ? `https://blockstream.info/api/tx/${txid}/hex`
-      : `https://blockstream.info/testnet/api/tx/${txid}/hex`;
-      
-    const response = await fetch(url);
-    if (response.ok) {
-      const hex = await response.text();
-      return { hex };
-    }
-  } catch (error) {
-    console.log('Blockstream transaction fetch failed:', error.message);
-  }
-  
-  // Fallback to Mempool.space
-  try {
-    const url = isMainnet 
-      ? `https://mempool.space/api/tx/${txid}/hex`
-      : `https://mempool.space/testnet/api/tx/${txid}/hex`;
-      
-    const response = await fetch(url);
-    if (response.ok) {
-      const hex = await response.text();
-      return { hex };
-    }
-  } catch (error) {
-    console.log('Mempool.space transaction fetch failed:', error.message);
-  }
-  
-  throw new Error('Failed to fetch transaction hex from all APIs');
-}
-
-async function getFeeRates(network: string) {
-  const isMainnet = network === 'mainnet';
+  const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
   
   try {
-    const url = isMainnet 
-      ? 'https://mempool.space/api/v1/fees/recommended'
-      : 'https://mempool.space/testnet/api/v1/fees/recommended';
-      
-    const response = await fetch(url);
+    const response = await fetch(`${baseUrl}/api/v1/fees/recommended`);
     if (response.ok) {
       const fees = await response.json();
       return {
@@ -389,7 +305,7 @@ async function getFeeRates(network: string) {
       };
     }
   } catch (error) {
-    console.log('Fee rate fetch failed:', error.message);
+    console.log('Mempool fee rate fetch failed:', error.message);
   }
   
   // Default fee rates if API fails
@@ -404,8 +320,8 @@ async function getFeeRates(network: string) {
 async function estimateTransactionFees(data: any) {
   const { address, network = 'testnet', outputs = 1 } = data;
   
-  const utxos = await fetchUTXOs(address, network);
-  const feeRates = await getFeeRates(network);
+  const utxos = await fetchUTXOsFromMempool(address, network);
+  const feeRates = await getMempoolFeeRates(network);
   
   // Estimate transaction size
   const estimatedSize = (utxos.length * 148) + (outputs * 34) + 10;
@@ -437,14 +353,15 @@ async function estimateTransactionFees(data: any) {
         estimatedTime: '1-10 min'
       }
     },
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    provider: 'mempool.space'
   };
 }
 
 async function getAddressUTXOs(data: any) {
   const { address, network = 'testnet' } = data;
   
-  const utxos = await fetchUTXOs(address, network);
+  const utxos = await fetchUTXOsFromMempool(address, network);
   const totalBalance = utxos.reduce((sum: number, utxo: any) => sum + utxo.value, 0);
   
   return {
@@ -454,7 +371,8 @@ async function getAddressUTXOs(data: any) {
     utxoCount: utxos.length,
     totalBalance,
     totalBalanceBTC: totalBalance / 100000000,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    provider: 'mempool.space'
   };
 }
 
@@ -462,70 +380,119 @@ async function checkTransactionStatus(data: any) {
   const { txid, network = 'testnet' } = data;
   
   const isMainnet = network === 'mainnet';
+  const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
   
-  try {
-    const url = isMainnet 
-      ? `https://blockstream.info/api/tx/${txid}`
-      : `https://blockstream.info/testnet/api/tx/${txid}`;
-      
-    const response = await fetch(url);
-    if (response.ok) {
-      const txData = await response.json();
-      return {
-        txid,
-        network,
-        confirmed: txData.status.confirmed,
-        confirmations: txData.status.confirmed ? txData.status.block_height : 0,
-        blockHeight: txData.status.block_height,
-        fee: txData.fee,
-        size: txData.size,
-        weight: txData.weight,
-        timestamp: new Date().toISOString(),
-        explorerUrl: generateExplorerUrl(txid, network)
-      };
-    }
-  } catch (error) {
-    console.log('Transaction status check failed:', error.message);
+  const response = await fetch(`${baseUrl}/api/tx/${txid}`);
+  if (!response.ok) {
+    throw new Error(`Failed to check transaction status: ${response.statusText}`);
   }
   
-  throw new Error('Failed to check transaction status');
+  const txData = await response.json();
+  
+  return {
+    txid,
+    network,
+    confirmed: txData.status.confirmed,
+    confirmations: txData.status.confirmed ? 1 : 0,
+    blockHeight: txData.status.block_height,
+    blockHash: txData.status.block_hash,
+    blockTime: txData.status.block_time,
+    fee: txData.fee,
+    size: txData.size,
+    weight: txData.weight,
+    vsize: txData.vsize,
+    timestamp: new Date().toISOString(),
+    explorerUrl: generateMempoolExplorerUrl(txid, network),
+    provider: 'mempool.space'
+  };
 }
 
 async function getAddressInformation(data: any) {
   const { address, network = 'testnet' } = data;
   
   const isMainnet = network === 'mainnet';
+  const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
   
-  try {
-    const url = isMainnet 
-      ? `https://blockstream.info/api/address/${address}`
-      : `https://blockstream.info/testnet/api/address/${address}`;
-      
-    const response = await fetch(url);
-    if (response.ok) {
-      const addressData = await response.json();
-      return {
-        address,
-        network,
-        balance: addressData.chain_stats.funded_txo_sum - addressData.chain_stats.spent_txo_sum,
-        totalReceived: addressData.chain_stats.funded_txo_sum,
-        totalSent: addressData.chain_stats.spent_txo_sum,
-        transactionCount: addressData.chain_stats.tx_count,
-        unconfirmedBalance: addressData.mempool_stats.funded_txo_sum - addressData.mempool_stats.spent_txo_sum,
-        timestamp: new Date().toISOString()
-      };
-    }
-  } catch (error) {
-    console.log('Address information fetch failed:', error.message);
+  const response = await fetch(`${baseUrl}/api/address/${address}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch address information: ${response.statusText}`);
   }
   
-  throw new Error('Failed to fetch address information');
+  const addressData = await response.json();
+  
+  return {
+    address,
+    network,
+    balance: addressData.chain_stats.funded_txo_sum - addressData.chain_stats.spent_txo_sum,
+    totalReceived: addressData.chain_stats.funded_txo_sum,
+    totalSent: addressData.chain_stats.spent_txo_sum,
+    transactionCount: addressData.chain_stats.tx_count,
+    unconfirmedBalance: addressData.mempool_stats.funded_txo_sum - addressData.mempool_stats.spent_txo_sum,
+    unconfirmedTxCount: addressData.mempool_stats.tx_count,
+    timestamp: new Date().toISOString(),
+    provider: 'mempool.space'
+  };
 }
 
-function generateExplorerUrl(txid: string, network: string): string {
+async function getBlockInformation(data: any) {
+  const { blockHash, network = 'testnet' } = data;
+  
+  const isMainnet = network === 'mainnet';
+  const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
+  
+  const response = await fetch(`${baseUrl}/api/block/${blockHash}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch block information: ${response.statusText}`);
+  }
+  
+  const blockData = await response.json();
+  
+  return {
+    blockHash,
+    network,
+    height: blockData.height,
+    timestamp: blockData.timestamp,
+    txCount: blockData.tx_count,
+    size: blockData.size,
+    weight: blockData.weight,
+    merkleRoot: blockData.merkle_root,
+    previousBlockHash: blockData.previousblockhash,
+    nonce: blockData.nonce,
+    bits: blockData.bits,
+    difficulty: blockData.difficulty,
+    explorerUrl: `${baseUrl}/block/${blockHash}`,
+    provider: 'mempool.space'
+  };
+}
+
+async function getMempoolStats(data: any) {
+  const { network = 'testnet' } = data;
+  
+  const isMainnet = network === 'mainnet';
+  const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
+  
+  const response = await fetch(`${baseUrl}/api/mempool`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch mempool stats: ${response.statusText}`);
+  }
+  
+  const mempoolData = await response.json();
+  
+  return {
+    network,
+    count: mempoolData.count,
+    vsize: mempoolData.vsize,
+    totalFees: mempoolData.total_fee,
+    feeHistogram: mempoolData.fee_histogram,
+    timestamp: new Date().toISOString(),
+    provider: 'mempool.space'
+  };
+}
+
+function generateMempoolExplorerUrl(txid: string, network: string): string {
   const isMainnet = network === 'mainnet';
   
   return isMainnet 
-    ? `https://blockstream.info/tx/${txid}`
-    : `https://blockstream.info/testnet/tx/${txid}`;
+    ? `https://mempool.space/tx/${txid}`
+    : `https://mempool.space/testnet/tx/${txid}`;
 }
