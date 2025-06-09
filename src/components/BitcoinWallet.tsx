@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet, RefreshCw, Send, Copy } from 'lucide-react';
+import { Wallet, RefreshCw, Send, Copy, ArrowUpRight } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { supabase } from '@/integrations/supabase/client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface WalletData {
   address: string;
@@ -28,7 +29,16 @@ const BitcoinWallet: React.FC = () => {
   const [recipientAddress, setRecipientAddress] = useState('');
   const [amountSats, setAmountSats] = useState('');
   const [sendLoading, setSendLoading] = useState(false);
+  const [selectedExchange, setSelectedExchange] = useState('');
   const { toast } = useToast();
+
+  // Popular exchange testnet addresses for quick selection
+  const exchangeWallets = [
+    { name: 'Coinbase (Testnet)', address: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx' },
+    { name: 'Binance (Testnet)', address: 'tb1qrp33g013s6g2s4q6fqfqcbx8dfgfqd3xw8zhvc' },
+    { name: 'Kraken (Testnet)', address: 'tb1qqqqqp0whnp6x8s3y5vqh4q4z9p7z5z8p5t4q3' },
+    { name: 'Custom Exchange', value: 'custom' }
+  ];
 
   const generateWallet = async () => {
     setLoading(true);
@@ -119,12 +129,80 @@ const BitcoinWallet: React.FC = () => {
       // Clear form and refresh balance
       setRecipientAddress('');
       setAmountSats('');
+      setSelectedExchange('');
       await getBalance();
       
     } catch (error) {
       console.error('Error sending BTC:', error);
       toast({
         title: "Transaction Failed",
+        description: `${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setSendLoading(false);
+    }
+  };
+
+  const handleExchangeSelect = (value: string) => {
+    setSelectedExchange(value);
+    if (value !== 'custom') {
+      const exchange = exchangeWallets.find(e => e.address === value);
+      if (exchange) {
+        setRecipientAddress(exchange.address);
+      }
+    } else {
+      setRecipientAddress('');
+    }
+  };
+
+  const withdrawToExchange = async () => {
+    if (!wallet || !balance || !recipientAddress) {
+      toast({
+        title: "Error",
+        description: "Please select an exchange and ensure you have a balance",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Calculate amount to send (leave some for fees)
+    const feeReserve = 1000; // Reserve 1000 sats for fees
+    const sendAmount = Math.max(0, balance.balanceSats - feeReserve);
+
+    if (sendAmount <= 0) {
+      toast({
+        title: "Insufficient Balance",
+        description: "Not enough balance to cover transaction fees",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-btc', {
+        body: {
+          privateKeyWIF: wallet.privateKey,
+          recipientAddress,
+          amountSats: sendAmount
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Withdrawal Successful!",
+        description: `Sent ${sendAmount} sats to exchange. TXID: ${data.txid}`,
+      });
+      
+      // Refresh balance
+      await getBalance();
+      
+    } catch (error) {
+      console.error('Error withdrawing to exchange:', error);
+      toast({
+        title: "Withdrawal Failed",
         description: `${error.message}`,
         variant: "destructive",
       });
@@ -234,13 +312,86 @@ const BitcoinWallet: React.FC = () => {
         </Card>
       )}
 
-      {/* Send BTC */}
+      {/* Exchange Withdrawal */}
+      {wallet && balance && balance.balanceSats > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ArrowUpRight className="h-5 w-5" />
+              Withdraw to Exchange
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Exchange</label>
+              <Select value={selectedExchange} onValueChange={handleExchangeSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an exchange or enter custom address" />
+                </SelectTrigger>
+                <SelectContent>
+                  {exchangeWallets.map((exchange) => (
+                    <SelectItem key={exchange.address || exchange.value} value={exchange.address || exchange.value}>
+                      {exchange.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(selectedExchange === 'custom' || selectedExchange === '') && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Exchange Wallet Address</label>
+                <Input 
+                  value={recipientAddress}
+                  onChange={(e) => setRecipientAddress(e.target.value)}
+                  placeholder="Enter exchange testnet address"
+                  className="font-mono"
+                />
+              </div>
+            )}
+
+            {selectedExchange && selectedExchange !== 'custom' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Selected Exchange Address</label>
+                <div className="p-2 bg-muted rounded-md">
+                  <p className="font-mono text-xs break-all">{recipientAddress}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="p-3 bg-blue-50 rounded-md">
+              <p className="text-sm text-blue-800">
+                <strong>Withdrawal Amount:</strong> {balance.balanceSats - 1000} sats 
+                <br />
+                <span className="text-xs">(1000 sats reserved for transaction fees)</span>
+              </p>
+            </div>
+
+            <Button 
+              onClick={withdrawToExchange} 
+              disabled={sendLoading || !recipientAddress || balance.balanceSats <= 1000}
+              className="w-full"
+            >
+              {sendLoading ? "Processing Withdrawal..." : "Withdraw All to Exchange"}
+            </Button>
+
+            <Alert>
+              <AlertDescription>
+                This will send your entire balance (minus fees) to the selected exchange address. 
+                Make sure the address is correct!
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Manual Send BTC */}
       {wallet && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Send className="h-5 w-5" />
-              Send Bitcoin
+              Send Bitcoin (Manual)
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
