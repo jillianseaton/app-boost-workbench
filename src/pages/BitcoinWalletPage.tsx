@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BitcoinWallet from '@/components/BitcoinWallet';
 import CashAppWallet from '@/components/CashAppWallet';
+import WalletManager from '@/components/WalletManager';
 
 const BitcoinWalletPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,13 +32,18 @@ const BitcoinWalletPage: React.FC = () => {
         </div>
 
         {/* Wallet Tabs */}
-        <Tabs defaultValue="bitcoin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="bitcoin">Bitcoin Wallet</TabsTrigger>
+        <Tabs defaultValue="production" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="production">Production Wallets</TabsTrigger>
+            <TabsTrigger value="testnet">Testnet Wallet</TabsTrigger>
             <TabsTrigger value="cashapp">CashApp Integration</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="bitcoin" className="mt-6">
+          <TabsContent value="production" className="mt-6">
+            <WalletManager />
+          </TabsContent>
+          
+          <TabsContent value="testnet" className="mt-6">
             <BitcoinWallet />
           </TabsContent>
           

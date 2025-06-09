@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -21,7 +20,7 @@ serve(async (req) => {
     
     switch (action) {
       case 'create_and_broadcast':
-        result = await createAndBroadcastTransaction(transactionData);
+        result = await createAndBroadcastRealTransaction(transactionData);
         break;
       case 'broadcast_raw':
         result = await broadcastRawTransaction(transactionData);
@@ -38,11 +37,8 @@ serve(async (req) => {
       case 'get_address_info':
         result = await getAddressInformation(transactionData);
         break;
-      case 'get_block_info':
-        result = await getBlockInformation(transactionData);
-        break;
-      case 'get_mempool_stats':
-        result = await getMempoolStats(transactionData);
+      case 'create_multisig_transaction':
+        result = await createMultisigTransaction(transactionData);
         break;
       default:
         throw new Error(`Unknown action: ${action}`);
@@ -66,54 +62,78 @@ serve(async (req) => {
   }
 });
 
-async function createAndBroadcastTransaction(data: any) {
+async function createAndBroadcastRealTransaction(data: any) {
   const { 
-    privateKeyWIF, 
     recipientAddress, 
     amountSats, 
     network = 'mainnet',
-    feeRate = 'medium'
+    feeRate = 'medium',
+    walletType = 'generated',
+    isMultisig = false
   } = data;
   
-  console.log('Creating and broadcasting BTC transaction:', { 
+  console.log('Creating REAL Bitcoin transaction:', { 
     recipientAddress, 
     amountSats, 
-    network 
+    network,
+    walletType,
+    isMultisig
   });
+
+  // SECURITY WARNING: In production, private keys should NEVER be hardcoded
+  // This should use secure key management systems like:
+  // - Hardware Security Modules (HSM)
+  // - Key Management Services (KMS)
+  // - Secure enclaves
+  // - Multi-party computation (MPC)
   
-  // Import bitcoinjs-lib
+  const fundingPrivateKey = Deno.env.get('BITCOIN_FUNDING_PRIVATE_KEY');
+  if (!fundingPrivateKey) {
+    throw new Error('Bitcoin funding private key not configured in secrets');
+  }
+  
+  // Import bitcoinjs-lib for real transaction creation
   const bitcoin = await import('https://cdn.skypack.dev/bitcoinjs-lib@6.1.5');
   
-  // Set network
+  // Set network (mainnet for production)
   const btcNetwork = network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
   
-  // Create keypair from private key
-  const keyPair = bitcoin.ECPair.fromWIF(privateKeyWIF, btcNetwork);
-  const { address: senderAddress } = bitcoin.payments.p2pkh({ 
+  // Create keypair from funding private key
+  const keyPair = bitcoin.ECPair.fromWIF(fundingPrivateKey, btcNetwork);
+  const { address: fundingAddress } = bitcoin.payments.p2wpkh({ 
     pubkey: keyPair.publicKey, 
     network: btcNetwork 
   });
   
-  // Get UTXOs for the sender address using mempool.space
-  const utxos = await fetchUTXOsFromMempool(senderAddress, network);
+  console.log('Funding from address:', fundingAddress);
+  
+  // Get UTXOs for the funding address
+  const utxos = await fetchUTXOsFromMempool(fundingAddress, network);
   
   if (utxos.length === 0) {
-    throw new Error('No UTXOs available for this address');
+    throw new Error('No UTXOs available in funding wallet - insufficient funds');
   }
   
   // Calculate total available balance
   const totalBalance = utxos.reduce((sum: number, utxo: any) => sum + utxo.value, 0);
+  console.log('Total funding balance:', totalBalance, 'sats');
   
-  // Get current fee rates from mempool.space
+  // Get current fee rates
   const feeRates = await getMempoolFeeRates(network);
   const satPerByte = feeRates[feeRate] || feeRates.medium;
   
-  // Estimate transaction size (inputs * 148 + outputs * 34 + 10)
+  // Estimate transaction size
   const estimatedSize = (utxos.length * 148) + (2 * 34) + 10;
   const estimatedFee = estimatedSize * satPerByte;
   
+  console.log('Transaction estimates:', {
+    size: estimatedSize,
+    feeRate: satPerByte,
+    estimatedFee
+  });
+  
   if (totalBalance < amountSats + estimatedFee) {
-    throw new Error(`Insufficient balance. Available: ${totalBalance} sats, Required: ${amountSats + estimatedFee} sats`);
+    throw new Error(`Insufficient funds in hot wallet. Available: ${totalBalance} sats, Required: ${amountSats + estimatedFee} sats`);
   }
   
   // Create transaction
@@ -121,7 +141,7 @@ async function createAndBroadcastTransaction(data: any) {
   
   let inputValue = 0;
   
-  // Add inputs
+  // Add inputs from funding wallet
   for (const utxo of utxos) {
     const txResponse = await fetchTransactionHexFromMempool(utxo.txid, network);
     
@@ -148,25 +168,25 @@ async function createAndBroadcastTransaction(data: any) {
   const change = inputValue - amountSats - estimatedFee;
   if (change > 546) { // Dust threshold
     psbt.addOutput({
-      address: senderAddress,
+      address: fundingAddress,
       value: change,
     });
   }
   
-  // Sign all inputs
+  // Sign all inputs with funding wallet
   for (let i = 0; i < psbt.inputCount; i++) {
     psbt.signInput(i, keyPair);
   }
   
   psbt.finalizeAllInputs();
   
-  // Get transaction hex
+  // Get transaction hex and ID
   const txHex = psbt.extractTransaction().toHex();
   const txid = psbt.extractTransaction().getId();
   
-  console.log('Transaction created:', { txid, txHex });
+  console.log('Real transaction created:', { txid, size: txHex.length / 2 });
   
-  // Broadcast transaction using mempool.space first, then fallback
+  // Broadcast to Bitcoin network
   const broadcastResult = await broadcastToMempool(txHex, network);
   
   return {
@@ -175,35 +195,99 @@ async function createAndBroadcastTransaction(data: any) {
     txHex,
     amountSats,
     recipientAddress,
-    senderAddress,
+    fundingAddress,
     fee: estimatedFee,
     change,
     network,
+    walletType,
+    isMultisig,
     broadcastResults: broadcastResult,
     explorerUrl: generateMempoolExplorerUrl(txid, network),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    warning: 'This is a REAL Bitcoin transaction on mainnet with real money'
   };
 }
 
-async function broadcastRawTransaction(data: any) {
-  const { txHex, network = 'mainnet' } = data;
+async function createMultisigTransaction(data: any) {
+  const { recipientAddress, amountSats, publicKeys, requiredSigs, network = 'mainnet' } = data;
   
-  console.log('Broadcasting raw transaction via mempool.space:', { network });
+  console.log('Creating multisig transaction:', {
+    recipientAddress,
+    amountSats,
+    publicKeysCount: publicKeys.length,
+    requiredSigs,
+    network
+  });
   
-  const broadcastResult = await broadcastToMempool(txHex, network);
-  
-  // Extract txid from hex
+  // Import bitcoinjs-lib
   const bitcoin = await import('https://cdn.skypack.dev/bitcoinjs-lib@6.1.5');
-  const tx = bitcoin.Transaction.fromHex(txHex);
-  const txid = tx.getId();
+  const btcNetwork = network === 'mainnet' ? bitcoin.networks.bitcoin : bitcoin.networks.testnet;
+  
+  // Create multisig redeem script
+  const pubkeyBuffers = publicKeys.map((pk: string) => Buffer.from(pk, 'hex'));
+  const { address: multisigAddress, redeem } = bitcoin.payments.p2sh({
+    redeem: bitcoin.payments.p2ms({
+      m: requiredSigs,
+      pubkeys: pubkeyBuffers,
+      network: btcNetwork
+    }),
+    network: btcNetwork
+  });
+  
+  // Get UTXOs for multisig address
+  const utxos = await fetchUTXOsFromMempool(multisigAddress, network);
+  
+  if (utxos.length === 0) {
+    throw new Error('No UTXOs available in multisig wallet');
+  }
+  
+  // Create unsigned transaction template
+  const psbt = new bitcoin.Psbt({ network: btcNetwork });
+  
+  let inputValue = 0;
+  
+  // Add inputs
+  for (const utxo of utxos) {
+    const txResponse = await fetchTransactionHexFromMempool(utxo.txid, network);
+    
+    psbt.addInput({
+      hash: utxo.txid,
+      index: utxo.vout,
+      nonWitnessUtxo: Buffer.from(txResponse.hex, 'hex'),
+      redeemScript: redeem!.output,
+    });
+    
+    inputValue += utxo.value;
+  }
+  
+  // Add outputs
+  psbt.addOutput({
+    address: recipientAddress,
+    value: amountSats,
+  });
+  
+  // Calculate and add change
+  const feeRates = await getMempoolFeeRates(network);
+  const estimatedSize = (utxos.length * 200) + (2 * 34) + 50; // Larger size for multisig
+  const estimatedFee = estimatedSize * feeRates.medium;
+  const change = inputValue - amountSats - estimatedFee;
+  
+  if (change > 546) {
+    psbt.addOutput({
+      address: multisigAddress,
+      value: change,
+    });
+  }
   
   return {
     success: true,
-    txid,
-    network,
-    broadcastResults: broadcastResult,
-    explorerUrl: generateMempoolExplorerUrl(txid, network),
-    timestamp: new Date().toISOString()
+    unsignedTransaction: psbt.toBase64(),
+    multisigAddress,
+    requiredSignatures: requiredSigs,
+    totalSigners: publicKeys.length,
+    estimatedFee,
+    change,
+    note: 'This transaction requires signing by multiple parties before broadcast'
   };
 }
 
@@ -212,7 +296,7 @@ async function broadcastToMempool(txHex: string, network: string) {
   const baseUrl = isMainnet ? 'https://mempool.space' : 'https://mempool.space/testnet';
   
   try {
-    console.log('Broadcasting to mempool.space...');
+    console.log('Broadcasting to Bitcoin network via mempool.space...');
     
     const response = await fetch(`${baseUrl}/api/tx`, {
       method: 'POST',
@@ -222,46 +306,22 @@ async function broadcastToMempool(txHex: string, network: string) {
     
     if (response.ok) {
       const txid = await response.text();
+      console.log('Successfully broadcast to Bitcoin network:', txid);
       return {
         success: true,
         txid,
         api: 'mempool.space',
+        network: isMainnet ? 'mainnet' : 'testnet',
         timestamp: new Date().toISOString()
       };
     } else {
       const errorText = await response.text();
-      throw new Error(`Mempool.space broadcast failed: ${errorText}`);
+      throw new Error(`Bitcoin network broadcast failed: ${errorText}`);
     }
     
   } catch (error) {
-    console.error('Mempool.space broadcast error:', error.message);
-    
-    // Fallback to Blockstream
-    try {
-      const blockstreamUrl = isMainnet 
-        ? 'https://blockstream.info/api/tx' 
-        : 'https://blockstream.info/testnet/api/tx';
-        
-      const response = await fetch(blockstreamUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: txHex,
-      });
-      
-      if (response.ok) {
-        const txid = await response.text();
-        return {
-          success: true,
-          txid,
-          api: 'blockstream (fallback)',
-          timestamp: new Date().toISOString()
-        };
-      }
-    } catch (fallbackError) {
-      console.error('Fallback broadcast also failed:', fallbackError.message);
-    }
-    
-    throw new Error(`Failed to broadcast transaction: ${error.message}`);
+    console.error('Bitcoin broadcast error:', error.message);
+    throw new Error(`Failed to broadcast to Bitcoin network: ${error.message}`);
   }
 }
 
@@ -271,7 +331,7 @@ async function fetchUTXOsFromMempool(address: string, network: string) {
   
   const response = await fetch(`${baseUrl}/api/address/${address}/utxo`);
   if (!response.ok) {
-    throw new Error(`Failed to fetch UTXOs from mempool.space: ${response.statusText}`);
+    throw new Error(`Failed to fetch UTXOs: ${response.statusText}`);
   }
   
   return await response.json();
@@ -283,7 +343,7 @@ async function fetchTransactionHexFromMempool(txid: string, network: string) {
   
   const response = await fetch(`${baseUrl}/api/tx/${txid}/hex`);
   if (!response.ok) {
-    throw new Error(`Failed to fetch transaction hex from mempool.space: ${response.statusText}`);
+    throw new Error(`Failed to fetch transaction hex: ${response.statusText}`);
   }
   
   const hex = await response.text();
@@ -306,10 +366,9 @@ async function getMempoolFeeRates(network: string) {
       };
     }
   } catch (error) {
-    console.log('Mempool fee rate fetch failed:', error.message);
+    console.log('Fee rate fetch failed:', error.message);
   }
   
-  // Default fee rates if API fails
   return {
     slow: 1,
     medium: 5,
