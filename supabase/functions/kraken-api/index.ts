@@ -12,54 +12,77 @@ const KRAKEN_API_URL = 'https://api.kraken.com';
 
 // Generate Kraken API signature
 async function generateSignature(path: string, postData: string, secret: string, nonce: string): Promise<string> {
-  const message = nonce + postData;
+  console.log('Generating signature for path:', path);
+  console.log('Post data:', postData);
+  console.log('Nonce:', nonce);
   
-  // Decode the base64 secret
-  const secretBytes = new Uint8Array(atob(secret).split('').map(c => c.charCodeAt(0)));
-  
-  // Create SHA256 hash of the message
-  const msgEncoder = new TextEncoder();
-  const msgBytes = msgEncoder.encode(message);
-  const msgHash = await crypto.subtle.digest('SHA-256', msgBytes);
-  
-  // Combine path and hash
-  const pathBytes = msgEncoder.encode(path);
-  const combined = new Uint8Array(pathBytes.length + msgHash.byteLength);
-  combined.set(pathBytes);
-  combined.set(new Uint8Array(msgHash), pathBytes.length);
-  
-  // Create HMAC-SHA512
-  const key = await crypto.subtle.importKey(
-    'raw',
-    secretBytes,
-    { name: 'HMAC', hash: 'SHA-512' },
-    false,
-    ['sign']
-  );
-  
-  const signature = await crypto.subtle.sign('HMAC', key, combined);
-  
-  // Convert to base64
-  const signatureArray = new Uint8Array(signature);
-  return btoa(String.fromCharCode(...signatureArray));
+  try {
+    // Decode the base64 secret
+    const secretBuffer = Uint8Array.from(atob(secret), c => c.charCodeAt(0));
+    
+    // Create the message: nonce + postdata
+    const message = nonce + postData;
+    const messageBuffer = new TextEncoder().encode(message);
+    
+    // Hash the message with SHA256
+    const messageHash = await crypto.subtle.digest('SHA-256', messageBuffer);
+    
+    // Combine path and message hash
+    const pathBuffer = new TextEncoder().encode(path);
+    const combinedBuffer = new Uint8Array(pathBuffer.length + messageHash.byteLength);
+    combinedBuffer.set(pathBuffer);
+    combinedBuffer.set(new Uint8Array(messageHash), pathBuffer.length);
+    
+    // Import the secret key for HMAC
+    const key = await crypto.subtle.importKey(
+      'raw',
+      secretBuffer,
+      { name: 'HMAC', hash: 'SHA-512' },
+      false,
+      ['sign']
+    );
+    
+    // Generate HMAC signature
+    const signature = await crypto.subtle.sign('HMAC', key, combinedBuffer);
+    
+    // Convert to base64
+    const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
+    console.log('Generated signature successfully');
+    
+    return signatureBase64;
+  } catch (error) {
+    console.error('Error generating signature:', error);
+    throw error;
+  }
 }
 
 // Make authenticated request to Kraken
 async function krakenRequest(endpoint: string, params: any, apiKey: string, apiSecret: string) {
-  console.log(`Making Kraken API request to ${endpoint}`);
+  console.log(`Making Kraken API request to ${endpoint} with params:`, params);
   
-  const nonce = Date.now().toString() + Math.random().toString().slice(2, 8);
-  const postData = new URLSearchParams({
-    nonce,
-    ...params
-  }).toString();
+  // Generate nonce (microseconds)
+  const nonce = (Date.now() * 1000).toString();
   
+  // Prepare form data
+  const formParams = new URLSearchParams();
+  formParams.append('nonce', nonce);
+  
+  // Add other parameters
+  Object.keys(params).forEach(key => {
+    if (params[key] !== undefined && params[key] !== null) {
+      formParams.append(key, params[key].toString());
+    }
+  });
+  
+  const postData = formParams.toString();
   const path = `/0/private/${endpoint}`;
+  
+  console.log('Request path:', path);
+  console.log('Post data:', postData);
+  console.log('API Key (first 8 chars):', apiKey.substring(0, 8));
   
   try {
     const signature = await generateSignature(path, postData, apiSecret, nonce);
-
-    console.log(`Request details: path=${path}, nonce=${nonce}`);
 
     const response = await fetch(`${KRAKEN_API_URL}${path}`, {
       method: 'POST',
@@ -72,17 +95,30 @@ async function krakenRequest(endpoint: string, params: any, apiKey: string, apiS
       body: postData,
     });
 
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+    const responseText = await response.text();
+    console.log('Raw response:', responseText);
+
     if (!response.ok) {
       console.error(`HTTP error: ${response.status} ${response.statusText}`);
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      throw new Error(`HTTP ${response.status}: ${response.statusText} - ${responseText}`);
     }
 
-    const data = await response.json();
-    console.log(`Kraken API response:`, data);
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', parseError);
+      throw new Error(`Invalid JSON response: ${responseText}`);
+    }
+    
+    console.log('Parsed response:', data);
     
     if (data.error && data.error.length > 0) {
       console.error('Kraken API errors:', data.error);
-      throw new Error(data.error.join(', '));
+      throw new Error(`Kraken API Error: ${data.error.join(', ')}`);
     }
     
     return data.result;
@@ -98,7 +134,10 @@ serve(async (req) => {
   }
 
   try {
-    const { action, apiKey, apiSecret, ...params } = await req.json();
+    const requestBody = await req.json();
+    console.log('Received request:', requestBody);
+    
+    const { action, apiKey, apiSecret, ...params } = requestBody;
     
     console.log(`Kraken API request: action=${action}`);
     
@@ -106,9 +145,14 @@ serve(async (req) => {
       throw new Error('API key and secret are required');
     }
 
-    // Validate API key format
+    // Validate API key format (should be base64-ish)
     if (!apiKey.trim() || !apiSecret.trim()) {
       throw new Error('API key and secret cannot be empty');
+    }
+
+    // Basic validation for Kraken API key format
+    if (apiKey.length < 50 || apiSecret.length < 80) {
+      throw new Error('API key or secret appears to be invalid format. Please check your Kraken API credentials.');
     }
 
     let result;
@@ -117,28 +161,51 @@ serve(async (req) => {
       case 'connect':
         console.log('Testing Kraken connection...');
         
-        // Verify API credentials and get account info
-        const accountBalance = await krakenRequest('Balance', {}, apiKey, apiSecret);
-        
-        // Get trade balance to determine fee tier
-        let tradeFee = 0.26; // Default fee
-        let verification = 'intermediate';
-        
         try {
-          const tradeBalance = await krakenRequest('TradeBalance', {}, apiKey, apiSecret);
-          if (tradeBalance.c) {
-            tradeFee = parseFloat(tradeBalance.c);
+          // Test with account balance - this is a simple authenticated endpoint
+          const accountBalance = await krakenRequest('Balance', {}, apiKey, apiSecret);
+          console.log('Account balance retrieved successfully:', accountBalance);
+          
+          // Get additional account info if possible
+          let tradeFee = 0.26; // Default fee
+          let verification = 'intermediate';
+          
+          try {
+            const tradeBalance = await krakenRequest('TradeBalance', {}, apiKey, apiSecret);
+            console.log('Trade balance:', tradeBalance);
+            
+            // Extract fee information if available
+            if (tradeBalance && tradeBalance.m) {
+              tradeFee = parseFloat(tradeBalance.m) || 0.26;
+            }
+          } catch (feeError) {
+            console.warn('Could not fetch trade balance (non-critical):', feeError);
           }
-        } catch (feeError) {
-          console.warn('Could not fetch trade balance, using default fee:', feeError);
+          
+          result = {
+            connected: true,
+            balances: accountBalance,
+            tradeFee,
+            verification
+          };
+        } catch (connectionError) {
+          console.error('Connection test failed:', connectionError);
+          
+          // Provide more specific error messages based on common issues
+          let errorMessage = connectionError.message;
+          
+          if (errorMessage.includes('EAPI:Invalid key')) {
+            errorMessage = 'Invalid API key. Please check your Kraken API key is correct.';
+          } else if (errorMessage.includes('EAPI:Invalid signature')) {
+            errorMessage = 'Invalid API signature. Please check your Kraken API secret is correct.';
+          } else if (errorMessage.includes('EAPI:Invalid nonce')) {
+            errorMessage = 'Invalid nonce. Please try again.';
+          } else if (errorMessage.includes('EGeneral:Permission denied')) {
+            errorMessage = 'Permission denied. Please ensure your API key has "Query Funds" permission enabled.';
+          }
+          
+          throw new Error(errorMessage);
         }
-        
-        result = {
-          connected: true,
-          balances: accountBalance,
-          tradeFee,
-          verification
-        };
         break;
 
       case 'balances':
@@ -156,12 +223,11 @@ serve(async (req) => {
         }
         
         if (method === 'bitcoin' || method === 'crypto') {
-          // Cryptocurrency withdrawal
           console.log(`Withdrawing ${amount} ${asset} to ${address}`);
           
           const withdrawResult = await krakenRequest('Withdraw', {
             asset,
-            key: address, // Note: This requires pre-configured withdrawal addresses in Kraken
+            key: address,
             amount
           }, apiKey, apiSecret);
           
@@ -171,12 +237,11 @@ serve(async (req) => {
             message: `Withdrawal of ${amount} ${asset} initiated`
           };
         } else {
-          // Fiat withdrawal (wire, ACH)
           console.log(`Withdrawing $${amount} USD via ${method}`);
           
           const withdrawResult = await krakenRequest('Withdraw', {
             asset: 'USD',
-            key: method, // This should match a pre-configured withdrawal method
+            key: method,
             amount
           }, apiKey, apiSecret);
           

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +19,9 @@ import {
   EyeOff,
   Shield,
   AlertTriangle,
-  ExternalLink
+  ExternalLink,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 
 interface KrakenBalance {
@@ -51,6 +52,7 @@ const KrakenWallet: React.FC = () => {
   const [withdrawCurrency, setWithdrawCurrency] = useState('BTC');
   const [withdrawAddress, setWithdrawAddress] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('bitcoin');
+  const [connectionError, setConnectionError] = useState<string>('');
   const { toast } = useToast();
 
   const withdrawalMethods: WithdrawalMethod[] = [
@@ -74,56 +76,90 @@ const KrakenWallet: React.FC = () => {
     }
   ];
 
+  const validateApiCredentials = () => {
+    if (!apiKey.trim() || !apiSecret.trim()) {
+      setConnectionError('Both API key and secret are required');
+      return false;
+    }
+
+    if (apiKey.length < 50) {
+      setConnectionError('API key appears too short. Please check your Kraken API key.');
+      return false;
+    }
+
+    if (apiSecret.length < 80) {
+      setConnectionError('API secret appears too short. Please check your Kraken API secret.');
+      return false;
+    }
+
+    // Check for common issues
+    if (apiKey.includes(' ') || apiSecret.includes(' ')) {
+      setConnectionError('API credentials should not contain spaces. Please check for copy/paste errors.');
+      return false;
+    }
+
+    setConnectionError('');
+    return true;
+  };
+
   const connectKraken = async () => {
-    if (!apiKey || !apiSecret) {
-      toast({
-        title: "Missing Credentials",
-        description: "Please enter both API key and secret",
-        variant: "destructive",
-      });
+    if (!validateApiCredentials()) {
       return;
     }
 
     setLoading(true);
+    setConnectionError('');
+    
     try {
       console.log('Connecting to Kraken with API key:', apiKey.substring(0, 8) + '...');
       
       const { data, error } = await supabase.functions.invoke('kraken-api', {
         body: {
           action: 'connect',
-          apiKey,
-          apiSecret
+          apiKey: apiKey.trim(),
+          apiSecret: apiSecret.trim()
         }
       });
 
+      console.log('Supabase function response:', { data, error });
+
       if (error) {
         console.error('Supabase function error:', error);
-        throw new Error(error.message || 'Failed to connect to Kraken');
+        throw new Error(`Connection error: ${error.message}`);
       }
 
-      if (data.error) {
+      if (data?.error) {
         console.error('Kraken API error:', data.error);
         throw new Error(data.error);
+      }
+
+      if (!data?.connected) {
+        throw new Error('Connection failed - no data returned');
       }
 
       console.log('Kraken connection successful:', data);
       
       setAccount({
         connected: true,
-        balances: data.balances,
-        tradeFee: data.tradeFee,
-        verification: data.verification
+        balances: data.balances || {},
+        tradeFee: data.tradeFee || 0.26,
+        verification: data.verification || 'intermediate'
       });
 
       toast({
         title: "Kraken Connected!",
         description: "Successfully connected to your Kraken account",
       });
-    } catch (error) {
+
+      setConnectionError('');
+    } catch (error: any) {
       console.error('Connection error:', error);
+      const errorMessage = error.message || "Unable to connect to Kraken. Please check your API credentials.";
+      setConnectionError(errorMessage);
+      
       toast({
         title: "Connection Failed",
-        description: error.message || "Unable to connect to Kraken. Please check your API credentials.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -252,6 +288,7 @@ const KrakenWallet: React.FC = () => {
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
             Kraken Exchange Integration
+            {account?.connected && <CheckCircle className="h-5 w-5 text-green-500" />}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -265,14 +302,24 @@ const KrakenWallet: React.FC = () => {
 
           {!account ? (
             <div className="space-y-4">
+              {connectionError && (
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertDescription>{connectionError}</AlertDescription>
+                </Alert>
+              )}
+
               <div className="space-y-2">
                 <Label>Kraken API Key</Label>
                 <div className="relative">
                   <Input 
                     type={showSecrets ? "text" : "password"}
                     value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Enter your Kraken API key"
+                    onChange={(e) => {
+                      setApiKey(e.target.value);
+                      setConnectionError('');
+                    }}
+                    placeholder="Enter your Kraken API key (starts with letters/numbers)"
                     className="pr-10"
                   />
                   <Button
@@ -284,6 +331,9 @@ const KrakenWallet: React.FC = () => {
                     {showSecrets ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Should be ~56 characters long
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -291,9 +341,15 @@ const KrakenWallet: React.FC = () => {
                 <Input 
                   type={showSecrets ? "text" : "password"}
                   value={apiSecret}
-                  onChange={(e) => setApiSecret(e.target.value)}
-                  placeholder="Enter your Kraken API secret"
+                  onChange={(e) => {
+                    setApiSecret(e.target.value);
+                    setConnectionError('');
+                  }}
+                  placeholder="Enter your Kraken API secret (long base64 string)"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Should be ~88 characters long
+                </p>
               </div>
 
               <Alert>
@@ -303,11 +359,17 @@ const KrakenWallet: React.FC = () => {
                     Kraken API Settings <ExternalLink className="h-3 w-3 inline" />
                   </a>
                   <br />
-                  Required permissions: Query Funds, Withdraw Funds, Trade
+                  <strong>Required permissions:</strong> Query Funds, Withdraw Funds, Trade
+                  <br />
+                  <strong>Note:</strong> API keys may take a few minutes to become active after creation.
                 </AlertDescription>
               </Alert>
               
-              <Button onClick={connectKraken} disabled={loading || !apiKey || !apiSecret} className="w-full">
+              <Button 
+                onClick={connectKraken} 
+                disabled={loading || !apiKey || !apiSecret} 
+                className="w-full"
+              >
                 {loading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -322,7 +384,7 @@ const KrakenWallet: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Badge variant="default">Connected</Badge>
+                  <Badge variant="default" className="bg-green-500">Connected</Badge>
                   <Badge variant="secondary">Verification: {account.verification}</Badge>
                   <Badge variant="outline">Fee: {account.tradeFee}%</Badge>
                 </div>
