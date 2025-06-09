@@ -27,7 +27,7 @@ export const useWithdrawal = ({
   const { toast } = useToast();
 
   const generateValidTxHash = () => {
-    // Generate a valid 64-character hex string (32 bytes)
+    // Generate a valid 64-character lowercase hex string (32 bytes)
     const chars = '0123456789abcdef';
     let result = '';
     for (let i = 0; i < 64; i++) {
