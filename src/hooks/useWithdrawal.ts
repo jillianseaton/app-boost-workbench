@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface UseWithdrawalProps {
   earnings: number;
+  tasksCompleted: number;
   setEarnings: React.Dispatch<React.SetStateAction<number>>;
   setHasWithdrawn: React.Dispatch<React.SetStateAction<boolean>>;
   addTransaction: (transaction: any) => string;
@@ -14,6 +15,7 @@ interface UseWithdrawalProps {
 
 export const useWithdrawal = ({
   earnings,
+  tasksCompleted,
   setEarnings,
   setHasWithdrawn,
   addTransaction,
@@ -94,10 +96,10 @@ export const useWithdrawal = ({
   };
 
   const handleWithdraw = async () => {
-    if (earnings < 10) {
+    if (tasksCompleted < 20) {
       toast({
-        title: "Minimum withdrawal not met",
-        description: "You need at least $10.00 to withdraw.",
+        title: "Complete all tasks first",
+        description: "You need to complete all 20 optimization tasks before withdrawing.",
         variant: "destructive",
       });
       return;

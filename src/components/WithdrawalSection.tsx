@@ -8,6 +8,7 @@ import { Bitcoin, Send, Download, Loader2 } from 'lucide-react';
 
 interface WithdrawalSectionProps {
   earnings: number;
+  tasksCompleted: number;
   hasWithdrawn: boolean;
   onWithdraw: () => void;
   isWithdrawing?: boolean;
@@ -15,6 +16,7 @@ interface WithdrawalSectionProps {
 
 const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({ 
   earnings, 
+  tasksCompleted,
   hasWithdrawn, 
   onWithdraw,
   isWithdrawing = false
@@ -25,7 +27,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   const [currencyType] = useState('Bitcoin');
 
   // Debug logging
-  console.log('WithdrawalSection - earnings:', earnings, 'hasWithdrawn:', hasWithdrawn, 'isWithdrawing:', isWithdrawing);
+  console.log('WithdrawalSection - earnings:', earnings, 'tasksCompleted:', tasksCompleted, 'hasWithdrawn:', hasWithdrawn, 'isWithdrawing:', isWithdrawing);
 
   // Predefined wallet addresses for dropdown
   const walletOptions = [
@@ -48,14 +50,14 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     if (!bitcoinAddress.trim()) {
       return;
     }
-    if (earnings < 10) {
+    if (tasksCompleted < 20) {
       return;
     }
     onWithdraw();
   };
 
-  // Only show withdrawal section if minimum threshold is met and hasn't withdrawn
-  if (earnings < 10 || hasWithdrawn) {
+  // Only show withdrawal section if all tasks completed and hasn't withdrawn
+  if (tasksCompleted < 20 || hasWithdrawn) {
     return null;
   }
 
@@ -142,7 +144,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
         <div className="flex gap-2">
           <Button 
             onClick={handleWithdraw} 
-            disabled={!bitcoinAddress.trim() || earnings < 10 || isWithdrawing}
+            disabled={!bitcoinAddress.trim() || tasksCompleted < 20 || isWithdrawing}
             className="flex-1"
             variant="default"
           >

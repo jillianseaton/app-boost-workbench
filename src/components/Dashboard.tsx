@@ -31,6 +31,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   
   const { isWithdrawing, withdrawalAmount, handleWithdraw } = useWithdrawal({
     earnings,
+    tasksCompleted,
     setEarnings,
     setHasWithdrawn,
     addTransaction,
@@ -100,6 +101,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
       <WithdrawalSection 
         earnings={availableEarnings}
+        tasksCompleted={tasksCompleted}
         hasWithdrawn={hasWithdrawn}
         onWithdraw={handleWithdraw}
         isWithdrawing={isWithdrawing}
