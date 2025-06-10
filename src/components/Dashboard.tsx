@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import TaskOptimization from './TaskOptimization';
 import WithdrawalSection from './WithdrawalSection';
 import PartnerServices from './PartnerServices';
 import TransactionHistory from './TransactionHistory';
-import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   phoneNumber: string;
@@ -34,8 +34,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [hasWithdrawn, setHasWithdrawn] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [withdrawalAmount, setWithdrawalAmount] = useState(0); // Track amount being withdrawn
   const { toast } = useToast();
 
   const maxTasks = 20;
@@ -93,91 +91,35 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     });
   };
 
-  const handleWithdraw = async () => {
-    if (earnings < 10) {
-      toast({
-        title: "Minimum withdrawal not met",
-        description: "You need at least $10.00 to withdraw.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleWithdraw = () => {
+    // This will be handled by the WithdrawalSection component via useStripe hook
+    // Add transaction when withdrawal is successful
+    const transactionId = addTransaction({
+      type: 'withdrawal',
+      amount: earnings,
+      status: 'pending',
+    });
 
-    if (isWithdrawing) {
-      toast({
-        title: "Withdrawal in progress",
-        description: "Please wait for the current withdrawal to complete.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Reset earnings and set withdrawal flag
+    setEarnings(0);
+    setHasWithdrawn(true);
 
-    setIsWithdrawing(true);
-    setWithdrawalAmount(earnings); // Store the amount being withdrawn
-
-    try {
-      console.log('Initiating Stripe withdrawal:', { 
-        amount: earnings, 
-        userEmail: user.phoneNumber, // Using phone as email for now
-        userId: user.username 
-      });
-
-      // Add withdrawal transaction but DON'T reset earnings yet
-      const transactionId = addTransaction({
-        type: 'withdrawal',
-        amount: withdrawalAmount,
-        status: 'pending',
-      });
-
-      toast({
-        title: "Bank Withdrawal Initiated",
-        description: `$${withdrawalAmount.toFixed(2)} withdrawal initiated. Funds will arrive in 1-2 business days.`,
-      });
-
-      // Simulate processing time for demo
-      setTimeout(() => {
-        updateTransaction(transactionId, { 
-          status: 'confirmed'
-        });
-        
-        // NOW reset earnings since withdrawal is confirmed
-        setEarnings(prev => prev - withdrawalAmount);
-        setHasWithdrawn(true);
-        setWithdrawalAmount(0);
-        
-        toast({
-          title: "Withdrawal Confirmed",
-          description: `Your withdrawal has been processed and is on its way to your bank account.`,
-        });
-      }, 5000); // 5 seconds for demo
-
-    } catch (error) {
-      console.error('Withdrawal failed:', error);
-      setWithdrawalAmount(0); // Reset withdrawal amount on failure
-      toast({
-        title: "Withdrawal Failed",
-        description: error.message || "Unable to process withdrawal. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsWithdrawing(false);
-    }
+    // Update transaction to confirmed after successful withdrawal
+    setTimeout(() => {
+      updateTransaction(transactionId, { status: 'confirmed' });
+    }, 1000);
   };
 
   const resetAccount = () => {
     setEarnings(0);
     setTasksCompleted(0);
     setHasWithdrawn(false);
-    setIsWithdrawing(false);
-    setWithdrawalAmount(0);
+    setTransactions([]);
     toast({
       title: "Account Reset",
       description: "Ready for a new day of earning!",
     });
   };
-
-  // Calculate available earnings (total earnings minus amount being withdrawn)
-  const availableEarnings = earnings - withdrawalAmount;
 
   return (
     <div className="space-y-6">
@@ -210,12 +152,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">${availableEarnings.toFixed(2)}</div>
-            {withdrawalAmount > 0 && (
-              <div className="text-xs text-orange-600 mt-1">
-                ${withdrawalAmount.toFixed(2)} being withdrawn...
-              </div>
-            )}
+            <div className="text-2xl font-bold text-green-600">${earnings.toFixed(2)}</div>
           </CardContent>
         </Card>
 
@@ -262,11 +199,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
       {/* Withdrawal Section */}
       <WithdrawalSection 
-        earnings={availableEarnings}
+        earnings={earnings}
         hasWithdrawn={hasWithdrawn}
         onWithdraw={handleWithdraw}
-        isWithdrawing={isWithdrawing}
-        userEmail={user.phoneNumber} // Using phone as email identifier
+        userEmail={user.phoneNumber}
         userId={user.username}
       />
 

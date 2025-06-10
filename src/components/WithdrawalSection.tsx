@@ -10,7 +10,6 @@ interface WithdrawalSectionProps {
   earnings: number;
   hasWithdrawn: boolean;
   onWithdraw: () => void;
-  isWithdrawing?: boolean;
   userEmail?: string;
   userId?: string;
 }
@@ -19,16 +18,12 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   earnings, 
   hasWithdrawn, 
   onWithdraw,
-  isWithdrawing = false,
   userEmail = '',
   userId = ''
 }) => {
   const [withdrawType] = useState('Bank Transfer');
   const [currencyType] = useState('USD');
   const { loading, accountSetupLoading, createPayout, setupAccount } = useStripe();
-
-  // Debug logging
-  console.log('WithdrawalSection - earnings:', earnings, 'hasWithdrawn:', hasWithdrawn, 'isWithdrawing:', isWithdrawing);
 
   const handleWithdraw = async () => {
     if (earnings < 10) {
@@ -42,6 +37,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
         userId: userId,
       });
       
+      // Call the parent onWithdraw to update the dashboard state
       onWithdraw();
     } catch (error) {
       console.error('Withdrawal failed:', error);
@@ -50,7 +46,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
   const handleAccountSetup = async () => {
     try {
-      const result = await setupAccount(userEmail, userId);
+      const result = await setupAccount(userEmail, userId, window.location.origin);
       if (result?.onboardingUrl) {
         // Open Stripe onboarding in new tab
         window.open(result.onboardingUrl, '_blank');
@@ -116,11 +112,11 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
         <div className="flex gap-2">
           <Button 
             onClick={handleWithdraw} 
-            disabled={!userEmail || earnings < 10 || isWithdrawing || loading}
+            disabled={!userEmail || earnings < 10 || loading}
             className="flex-1"
             variant="default"
           >
-            {(isWithdrawing || loading) ? (
+            {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Processing...
