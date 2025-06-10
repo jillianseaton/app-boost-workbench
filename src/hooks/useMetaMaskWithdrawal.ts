@@ -58,7 +58,7 @@ export const useMetaMaskWithdrawal = ({
     setWithdrawalAmount(earnings);
 
     try {
-      // Ensure MetaMask is connected
+      // Get connected account
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
@@ -69,34 +69,16 @@ export const useMetaMaskWithdrawal = ({
 
       const withdrawalAddress = accounts[0];
 
-      // Verify we're on Ethereum mainnet
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      if (chainId !== '0x1') {
-        // Request switch to Ethereum mainnet
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x1' }],
-          });
-        } catch (switchError: any) {
-          if (switchError.code === 4902) {
-            throw new Error('Please add Ethereum Mainnet to MetaMask and try again');
-          }
-          throw switchError;
-        }
-      }
-
-      // Get current user for authentication
+      // Get current user
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (!currentUser) {
         throw new Error('User not authenticated');
       }
 
-      console.log('Initiating REAL MetaMask withdrawal:', { 
+      console.log('Initiating real MetaMask withdrawal:', { 
         address: withdrawalAddress, 
         amountUSD: earnings,
-        userId: currentUser.id,
-        network: 'ethereum-mainnet'
+        userId: currentUser.id
       });
 
       // Create pending transaction record
@@ -106,16 +88,10 @@ export const useMetaMaskWithdrawal = ({
         address: withdrawalAddress,
         status: 'pending',
         network: 'ethereum',
-        currency: 'ETH',
-        isReal: true
+        currency: 'ETH'
       });
 
-      toast({
-        title: "Processing Real Withdrawal...",
-        description: "Creating Ethereum transaction. This may take a few moments.",
-      });
-
-      // Call the REAL withdrawal edge function
+      // Call the real withdrawal edge function
       const { data, error } = await supabase.functions.invoke('metamask-withdrawal', {
         body: {
           userId: currentUser.id,
@@ -126,15 +102,12 @@ export const useMetaMaskWithdrawal = ({
       });
 
       if (error) {
-        console.error('Withdrawal API error:', error);
-        throw new Error(error.message || 'Withdrawal service error');
+        throw error;
       }
 
       if (!data.success) {
         throw new Error(data.error || 'Withdrawal failed');
       }
-
-      console.log('Real withdrawal response:', data);
 
       // Update transaction with real blockchain data
       updateTransaction(transactionId, {
@@ -143,58 +116,52 @@ export const useMetaMaskWithdrawal = ({
         explorerUrl: data.explorerUrl,
         amountETH: data.ethAmount,
         gasFeeETH: data.gasFeeETH,
-        ethPrice: data.ethPrice,
-        network: 'ethereum-mainnet',
-        isReal: true
+        ethPrice: data.ethPrice
       });
 
       toast({
-        title: "Real Transaction Broadcasted!",
-        description: `${data.ethAmount.toFixed(6)} ETH sent to Ethereum mainnet. TX: ${data.txHash.substring(0, 10)}...`,
-        duration: 10000,
+        title: "Withdrawal Broadcasted!",
+        description: `$${withdrawalAmount.toFixed(2)} (${data.ethAmount.toFixed(6)} ETH) has been sent to the blockchain. Confirmation pending...`,
       });
 
-      // Update user balance immediately (optimistic update)
+      // Update user balance immediately
       setEarnings(prev => prev - withdrawalAmount);
       setHasWithdrawn(true);
       setWithdrawalAmount(0);
 
-      // Monitor for confirmation and show success message
-      setTimeout(() => {
-        toast({
-          title: "Check Transaction Status",
-          description: `Track your transaction on Etherscan: ${data.explorerUrl}`,
-          duration: 15000,
-        });
-      }, 5000);
+      // Monitor for confirmation
+      setTimeout(async () => {
+        try {
+          // Check if transaction is confirmed
+          const response = await fetch(`https://api.etherscan.io/api?module=transaction&action=gettxreceiptstatus&txhash=${data.txHash}&apikey=demo`);
+          const txData = await response.json();
+          
+          if (txData.result?.status === '1') {
+            updateTransaction(transactionId, { status: 'confirmed' });
+            toast({
+              title: "Withdrawal Confirmed!",
+              description: `Transaction confirmed on Ethereum blockchain.`,
+            });
+          }
+        } catch (error) {
+          console.error('Error checking confirmation:', error);
+        }
+      }, 120000); // Check after 2 minutes
 
     } catch (error: any) {
-      console.error('Real MetaMask withdrawal failed:', error);
+      console.error('MetaMask withdrawal failed:', error);
       setWithdrawalAmount(0);
-      
-      // Specific error handling for different scenarios
-      let errorMessage = error.message || "Unable to process withdrawal. Please try again.";
-      
-      if (error.message?.includes('insufficient')) {
-        errorMessage = "Insufficient funds in hot wallet. Please contact support.";
-      } else if (error.message?.includes('Invalid Ethereum address')) {
-        errorMessage = "Invalid Ethereum address. Please check your MetaMask wallet.";
-      } else if (error.message?.includes('User rejected')) {
-        errorMessage = "Transaction rejected by user.";
-      }
+      setIsWithdrawing(false);
       
       toast({
-        title: "Real Withdrawal Failed",
-        description: errorMessage,
+        title: "Withdrawal Failed",
+        description: error.message || "Unable to process withdrawal. Please try again.",
         variant: "destructive",
-        duration: 10000,
       });
       
-      // Restore earnings if withdrawal failed before broadcast
-      if (!error.message?.includes('broadcasted')) {
-        setEarnings(prev => prev + withdrawalAmount);
-        setHasWithdrawn(false);
-      }
+      // Restore earnings if withdrawal failed
+      setEarnings(prev => prev + withdrawalAmount);
+      setHasWithdrawn(false);
     } finally {
       setIsWithdrawing(false);
     }
