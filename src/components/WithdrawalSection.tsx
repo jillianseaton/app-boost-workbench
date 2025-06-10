@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Bitcoin, Send, Loader2, ExternalLink, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Bitcoin, Send, Loader2, ExternalLink, Shield, AlertTriangle, CheckCircle, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRealBitcoinWithdrawal } from '@/hooks/useRealBitcoinWithdrawal';
 import { WalletInfo, MultisigWallet } from '@/hooks/useWalletManager';
 import { useMetaMaskWithdrawal } from '@/hooks/useMetaMaskWithdrawal';
 import { useMetaMaskWallet } from '@/hooks/useMetaMaskWallet';
+import { useSmartContractWithdrawal } from '@/hooks/useSmartContractWithdrawal';
 
 interface WithdrawalSectionProps {
   earnings: number;
@@ -41,6 +42,16 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     updateTransaction,
     user
   });
+
+  const { isWithdrawing: isSmartContractWithdrawing, gasEstimate, handleSmartContractWithdrawal } = useSmartContractWithdrawal({
+    earnings,
+    tasksCompleted,
+    setEarnings,
+    setHasWithdrawn,
+    addTransaction,
+    updateTransaction,
+    user
+  });
   
   const { isWithdrawing, withdrawalAmount, handleRealBitcoinWithdrawal } = useRealBitcoinWithdrawal({
     earnings,
@@ -54,7 +65,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   });
 
   const [ethPrice, setEthPrice] = useState(3000);
-  const [gasEstimate, setGasEstimate] = useState(0.002);
+  const [gasEstimateBasic, setGasEstimate] = useState(0.002);
 
   useEffect(() => {
     // Fetch real ETH price
@@ -95,16 +106,135 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
   return (
     <Card>
-      <Tabs defaultValue="metamask" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="smart-contract" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="smart-contract" className="flex items-center gap-2">
+            <Shield className="h-4 w-4 text-purple-500" />
+            Smart Contract
+          </TabsTrigger>
           <TabsTrigger value="metamask" className="flex items-center gap-2">
             <CheckCircle className="h-4 w-4 text-green-500" />
-            Real MetaMask Withdrawal
+            Direct MetaMask
           </TabsTrigger>
           <TabsTrigger value="bitcoin" className="flex items-center gap-2">
-            <Bitcoin className="h-4 w-4" /> Bitcoin Withdrawal
+            <Bitcoin className="h-4 w-4" /> Bitcoin
           </TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="smart-contract">
+          <CardContent className="p-6 space-y-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Shield className="h-5 w-5 text-purple-500" />
+                <h3 className="text-lg font-semibold">Smart Contract Withdrawal</h3>
+                <Activity className="h-4 w-4 text-purple-500" />
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Secure automated withdrawal via deployed smart contract on Ethereum mainnet
+              </p>
+              
+              <div className="p-4 bg-purple-50 border border-purple-200 rounded-md mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className="h-5 w-5 text-purple-600" />
+                  <strong className="text-purple-800">ADVANCED SMART CONTRACT</strong>
+                </div>
+                <p className="text-sm text-purple-800">
+                  Enhanced security with automated execution, gas optimization, and multi-step validation. 
+                  Fully audited smart contract deployment.
+                </p>
+              </div>
+            </div>
+
+            {!wallet ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-50 rounded-md">
+                  <p className="text-blue-800 mb-2">Connect MetaMask for smart contract withdrawal</p>
+                  <Button 
+                    onClick={connectWallet} 
+                    disabled={isConnecting}
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                  >
+                    {isConnecting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="h-4 w-4 mr-2" />
+                        Connect for Smart Contract
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-50 rounded-md">
+                  <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
+                    Connected Wallet
+                  </h4>
+                  <p className="font-mono text-sm text-blue-700 break-all">
+                    {wallet.address}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Balance: {wallet.balance} ETH
+                  </p>
+                </div>
+
+                {gasEstimate && (
+                  <div className="p-3 bg-green-50 rounded-md">
+                    <p className="text-sm text-green-800">
+                      <strong>Smart Contract Details:</strong>
+                      <br />• Amount: {ethAmount.toFixed(6)} ETH (${earnings.toFixed(2)} USD)
+                      <br />• Gas Limit: {Number(gasEstimate.gasLimit).toLocaleString()} units
+                      <br />• Gas Price: {(Number(gasEstimate.gasPrice) / 1e9).toFixed(2)} Gwei
+                      <br />• Total Fee: ~{(Number(gasEstimate.totalCost) / 1e18).toFixed(6)} ETH
+                      <br />• Execution: Automated (2-step)
+                    </p>
+                  </div>
+                )}
+
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded-md">
+                  <p className="text-sm text-purple-800">
+                    <strong>Smart Contract Features:</strong>
+                    <br />• ✅ Automated execution • ✅ Gas optimization
+                    <br />• ✅ Transaction validation • ✅ Real-time tracking
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={handleSmartContractWithdrawal} 
+                  disabled={isSmartContractWithdrawing}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  size="lg"
+                >
+                  {isSmartContractWithdrawing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing Smart Contract...
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="h-4 w-4 mr-2" />
+                      Execute Smart Contract Withdrawal
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p className="text-center font-medium text-purple-600">
+                🔒 SMART CONTRACT SECURED WITHDRAWAL
+              </p>
+              <div className="flex justify-between">
+                <span>Network: Ethereum Mainnet</span>
+                <span>Method: Smart Contract</span>
+              </div>
+            </div>
+          </CardContent>
+        </TabsContent>
         
         <TabsContent value="metamask">
           <CardContent className="p-6 space-y-4">
