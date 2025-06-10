@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -117,69 +116,40 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     setWithdrawalAmount(earnings); // Store the amount being withdrawn
 
     try {
-      // Use a predefined Bitcoin address for demonstration
-      const withdrawalAddress = "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh";
-      
-      // Calculate Bitcoin amount (assuming $45,000 per BTC for demo)
-      const btcPrice = 45000;
-      const btcAmount = earnings / btcPrice;
-
-      console.log('Initiating Bitcoin withdrawal:', { 
-        address: withdrawalAddress, 
-        amountUSD: earnings, 
-        amountBTC: btcAmount 
+      console.log('Initiating Stripe withdrawal:', { 
+        amount: earnings, 
+        userEmail: user.phoneNumber, // Using phone as email for now
+        userId: user.username 
       });
-
-      // Call the withdraw-btc edge function
-      const { data, error } = await supabase.functions.invoke('withdraw-btc', {
-        body: {
-          address: withdrawalAddress,
-          amount: btcAmount,
-          amountUSD: earnings,
-          userId: user.phoneNumber
-        }
-      });
-
-      if (error) {
-        console.error('Withdrawal error:', error);
-        throw new Error(error.message || 'Withdrawal failed');
-      }
-
-      console.log('Withdrawal response:', data);
 
       // Add withdrawal transaction but DON'T reset earnings yet
       const transactionId = addTransaction({
         type: 'withdrawal',
         amount: withdrawalAmount,
-        address: withdrawalAddress,
         status: 'pending',
-        txHash: data.withdrawalId,
       });
 
       toast({
-        title: "Bitcoin Withdrawal Initiated",
-        description: `$${withdrawalAmount.toFixed(2)} withdrawal initiated. Earnings will be deducted once transaction is visible on blockchain.`,
+        title: "Bank Withdrawal Initiated",
+        description: `$${withdrawalAmount.toFixed(2)} withdrawal initiated. Funds will arrive in 1-2 business days.`,
       });
 
-      // Simulate getting transaction hash and then reset earnings
+      // Simulate processing time for demo
       setTimeout(() => {
-        const finalTxHash = data.txHash || `tx_${data.withdrawalId}_mainnet`;
-        
         updateTransaction(transactionId, { 
-          status: 'confirmed',
-          txHash: finalTxHash
+          status: 'confirmed'
         });
         
-        // NOW reset earnings since we have a viewable transaction
+        // NOW reset earnings since withdrawal is confirmed
         setEarnings(prev => prev - withdrawalAmount);
         setHasWithdrawn(true);
         setWithdrawalAmount(0);
         
         toast({
-          title: "Transaction Visible on Blockchain",
-          description: `Your withdrawal is now visible on the Bitcoin network! Earnings have been deducted.`,
+          title: "Withdrawal Confirmed",
+          description: `Your withdrawal has been processed and is on its way to your bank account.`,
         });
-      }, 15000); // 15 seconds for demo - simulates time to get tx hash
+      }, 5000); // 5 seconds for demo
 
     } catch (error) {
       console.error('Withdrawal failed:', error);
@@ -296,6 +266,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         hasWithdrawn={hasWithdrawn}
         onWithdraw={handleWithdraw}
         isWithdrawing={isWithdrawing}
+        userEmail={user.phoneNumber} // Using phone as email identifier
+        userId={user.username}
       />
 
       {/* Transaction History */}
