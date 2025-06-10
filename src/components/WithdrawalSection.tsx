@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -301,8 +302,8 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                     <strong>Real Transaction Details:</strong>
                     <br />• Amount: {ethAmount.toFixed(6)} ETH (${earnings.toFixed(2)} USD)
                     <br />• Network: Ethereum Mainnet
-                    <br />• Gas Fee: ~{gasEstimate.toFixed(6)} ETH (${(gasEstimate * ethPrice).toFixed(2)} USD)
-                    <br />• Total Cost: ~{(ethAmount + gasEstimate).toFixed(6)} ETH
+                    <br />• Gas Fee: ~{gasEstimateBasic.toFixed(6)} ETH (${(gasEstimateBasic * ethPrice).toFixed(2)} USD)
+                    <br />• Total Cost: ~{(ethAmount + gasEstimateBasic).toFixed(6)} ETH
                     <br />• ETH Price: ${ethPrice.toLocaleString()}
                   </p>
                 </div>
