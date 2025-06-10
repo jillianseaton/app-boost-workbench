@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,9 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import ABTesting from "./pages/ABTesting";
-import Heatmaps from "./pages/Heatmaps";
-import FunnelAnalysis from "./pages/FunnelAnalysis";
+import BitcoinWalletPage from "./pages/BitcoinWalletPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,9 +20,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/ab-testing" element={<ABTesting />} />
-          <Route path="/heatmaps" element={<Heatmaps />} />
-          <Route path="/funnel-analysis" element={<FunnelAnalysis />} />
+          <Route path="/bitcoin-wallet" element={<BitcoinWalletPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
