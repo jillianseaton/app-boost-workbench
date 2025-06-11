@@ -1,1 +1,37 @@
+
 project_id = "laoltiyaaagiiutahypb"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+
+[storage]
+port = 5000
+
+[auth]
+port = 9999
+
+[vector]
+port = 7777
+
+[functions]
+port = 8000
+serve_port = 54321
+[functions.stripe-payout]
+verify_jwt = true
+[functions.stripe-account-setup]
+verify_jwt = true
+[functions.create-payment-intent]
+verify_jwt = true
+[functions.verify-payment]
+verify_jwt = true

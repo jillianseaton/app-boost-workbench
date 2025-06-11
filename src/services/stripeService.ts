@@ -31,6 +31,45 @@ export interface StripeAccountSetupResponse {
   timestamp: string;
 }
 
+export interface CreatePaymentIntentRequest {
+  amount: number; // Amount in cents
+  description?: string;
+  currency?: string;
+  customerEmail?: string;
+}
+
+export interface CreatePaymentIntentResponse {
+  success: boolean;
+  data?: {
+    clientSecret: string;
+    paymentIntentId: string;
+    amount: number;
+    currency: string;
+    status: string;
+  };
+  error?: string;
+  timestamp: string;
+}
+
+export interface VerifyPaymentRequest {
+  paymentIntentId: string;
+}
+
+export interface VerifyPaymentResponse {
+  success: boolean;
+  data?: {
+    paymentIntentId: string;
+    status: string;
+    amount: number;
+    currency: string;
+    customerEmail?: string;
+    created: number;
+    confirmed: boolean;
+  };
+  error?: string;
+  timestamp: string;
+}
+
 class StripeService {
   async createPayout(request: StripePayoutRequest): Promise<StripePayoutResponse> {
     try {
@@ -66,6 +105,44 @@ class StripeService {
       return data;
     } catch (error) {
       console.error('Stripe Account Setup Error:', error);
+      throw error;
+    }
+  }
+
+  async createPaymentIntent(request: CreatePaymentIntentRequest): Promise<CreatePaymentIntentResponse> {
+    try {
+      console.log('Creating payment intent:', request);
+      
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: request,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Payment intent creation failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Payment Intent Creation Error:', error);
+      throw error;
+    }
+  }
+
+  async verifyPayment(paymentIntentId: string): Promise<VerifyPaymentResponse> {
+    try {
+      console.log('Verifying payment:', paymentIntentId);
+      
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
+        body: { paymentIntentId },
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Payment verification failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Payment Verification Error:', error);
       throw error;
     }
   }

@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { stripeService } from '@/services/stripeService';
 
 interface UseStripePaymentProps {
   amount: number;
@@ -40,27 +41,29 @@ export const useStripePayment = ({ amount, description }: UseStripePaymentProps)
   // Create payment intent and get client secret
   useEffect(() => {
     const createPaymentIntent = async () => {
+      if (!amount) return;
+      
+      setIsLoading(true);
       try {
-        const response = await fetch('/api/create-payment-intent', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            amount: amount * 100, // Convert to cents
-            description,
-          }),
+        const response = await stripeService.createPaymentIntent({
+          amount: Math.round(amount * 100), // Convert to cents
+          description,
         });
 
-        const { client_secret } = await response.json();
-        setClientSecret(client_secret);
+        if (!response.success || !response.data?.clientSecret) {
+          throw new Error(response.error || 'Failed to create payment intent');
+        }
+        
+        setClientSecret(response.data.clientSecret);
       } catch (error) {
         console.error('Error creating payment intent:', error);
         toast({
           title: "Payment Setup Failed",
-          description: "Unable to initialize payment. Please try again.",
+          description: error instanceof Error ? error.message : "Unable to initialize payment. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -108,8 +111,9 @@ export const useStripePayment = ({ amount, description }: UseStripePaymentProps)
     setIsLoading(true);
 
     try {
-      const { error } = await stripe.confirmPayment({
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
+        redirect: 'if_required',
         confirmParams: {
           return_url: `${window.location.origin}/payment-success`,
         },
@@ -121,11 +125,18 @@ export const useStripePayment = ({ amount, description }: UseStripePaymentProps)
           description: error.message || "An error occurred during payment.",
           variant: "destructive",
         });
-      } else {
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast({
           title: "Payment Successful",
           description: "Your payment has been processed successfully.",
         });
+        
+        // Optionally verify the payment on the backend
+        const verification = await stripeService.verifyPayment(paymentIntent.id);
+        console.log('Payment verification:', verification);
+        
+        // Redirect to success page
+        window.location.href = `${window.location.origin}/payment-success`;
       }
     } catch (err) {
       toast({
