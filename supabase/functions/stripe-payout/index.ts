@@ -12,6 +12,7 @@ interface PayoutRequest {
   amount: number; // Amount in USD
   email: string;
   userId: string;
+  accountId?: string; // Stripe Connect account ID
 }
 
 serve(async (req) => {
@@ -21,9 +22,9 @@ serve(async (req) => {
 
   try {
     const body: PayoutRequest = await req.json();
-    const { amount, email, userId } = body;
+    const { amount, email, userId, accountId } = body;
     
-    console.log('Stripe Payout Handler - Request:', { amount, email, userId });
+    console.log('Stripe Payout Handler - Request:', { amount, email, userId, accountId });
     
     if (!amount || amount < 10) {
       throw new Error('Minimum payout amount is $10.00');
@@ -41,69 +42,30 @@ serve(async (req) => {
     
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
     
-    try {
-      // Create a payout using Stripe Connect
-      // Note: This requires the account to be properly set up with Express accounts
-      const payout = await stripe.payouts.create({
-        amount: Math.round(amount * 100), // Convert to cents
-        currency: 'usd',
-        method: 'instant',
-      });
-      
-      console.log('Payout created:', payout.id);
-      
-      return new Response(JSON.stringify({
-        success: true,
-        data: {
-          payoutId: payout.id,
-          amount: amount,
-          status: payout.status,
-          estimatedArrival: payout.arrival_date ? new Date(payout.arrival_date * 1000).toLocaleDateString() : '1-2 business days',
-          accountId: payout.destination || 'default_account',
-        },
-        timestamp: new Date().toISOString(),
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-      
-    } catch (payoutError) {
-      console.log('Direct payout failed, trying alternative approach:', payoutError.message);
-      
-      // If direct payout fails, create a payment intent that can be captured later
-      try {
-        const paymentIntent = await stripe.paymentIntents.create({
-          amount: Math.round(amount * 100),
-          currency: 'usd',
-          payment_method_types: ['card'],
-          metadata: {
-            type: 'payout_request',
-            userId: userId,
-            email: email,
-          },
-        });
-        
-        console.log('Payment intent created for payout request:', paymentIntent.id);
-        
-        return new Response(JSON.stringify({
-          success: true,
-          data: {
-            payoutId: paymentIntent.id,
-            amount: amount,
-            status: 'pending_setup',
-            estimatedArrival: 'Requires manual processing',
-            accountId: 'manual_processing',
-            message: 'Payout request created. Manual processing required through Stripe dashboard.',
-          },
-          timestamp: new Date().toISOString(),
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-        
-      } catch (intentError) {
-        console.error('Payment intent creation also failed:', intentError);
-        throw new Error('Unable to process payout. Please check your account setup.');
-      }
-    }
+    // Create a payout to the connected Express account
+    const payout = await stripe.payouts.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: 'usd',
+      method: 'instant',
+    }, {
+      stripeAccount: accountId, // Specify the connected account
+    });
+    
+    console.log('Payout created:', payout.id);
+    
+    return new Response(JSON.stringify({
+      success: true,
+      data: {
+        payoutId: payout.id,
+        amount: amount,
+        status: payout.status,
+        estimatedArrival: payout.arrival_date ? new Date(payout.arrival_date * 1000).toLocaleDateString() : '1-2 business days',
+        accountId: accountId || 'default_account',
+      },
+      timestamp: new Date().toISOString(),
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
     
   } catch (error) {
     console.error('Stripe Payout Error:', error);
@@ -112,7 +74,7 @@ serve(async (req) => {
     
     // Provide more helpful error messages for common issues
     if (error.message.includes('permissions')) {
-      errorMessage = 'API key permissions error. For live payouts, you need to implement Stripe Connect with Express accounts.';
+      errorMessage = 'API key permissions error. Please ensure your restricted key has the necessary permissions for payouts.';
     } else if (error.message.includes('Invalid API Key')) {
       errorMessage = 'Invalid Stripe API key. Please check your key in the Stripe Dashboard.';
     } else if (error.message.includes('No such destination')) {
