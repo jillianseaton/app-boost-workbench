@@ -37,28 +37,7 @@ serve(async (req) => {
     
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
     
-    // For restricted keys, we have limited capabilities
-    // We can still create customers and some basic operations
-    if (stripeKey.startsWith('rk_')) {
-      console.log('Using restricted key - limited account setup capabilities');
-      
-      // With restricted keys, we can create customers but not Express accounts
-      // This is a simulation of what would happen with proper Connect setup
-      return new Response(JSON.stringify({
-        success: true,
-        data: {
-          accountId: `acct_simulation_${Math.random().toString(36).substr(2, 9)}`,
-          onboardingUrl: `${req.headers.get('origin')}/account-setup-simulation`,
-          payoutsEnabled: false,
-          note: 'Account setup simulation. For live Express accounts, you need full API access.',
-        },
-        timestamp: new Date().toISOString(),
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    
-    // For full secret keys, create actual Express account
+    // Create Express account (works with both restricted and full keys)
     const account = await stripe.accounts.create({
       type: 'express',
       email: email,

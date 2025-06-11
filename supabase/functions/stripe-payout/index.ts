@@ -41,23 +41,24 @@ serve(async (req) => {
     
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
     
-    // For restricted keys, we can only simulate payouts since they don't have full API access
-    // In a real implementation with restricted keys, you would:
-    // 1. Create a payment intent for the payout amount
-    // 2. Use Connect Express accounts for actual payouts
-    // 3. Handle this through webhooks and Connect flows
+    // Create a payout using Stripe Connect
+    // Note: This requires the account to be properly set up with Express accounts
+    const payout = await stripe.payouts.create({
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: 'usd',
+      method: 'instant',
+    });
     
-    console.log('Payout simulation for:', { amount, email, userId });
+    console.log('Payout created:', payout.id);
     
     return new Response(JSON.stringify({
       success: true,
       data: {
-        payoutId: `po_simulation_${Math.random().toString(36).substr(2, 9)}`,
+        payoutId: payout.id,
         amount: amount,
-        status: 'pending',
-        estimatedArrival: '1-2 business days',
-        accountId: 'simulation_account',
-        note: 'This is a simulation. For live payouts, implement Stripe Connect with Express accounts.',
+        status: payout.status,
+        estimatedArrival: payout.arrival_date ? new Date(payout.arrival_date * 1000).toLocaleDateString() : '1-2 business days',
+        accountId: payout.destination || 'default_account',
       },
       timestamp: new Date().toISOString(),
     }), {
@@ -74,6 +75,8 @@ serve(async (req) => {
       errorMessage = 'API key permissions error. For live payouts, you need to implement Stripe Connect with Express accounts.';
     } else if (error.message.includes('Invalid API Key')) {
       errorMessage = 'Invalid Stripe API key. Please check your key in the Stripe Dashboard.';
+    } else if (error.message.includes('No such destination')) {
+      errorMessage = 'Bank account not set up. Please complete account setup first.';
     }
     
     return new Response(JSON.stringify({
