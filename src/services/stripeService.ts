@@ -51,6 +51,25 @@ export interface CreatePaymentIntentResponse {
   timestamp: string;
 }
 
+export interface CreateCheckoutSessionRequest {
+  amount: number; // Amount in cents
+  description: string;
+  successUrl: string;
+  cancelUrl: string;
+  customerEmail?: string;
+  mode?: 'payment' | 'setup';
+}
+
+export interface CreateCheckoutSessionResponse {
+  success: boolean;
+  data?: {
+    url: string;
+    sessionId: string;
+  };
+  error?: string;
+  timestamp: string;
+}
+
 export interface VerifyPaymentRequest {
   paymentIntentId: string;
 }
@@ -124,6 +143,25 @@ class StripeService {
       return data;
     } catch (error) {
       console.error('Payment Intent Creation Error:', error);
+      throw error;
+    }
+  }
+
+  async createCheckoutSession(request: CreateCheckoutSessionRequest): Promise<CreateCheckoutSessionResponse> {
+    try {
+      console.log('Creating checkout session:', request);
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: request,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Checkout session creation failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Checkout Session Creation Error:', error);
       throw error;
     }
   }

@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CreditCard, Send, Settings, Loader2 } from 'lucide-react';
-import { useStripe } from '@/hooks/useStripe';
+import { useStripeCheckout } from '@/hooks/useStripeCheckout';
 
 interface WithdrawalSectionProps {
   earnings: number;
@@ -23,7 +23,23 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 }) => {
   const [withdrawType] = useState('Bank Transfer');
   const [currencyType] = useState('USD');
-  const { loading, accountSetupLoading, createPayout, setupAccount } = useStripe();
+  const { loading, createCheckoutSession } = useStripeCheckout();
+
+  const handleBankSetup = async () => {
+    try {
+      // Create a checkout session for bank account setup (minimal amount)
+      await createCheckoutSession({
+        amount: 100, // $1.00 verification charge
+        description: 'Bank Account Setup Verification',
+        successUrl: `${window.location.origin}/account-setup-success`,
+        cancelUrl: `${window.location.origin}/account-setup-cancelled`,
+        customerEmail: userEmail,
+        mode: 'setup'
+      });
+    } catch (error) {
+      console.error('Bank setup failed:', error);
+    }
+  };
 
   const handleWithdraw = async () => {
     if (earnings < 10) {
@@ -31,28 +47,20 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     }
     
     try {
-      await createPayout({
-        amount: earnings,
-        email: userEmail,
-        userId: userId,
+      // Create checkout session for the actual withdrawal
+      await createCheckoutSession({
+        amount: Math.round(earnings * 100), // Convert to cents
+        description: `Withdraw $${earnings.toFixed(2)} to Bank Account`,
+        successUrl: `${window.location.origin}/withdrawal-success`,
+        cancelUrl: `${window.location.origin}/withdrawal-cancelled`,
+        customerEmail: userEmail,
+        mode: 'payment'
       });
       
       // Call the parent onWithdraw to update the dashboard state
       onWithdraw();
     } catch (error) {
       console.error('Withdrawal failed:', error);
-    }
-  };
-
-  const handleAccountSetup = async () => {
-    try {
-      const result = await setupAccount(userEmail, userId, window.location.origin);
-      if (result?.onboardingUrl) {
-        // Open Stripe onboarding in new tab
-        window.open(result.onboardingUrl, '_blank');
-      }
-    } catch (error) {
-      console.error('Account setup failed:', error);
     }
   };
 
@@ -75,7 +83,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           <div className="p-3 bg-blue-50 rounded-md mb-4">
             <p className="text-sm text-blue-800">
               <strong>Processing Time:</strong> Bank transfers typically take 1-2 business days to arrive. 
-              Your withdrawal will be processed securely through Stripe.
+              Your withdrawal will be processed securely through Stripe Checkout.
             </p>
           </div>
         </div>
@@ -104,7 +112,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
           <div className="p-3 bg-yellow-50 rounded-md">
             <p className="text-sm text-yellow-800">
-              <strong>First-time setup required:</strong> Click "Setup Bank Account" to connect your bank account for withdrawals.
+              <strong>First-time setup required:</strong> Click "Setup Bank Account" to verify your bank account through Stripe Checkout.
             </p>
           </div>
         </div>
@@ -129,12 +137,12 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
             )}
           </Button>
           <Button 
-            onClick={handleAccountSetup}
+            onClick={handleBankSetup}
             variant="outline"
             className="flex-1"
-            disabled={!userEmail || accountSetupLoading}
+            disabled={!userEmail || loading}
           >
-            {accountSetupLoading ? (
+            {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Setting up...
@@ -149,7 +157,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
         </div>
 
         <div className="text-xs text-muted-foreground space-y-1">
-          <p className="text-center">Secure withdrawals powered by Stripe. Minimum withdrawal: $10.00</p>
+          <p className="text-center">Secure withdrawals powered by Stripe Checkout. Minimum withdrawal: $10.00</p>
           <div className="flex justify-between">
             <span>Method: {withdrawType}</span>
             <span>Currency: {currencyType}</span>
