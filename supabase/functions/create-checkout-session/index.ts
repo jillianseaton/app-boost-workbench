@@ -17,6 +17,12 @@ interface CheckoutSessionRequest {
   mode?: 'payment' | 'setup';
 }
 
+// Email validation helper
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -44,7 +50,8 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
     
     let customerId;
-    if (customerEmail) {
+    // Only attempt customer creation/lookup if we have a valid email
+    if (customerEmail && isValidEmail(customerEmail)) {
       try {
         const customers = await stripe.customers.list({
           email: customerEmail,
@@ -62,11 +69,13 @@ serve(async (req) => {
       } catch (customerError) {
         console.log('Customer creation/lookup failed, proceeding without customer:', customerError);
       }
+    } else if (customerEmail) {
+      console.log('Invalid email format provided:', customerEmail, 'proceeding without customer');
     }
     
     const sessionConfig: any = {
       customer: customerId,
-      customer_email: customerId ? undefined : customerEmail,
+      customer_email: customerId ? undefined : (customerEmail && isValidEmail(customerEmail) ? customerEmail : undefined),
       success_url: successUrl,
       cancel_url: cancelUrl,
       mode: mode,
@@ -86,9 +95,8 @@ serve(async (req) => {
         },
       ];
     } else if (mode === 'setup') {
-      sessionConfig.mode = 'setup';
       sessionConfig.payment_method_types = ['card'];
-      sessionConfig.usage = 'off_session';
+      // Removed the invalid 'usage' parameter - this is for Payment Intents, not Checkout Sessions
     }
     
     const session = await stripe.checkout.sessions.create(sessionConfig);

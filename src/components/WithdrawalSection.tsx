@@ -14,6 +14,12 @@ interface WithdrawalSectionProps {
   userId?: string;
 }
 
+// Email validation helper
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
 const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({ 
   earnings, 
   hasWithdrawn, 
@@ -27,13 +33,19 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
   const handleBankSetup = async () => {
     try {
+      // Validate email before proceeding
+      if (userEmail && !isValidEmail(userEmail)) {
+        console.error('Invalid email format:', userEmail);
+        return;
+      }
+
       // Create a checkout session for bank account setup (minimal amount)
       await createCheckoutSession({
         amount: 100, // $1.00 verification charge
         description: 'Bank Account Setup Verification',
         successUrl: `${window.location.origin}/account-setup-success`,
         cancelUrl: `${window.location.origin}/account-setup-cancelled`,
-        customerEmail: userEmail,
+        customerEmail: userEmail && isValidEmail(userEmail) ? userEmail : undefined,
         mode: 'setup'
       });
     } catch (error) {
@@ -47,13 +59,19 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     }
     
     try {
+      // Validate email before proceeding
+      if (userEmail && !isValidEmail(userEmail)) {
+        console.error('Invalid email format:', userEmail);
+        return;
+      }
+
       // Create checkout session for the actual withdrawal
       await createCheckoutSession({
         amount: Math.round(earnings * 100), // Convert to cents
         description: `Withdraw $${earnings.toFixed(2)} to Bank Account`,
         successUrl: `${window.location.origin}/withdrawal-success`,
         cancelUrl: `${window.location.origin}/withdrawal-cancelled`,
-        customerEmail: userEmail,
+        customerEmail: userEmail && isValidEmail(userEmail) ? userEmail : undefined,
         mode: 'payment'
       });
       
@@ -68,6 +86,8 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   if (earnings < 10 || hasWithdrawn) {
     return null;
   }
+
+  const hasValidEmail = userEmail && isValidEmail(userEmail);
 
   return (
     <Card>
@@ -110,6 +130,14 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
             </div>
           </div>
 
+          {!hasValidEmail && userEmail && (
+            <div className="p-3 bg-yellow-50 rounded-md">
+              <p className="text-sm text-yellow-800">
+                <strong>Invalid email format:</strong> Please ensure you have a valid email address to proceed with withdrawal.
+              </p>
+            </div>
+          )}
+
           <div className="p-3 bg-yellow-50 rounded-md">
             <p className="text-sm text-yellow-800">
               <strong>First-time setup required:</strong> Click "Setup Bank Account" to verify your bank account through Stripe Checkout.
@@ -120,7 +148,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
         <div className="flex gap-2">
           <Button 
             onClick={handleWithdraw} 
-            disabled={!userEmail || earnings < 10 || loading}
+            disabled={!hasValidEmail || earnings < 10 || loading}
             className="flex-1"
             variant="default"
           >
@@ -140,7 +168,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
             onClick={handleBankSetup}
             variant="outline"
             className="flex-1"
-            disabled={!userEmail || loading}
+            disabled={!hasValidEmail || loading}
           >
             {loading ? (
               <>
