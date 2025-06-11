@@ -102,9 +102,9 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
             </div>
           </div>
 
-          <div className="p-3 bg-green-50 rounded-md">
-            <p className="text-sm text-green-800">
-              <strong>Secure withdrawals:</strong> Connect your bank account through Stripe's secure platform for instant and safe transfers.
+          <div className="p-3 bg-yellow-50 rounded-md">
+            <p className="text-sm text-yellow-800">
+              <strong>First-time setup required:</strong> Click "Setup Bank Account" to connect your bank account for withdrawals.
             </p>
           </div>
         </div>

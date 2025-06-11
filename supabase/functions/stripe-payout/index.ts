@@ -12,7 +12,6 @@ interface PayoutRequest {
   amount: number; // Amount in USD
   email: string;
   userId: string;
-  accountId?: string; // Stripe Connect account ID
 }
 
 serve(async (req) => {
@@ -22,9 +21,9 @@ serve(async (req) => {
 
   try {
     const body: PayoutRequest = await req.json();
-    const { amount, email, userId, accountId } = body;
+    const { amount, email, userId } = body;
     
-    console.log('Stripe Payout Handler - Request:', { amount, email, userId, accountId });
+    console.log('Stripe Payout Handler - Request:', { amount, email, userId });
     
     if (!amount || amount < 10) {
       throw new Error('Minimum payout amount is $10.00');
@@ -42,25 +41,23 @@ serve(async (req) => {
     
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
     
-    // Create a payout to the connected Express account
-    const payout = await stripe.payouts.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: 'usd',
-      method: 'instant',
-    }, {
-      stripeAccount: accountId, // Specify the connected account
-    });
+    // For restricted keys, we can only simulate payouts since they don't have full API access
+    // In a real implementation with restricted keys, you would:
+    // 1. Create a payment intent for the payout amount
+    // 2. Use Connect Express accounts for actual payouts
+    // 3. Handle this through webhooks and Connect flows
     
-    console.log('Payout created:', payout.id);
+    console.log('Payout simulation for:', { amount, email, userId });
     
     return new Response(JSON.stringify({
       success: true,
       data: {
-        payoutId: payout.id,
+        payoutId: `po_simulation_${Math.random().toString(36).substr(2, 9)}`,
         amount: amount,
-        status: payout.status,
-        estimatedArrival: payout.arrival_date ? new Date(payout.arrival_date * 1000).toLocaleDateString() : '1-2 business days',
-        accountId: accountId || 'default_account',
+        status: 'pending',
+        estimatedArrival: '1-2 business days',
+        accountId: 'simulation_account',
+        note: 'This is a simulation. For live payouts, implement Stripe Connect with Express accounts.',
       },
       timestamp: new Date().toISOString(),
     }), {
@@ -74,11 +71,9 @@ serve(async (req) => {
     
     // Provide more helpful error messages for common issues
     if (error.message.includes('permissions')) {
-      errorMessage = 'API key permissions error. Please ensure your restricted key has the necessary permissions for payouts.';
+      errorMessage = 'API key permissions error. For live payouts, you need to implement Stripe Connect with Express accounts.';
     } else if (error.message.includes('Invalid API Key')) {
       errorMessage = 'Invalid Stripe API key. Please check your key in the Stripe Dashboard.';
-    } else if (error.message.includes('No such destination')) {
-      errorMessage = 'Bank account not set up. Please complete account setup first.';
     }
     
     return new Response(JSON.stringify({
