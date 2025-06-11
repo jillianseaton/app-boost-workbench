@@ -38,7 +38,7 @@ export const useStripePayment = ({ amount, description }: UseStripePaymentProps)
     loadStripe();
   }, []);
 
-  // Create payment intent and get client secret
+  // Create payment intent and get client secret using backend
   useEffect(() => {
     const createPaymentIntent = async () => {
       if (!amount) return;
@@ -131,9 +131,13 @@ export const useStripePayment = ({ amount, description }: UseStripePaymentProps)
           description: "Your payment has been processed successfully.",
         });
         
-        // Optionally verify the payment on the backend
-        const verification = await stripeService.verifyPayment(paymentIntent.id);
-        console.log('Payment verification:', verification);
+        // Verify the payment using backend
+        try {
+          const verification = await stripeService.verifyPayment(paymentIntent.id);
+          console.log('Payment verification:', verification);
+        } catch (verifyError) {
+          console.warn('Payment verification failed:', verifyError);
+        }
         
         // Redirect to success page
         window.location.href = `${window.location.origin}/payment-success`;

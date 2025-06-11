@@ -35,6 +35,11 @@ serve(async (req) => {
       throw new Error('Stripe secret key not configured');
     }
     
+    // Accept both restricted keys (rk_) and secret keys (sk_)
+    if (!stripeKey.startsWith('rk_') && !stripeKey.startsWith('sk_')) {
+      throw new Error('Invalid Stripe key format. Please use either a Restricted key (rk_) or Secret key (sk_)');
+    }
+    
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
     
     // Create payment intent
@@ -51,7 +56,7 @@ serve(async (req) => {
     }
     
     if (customerEmail) {
-      // Try to find or create customer
+      // Try to find or create customer (works with restricted keys)
       try {
         const customers = await stripe.customers.list({
           email: customerEmail,
