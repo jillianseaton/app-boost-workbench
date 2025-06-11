@@ -10,6 +10,7 @@ import BitcoinWalletPage from "./pages/BitcoinWalletPage";
 import StripePaymentPage from "./pages/StripePaymentPage";
 import AccountSetupSuccess from "./pages/AccountSetupSuccess";
 import AccountSetupCancelled from "./pages/AccountSetupCancelled";
+import AccountSetupSimulation from "./pages/AccountSetupSimulation";
 import WithdrawalSuccess from "./pages/WithdrawalSuccess";
 import WithdrawalCancelled from "./pages/WithdrawalCancelled";
 import NotFound from "./pages/NotFound";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/stripe-payment" element={<StripePaymentPage />} />
           <Route path="/account-setup-success" element={<AccountSetupSuccess />} />
           <Route path="/account-setup-cancelled" element={<AccountSetupCancelled />} />
+          <Route path="/account-setup-simulation" element={<AccountSetupSimulation />} />
           <Route path="/withdrawal-success" element={<WithdrawalSuccess />} />
           <Route path="/withdrawal-cancelled" element={<WithdrawalCancelled />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
