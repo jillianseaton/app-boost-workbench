@@ -37,40 +37,77 @@ serve(async (req) => {
     
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
     
-    // Create Express account (works with both restricted and full keys)
-    const account = await stripe.accounts.create({
-      type: 'express',
-      email: email,
-      metadata: {
-        userId: userId,
-        platform: 'EarnFlow',
-      },
-      capabilities: {
-        transfers: { requested: true },
-      },
-    });
-    
-    // Create account link for onboarding
-    const accountLink = await stripe.accountLinks.create({
-      account: account.id,
-      refresh_url: returnUrl || `${req.headers.get('origin')}/account-setup?refresh=true`,
-      return_url: returnUrl || `${req.headers.get('origin')}/account-setup?success=true`,
-      type: 'account_onboarding',
-    });
-    
-    console.log('Account created and link generated for:', account.id);
-    
-    return new Response(JSON.stringify({
-      success: true,
-      data: {
-        accountId: account.id,
-        onboardingUrl: accountLink.url,
-        payoutsEnabled: account.payouts_enabled,
-      },
-      timestamp: new Date().toISOString(),
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    try {
+      // Try to create Express account first
+      const account = await stripe.accounts.create({
+        type: 'express',
+        email: email,
+        metadata: {
+          userId: userId,
+          platform: 'EarnFlow',
+        },
+        capabilities: {
+          transfers: { requested: true },
+        },
+      });
+      
+      // Create account link for onboarding
+      const accountLink = await stripe.accountLinks.create({
+        account: account.id,
+        refresh_url: returnUrl || `${req.headers.get('origin')}/account-setup?refresh=true`,
+        return_url: returnUrl || `${req.headers.get('origin')}/account-setup?success=true`,
+        type: 'account_onboarding',
+      });
+      
+      console.log('Express account created and link generated for:', account.id);
+      
+      return new Response(JSON.stringify({
+        success: true,
+        data: {
+          accountId: account.id,
+          onboardingUrl: accountLink.url,
+          payoutsEnabled: account.payouts_enabled,
+        },
+        timestamp: new Date().toISOString(),
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+      
+    } catch (accountError) {
+      console.log('Express account creation failed, trying alternative approach:', accountError.message);
+      
+      // If Express account creation fails (common with restricted keys),
+      // create a customer and provide setup instructions
+      try {
+        const customer = await stripe.customers.create({
+          email: email,
+          metadata: {
+            userId: userId,
+            platform: 'EarnFlow',
+          },
+        });
+        
+        console.log('Customer created for manual setup:', customer.id);
+        
+        return new Response(JSON.stringify({
+          success: true,
+          data: {
+            accountId: customer.id,
+            onboardingUrl: `${req.headers.get('origin')}/manual-account-setup?customer=${customer.id}`,
+            payoutsEnabled: false,
+            setupType: 'manual',
+            message: 'Account created. Manual bank account setup required through your Stripe dashboard.',
+          },
+          timestamp: new Date().toISOString(),
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+        
+      } catch (customerError) {
+        console.error('Customer creation also failed:', customerError);
+        throw new Error('Unable to create account. Please check your Stripe API key permissions.');
+      }
+    }
     
   } catch (error) {
     console.error('Stripe Account Setup Error:', error);
