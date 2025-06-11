@@ -8,6 +8,10 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import BitcoinWalletPage from "./pages/BitcoinWalletPage";
 import StripePaymentPage from "./pages/StripePaymentPage";
+import AccountSetupSuccess from "./pages/AccountSetupSuccess";
+import AccountSetupCancelled from "./pages/AccountSetupCancelled";
+import WithdrawalSuccess from "./pages/WithdrawalSuccess";
+import WithdrawalCancelled from "./pages/WithdrawalCancelled";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +27,10 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/bitcoin-wallet" element={<BitcoinWalletPage />} />
           <Route path="/stripe-payment" element={<StripePaymentPage />} />
+          <Route path="/account-setup-success" element={<AccountSetupSuccess />} />
+          <Route path="/account-setup-cancelled" element={<AccountSetupCancelled />} />
+          <Route path="/withdrawal-success" element={<WithdrawalSuccess />} />
+          <Route path="/withdrawal-cancelled" element={<WithdrawalCancelled />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
