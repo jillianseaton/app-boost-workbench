@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,12 +28,11 @@ const StripePayment: React.FC<StripePaymentProps> = ({ onBack, amount, descripti
         document.head.appendChild(script);
         
         script.onload = () => {
-          // Replace with your actual publishable key
-          const stripeInstance = window.Stripe('pk_test_your_publishable_key_here');
+          const stripeInstance = window.Stripe('pk_live_51RBGS0K9RLxvHin2BAeEEZasJJp3IHcwM2QCBIksHEUaDa1GC5MDwwGYbMDejH2Pa9y6ZXvCdoDGTPIEqvmqhcr500r2MxBFkC');
           setStripe(stripeInstance);
         };
       } else {
-        const stripeInstance = window.Stripe('pk_test_your_publishable_key_here');
+        const stripeInstance = window.Stripe('pk_live_51RBGS0K9RLxvHin2BAeEEZasJJp3IHcwM2QCBIksHEUaDa1GC5MDwwGYbMDejH2Pa9y6ZXvCdoDGTPIEqvmqhcr500r2MxBFkC');
         setStripe(stripeInstance);
       }
     };
