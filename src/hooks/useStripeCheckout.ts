@@ -27,18 +27,21 @@ export const useStripeCheckout = () => {
         throw new Error(result.error || 'Failed to create checkout session');
       }
       
-      // Redirect to Stripe Checkout
+      console.log('Checkout session created successfully, URL:', result.data.url);
+      
+      // Use window.location.href for more reliable redirect instead of window.open
+      // This ensures the redirect works in all browsers and popup blockers don't interfere
       window.location.href = result.data.url;
       
       if (request.mode === 'setup') {
         toast({
           title: "Redirecting to Bank Setup",
-          description: "You'll be redirected to Stripe to verify your bank account.",
+          description: "Redirecting to Stripe to verify your bank account...",
         });
       } else {
         toast({
           title: "Redirecting to Checkout",
-          description: "You'll be redirected to Stripe to complete your withdrawal.",
+          description: "Redirecting to Stripe to complete your withdrawal...",
         });
       }
       

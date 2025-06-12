@@ -27,15 +27,19 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
   const handleBankSetup = async () => {
     try {
+      console.log('Starting bank setup with email:', userEmail);
+      
       // Create a checkout session for bank account setup (minimal amount)
-      await createCheckoutSession({
+      const result = await createCheckoutSession({
         amount: 100, // $1.00 verification charge
         description: 'Bank Account Setup Verification',
         successUrl: `${window.location.origin}/account-setup-success`,
         cancelUrl: `${window.location.origin}/account-setup-cancelled`,
-        customerEmail: userEmail || 'guest@example.com', // Default email for testing
+        customerEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`, // Ensure valid email format
         mode: 'setup'
       });
+      
+      console.log('Bank setup session created, redirecting...');
     } catch (error) {
       console.error('Bank setup failed:', error);
     }
@@ -43,15 +47,19 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
   const handleWithdraw = async () => {
     try {
+      console.log('Starting withdrawal with email:', userEmail);
+      
       // Create checkout session for the actual withdrawal
-      await createCheckoutSession({
+      const result = await createCheckoutSession({
         amount: Math.round(earnings * 100), // Convert to cents
         description: `Withdraw $${earnings.toFixed(2)} to Bank Account`,
         successUrl: `${window.location.origin}/withdrawal-success`,
         cancelUrl: `${window.location.origin}/withdrawal-cancelled`,
-        customerEmail: userEmail || 'guest@example.com', // Default email for testing
+        customerEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`, // Ensure valid email format
         mode: 'payment'
       });
+      
+      console.log('Withdrawal session created, redirecting...');
       
       // Call the parent onWithdraw to update the dashboard state
       onWithdraw();
@@ -108,7 +116,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
           <div className="p-3 bg-green-50 rounded-md">
             <p className="text-sm text-green-800">
-              <strong>Testing Mode:</strong> Buttons are enabled for testing. In production, proper email validation would be required.
+              <strong>Testing Mode:</strong> Buttons will redirect to Stripe Checkout. If the page doesn't redirect, check if popups are blocked in your browser.
             </p>
           </div>
         </div>
