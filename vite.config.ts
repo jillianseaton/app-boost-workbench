@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -10,13 +11,34 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
+    react({
+      // Updated SWC configuration to avoid deprecated options
+      jsxImportSource: '@emotion/react',
+      plugins: [],
+    }),
+    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  // Updated build configuration to avoid deprecated options
+  build: {
+    target: 'esnext',
+    minify: 'esbuild',
+    sourcemap: false,
+  },
+  // ESBuild configuration to avoid math-related deprecations
+  esbuild: {
+    logOverride: { 
+      'this-is-undefined-in-esm': 'silent',
+      'empty-import-meta': 'silent'
+    },
+    target: 'esnext',
+  },
+  // Suppress specific console warnings during development
+  define: {
+    __DEV__: mode === 'development',
   },
 }));
