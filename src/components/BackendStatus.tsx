@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +12,8 @@ const BackendStatus: React.FC = () => {
   useEffect(() => {
     const checkBackendHealth = async () => {
       try {
-        const isHealthy = await rubyBackendService.checkHealth();
-        setBackendStatus(isHealthy ? 'healthy' : 'unhealthy');
+        const response = await rubyBackendService.checkHealth();
+        setBackendStatus(response.status === 'ok' ? 'healthy' : 'unhealthy');
       } catch (error) {
         console.error('Failed to check backend health:', error);
         setBackendStatus('unhealthy');
@@ -27,7 +28,7 @@ const BackendStatus: React.FC = () => {
       case 'loading':
         return <Badge variant="secondary">Loading...</Badge>;
       case 'healthy':
-        return <Badge variant="success">Healthy</Badge>;
+        return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Healthy</Badge>;
       case 'unhealthy':
         return <Badge variant="destructive">Unhealthy</Badge>;
       default:
@@ -37,7 +38,7 @@ const BackendStatus: React.FC = () => {
 
   return (
     <Card>
-      <CardContent className="flex items-center justify-between">
+      <CardContent className="flex items-center justify-between p-4">
         <div>
           <h2 className="text-sm font-semibold">Ruby Backend Status</h2>
           <p className="text-xs text-muted-foreground">
