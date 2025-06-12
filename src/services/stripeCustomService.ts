@@ -31,6 +31,27 @@ export interface CustomAccountOnboardingResponse {
   timestamp: string;
 }
 
+export interface AccountRequirementsResponse {
+  success: boolean;
+  data?: {
+    accountId: string;
+    state: string;
+    chargesEnabled: boolean;
+    payoutsEnabled: boolean;
+    detailsSubmitted: boolean;
+    requirements: {
+      currentlyDue: string[];
+      eventuallyDue: string[];
+      pastDue: string[];
+      pendingVerification: string[];
+      disabledReason?: string;
+      currentDeadline?: number;
+    };
+  };
+  error?: string;
+  timestamp: string;
+}
+
 class StripeCustomService {
   async createAndOnboardCustomAccount(request: CustomAccountOnboardingRequest): Promise<CustomAccountOnboardingResponse> {
     try {
@@ -70,7 +91,7 @@ class StripeCustomService {
     }
   }
 
-  async getAccountRequirements(accountId: string) {
+  async getAccountRequirements(accountId: string): Promise<AccountRequirementsResponse> {
     try {
       console.log('Getting account requirements for:', accountId);
       
