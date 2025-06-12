@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import BitcoinWalletPage from "./pages/BitcoinWalletPage";
 import StripePaymentPage from "./pages/StripePaymentPage";
+import StripeConnect from "./components/StripeConnect";
 import AccountSetupSuccess from "./pages/AccountSetupSuccess";
 import AccountSetupCancelled from "./pages/AccountSetupCancelled";
 import AccountSetupSimulation from "./pages/AccountSetupSimulation";
