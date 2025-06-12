@@ -13,7 +13,6 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       // Updated SWC configuration to avoid deprecated options
-      jsxImportSource: '@emotion/react',
       plugins: [],
     }),
     mode === 'development' && componentTagger(),
