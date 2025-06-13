@@ -17,6 +17,7 @@ import AccountSetupCancelled from "./pages/AccountSetupCancelled";
 import AccountSetupSimulation from "./pages/AccountSetupSimulation";
 import WithdrawalSuccess from "./pages/WithdrawalSuccess";
 import WithdrawalCancelled from "./pages/WithdrawalCancelled";
+import StripeTestPage from "./pages/StripeTestPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,8 @@ const App: React.FC = () => {
             <Route path="/auth" element={<Auth />} />
             <Route path="/bitcoin-wallet" element={<BitcoinWalletPage />} />
             <Route path="/stripe-payment" element={<StripePaymentPage />} />
+            <Route path="/stripe-connect" element={<StripeConnect />} />
+            <Route path="/stripe-test" element={<StripeTestPage />} />
             <Route path="/destination-checkout" element={<DestinationCheckoutPage />} />
             <Route path="/custom-stripe-onboarding" element={<CustomStripeOnboardingPage />} />
             <Route path="/account-setup-success" element={<AccountSetupSuccess />} />
