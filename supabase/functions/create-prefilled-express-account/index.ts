@@ -106,6 +106,14 @@ serve(async (req) => {
       type: 'express',
       country: country || 'US',
       email: email || 'jillianseaton1303@gmail.com',
+      
+      // Add controller configuration for Express accounts
+      controller: {
+        fees: { payer: 'application' },
+        losses: { payments: 'application' },
+        stripe_dashboard: { type: 'express' },
+      },
+      
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
@@ -255,6 +263,7 @@ serve(async (req) => {
         accountType: 'express',
         businessName: accountData.business_profile.name,
         email: accountData.email,
+        controller: accountData.controller,
       },
       message: account.details_submitted 
         ? 'Account created and ready for use' 
