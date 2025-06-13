@@ -1,234 +1,139 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, TestTube } from 'lucide-react';
-import { stripeService } from '@/services/stripeService';
-import { stripeAdvancedService } from '@/services/stripeAdvancedService';
-import { stripeConnectService } from '@/services/stripeConnectService';
-import { useToast } from '@/hooks/use-toast';
+import { Loader2, Play } from 'lucide-react';
 import { TestResultData } from './TestResult';
+import { stripeConnectedAccountService } from '@/services/stripeConnectedAccountService';
 
 interface TestRunnerProps {
   onResultsUpdate: (results: TestResultData[]) => void;
 }
 
 const TestRunner: React.FC<TestRunnerProps> = ({ onResultsUpdate }) => {
-  const [testing, setTesting] = useState(false);
-  const { toast } = useToast();
-
-  const getBaseUrl = () => {
-    return window.location.origin;
-  };
+  const [running, setRunning] = useState(false);
 
   const runTests = async () => {
-    setTesting(true);
-    onResultsUpdate([]);
-    
-    const baseUrl = getBaseUrl();
-    
-    const tests: TestResultData[] = [
-      { name: 'Create Payment Intent', status: 'pending' },
-      { name: 'Create Checkout Session', status: 'pending' },
-      { name: 'Create Stripe Connect Account', status: 'pending' },
-      { name: 'Create Account Session', status: 'pending' },
-      { name: 'Create Account Link', status: 'pending' },
-      { name: 'Currency Checkout', status: 'pending' },
-    ];
+    setRunning(true);
+    const results: TestResultData[] = [];
 
-    onResultsUpdate([...tests]);
+    // Test 1: Create Express Account with Prefilled Data
+    results.push({ name: 'Express Account Creation', status: 'pending' });
+    onResultsUpdate([...results]);
 
-    // Test 1: Create Payment Intent
     try {
-      const paymentResult = await stripeService.createPaymentIntent({
-        amount: 1000,
-        description: 'Test payment',
-        currency: 'usd',
+      const expressResult = await stripeConnectedAccountService.createExpressAccount({
+        email: 'test-express@example.com',
+        country: 'US',
+        accountType: 'express',
+        businessType: 'individual',
+        businessName: 'Test Express Business',
+        productDescription: 'Test product for Express account',
+        firstName: 'John',
+        lastName: 'Doe',
+        userId: 'test_express_user',
+        platformSource: 'test_suite',
       });
-      
-      tests[0] = {
-        name: 'Create Payment Intent',
-        status: paymentResult.success ? 'success' : 'error',
-        message: paymentResult.success ? 'Payment intent created' : paymentResult.error
+
+      results[results.length - 1] = {
+        name: 'Express Account Creation',
+        status: expressResult.success ? 'success' : 'error',
+        message: expressResult.success 
+          ? `Account ${expressResult.data?.accountId} created successfully`
+          : expressResult.error || 'Failed to create Express account'
       };
     } catch (error) {
-      tests[0] = {
-        name: 'Create Payment Intent',
+      results[results.length - 1] = {
+        name: 'Express Account Creation',
         status: 'error',
         message: error instanceof Error ? error.message : 'Unknown error'
       };
     }
-    onResultsUpdate([...tests]);
 
-    // Test 2: Create Checkout Session
+    onResultsUpdate([...results]);
+
+    // Test 2: Create Custom Account with Prefilled Data
+    results.push({ name: 'Custom Account Creation', status: 'pending' });
+    onResultsUpdate([...results]);
+
     try {
-      const checkoutResult = await stripeService.createCheckoutSession({
-        amount: 1000,
-        description: 'Test checkout',
-        successUrl: `${baseUrl}/test-success`,
-        cancelUrl: `${baseUrl}/test-cancel`,
-        mode: 'payment'
+      const customResult = await stripeConnectedAccountService.createCustomAccount({
+        email: 'test-custom@example.com',
+        country: 'US',
+        accountType: 'custom',
+        businessType: 'company',
+        businessName: 'Test Custom Business',
+        productDescription: 'Test product for Custom account',
+        companyName: 'Test Custom Corp',
+        taxId: '12-3456789',
+        userId: 'test_custom_user',
+        platformSource: 'test_suite',
       });
-      
-      tests[1] = {
-        name: 'Create Checkout Session',
-        status: checkoutResult.success ? 'success' : 'error',
-        message: checkoutResult.success ? 'Checkout session created' : checkoutResult.error
+
+      results[results.length - 1] = {
+        name: 'Custom Account Creation',
+        status: customResult.success ? 'success' : 'error',
+        message: customResult.success 
+          ? `Account ${customResult.data?.accountId} created successfully`
+          : customResult.error || 'Failed to create Custom account'
       };
     } catch (error) {
-      tests[1] = {
-        name: 'Create Checkout Session',
+      results[results.length - 1] = {
+        name: 'Custom Account Creation',
         status: 'error',
         message: error instanceof Error ? error.message : 'Unknown error'
       };
     }
-    onResultsUpdate([...tests]);
 
-    // Test 3: Create Stripe Connect Account
+    onResultsUpdate([...results]);
+
+    // Test 3: Create Standard Account with Prefilled Data
+    results.push({ name: 'Standard Account Creation', status: 'pending' });
+    onResultsUpdate([...results]);
+
     try {
-      const connectResult = await stripeConnectService.createAccount();
-      
-      tests[2] = {
-        name: 'Create Stripe Connect Account',
-        status: connectResult.account ? 'success' : 'error',
-        message: connectResult.account ? `Account created: ${connectResult.account}` : connectResult.error
+      const standardResult = await stripeConnectedAccountService.createStandardAccount({
+        email: 'test-standard@example.com',
+        country: 'US',
+        accountType: 'standard',
+        businessType: 'individual',
+        businessName: 'Test Standard Business',
+        userId: 'test_standard_user',
+        platformSource: 'test_suite',
+      });
+
+      results[results.length - 1] = {
+        name: 'Standard Account Creation',
+        status: standardResult.success ? 'success' : 'error',
+        message: standardResult.success 
+          ? `Account ${standardResult.data?.accountId} created successfully`
+          : standardResult.error || 'Failed to create Standard account'
       };
     } catch (error) {
-      tests[2] = {
-        name: 'Create Stripe Connect Account',
+      results[results.length - 1] = {
+        name: 'Standard Account Creation',
         status: 'error',
         message: error instanceof Error ? error.message : 'Unknown error'
       };
     }
-    onResultsUpdate([...tests]);
 
-    // Test 4: Create Account Session (if we have an account)
-    if (tests[2].status === 'success' && tests[2].message?.includes('acct_')) {
-      const accountId = tests[2].message.split(': ')[1];
-      try {
-        const sessionResult = await stripeConnectService.createAccountSession(accountId);
-        
-        tests[3] = {
-          name: 'Create Account Session',
-          status: sessionResult.client_secret ? 'success' : 'error',
-          message: sessionResult.client_secret ? 'Account session created' : sessionResult.error
-        };
-      } catch (error) {
-        tests[3] = {
-          name: 'Create Account Session',
-          status: 'error',
-          message: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    } else {
-      tests[3] = {
-        name: 'Create Account Session',
-        status: 'error',
-        message: 'Skipped - no account available'
-      };
-    }
-    onResultsUpdate([...tests]);
-
-    // Test 5: Create Account Link (if we have an account)
-    if (tests[2].status === 'success' && tests[2].message?.includes('acct_')) {
-      const accountId = tests[2].message.split(': ')[1];
-      try {
-        const linkResult = await stripeAdvancedService.createAccountLink({
-          accountId,
-          refreshUrl: `${baseUrl}/test-refresh`,
-          returnUrl: `${baseUrl}/test-return`,
-          collectionType: 'currently_due'
-        });
-        
-        tests[4] = {
-          name: 'Create Account Link',
-          status: linkResult.success ? 'success' : 'error',
-          message: linkResult.success ? 'Account link created' : linkResult.error
-        };
-      } catch (error) {
-        tests[4] = {
-          name: 'Create Account Link',
-          status: 'error',
-          message: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    } else {
-      tests[4] = {
-        name: 'Create Account Link',
-        status: 'error',
-        message: 'Skipped - no account available'
-      };
-    }
-    onResultsUpdate([...tests]);
-
-    // Test 6: Currency Checkout (if we have an account)
-    if (tests[2].status === 'success' && tests[2].message?.includes('acct_')) {
-      const accountId = tests[2].message.split(': ')[1];
-      try {
-        const currencyResult = await stripeAdvancedService.createCurrencyCheckout({
-          accountId,
-          currency: 'USD',
-          amount: 1000,
-          productName: 'Test Product',
-          successUrl: `${baseUrl}/test-success`,
-          cancelUrl: `${baseUrl}/test-cancel`
-        });
-        
-        tests[5] = {
-          name: 'Currency Checkout',
-          status: currencyResult.success ? 'success' : 'error',
-          message: currencyResult.success ? 'Currency checkout created' : currencyResult.error
-        };
-      } catch (error) {
-        tests[5] = {
-          name: 'Currency Checkout',
-          status: 'error',
-          message: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    } else {
-      tests[5] = {
-        name: 'Currency Checkout',
-        status: 'error',
-        message: 'Skipped - no account available'
-      };
-    }
-    onResultsUpdate([...tests]);
-
-    setTesting(false);
-    
-    const successCount = tests.filter(t => t.status === 'success').length;
-    const totalTests = tests.length;
-    
-    toast({
-      title: "Integration Test Complete",
-      description: `${successCount}/${totalTests} tests passed`,
-      variant: successCount === totalTests ? "default" : "destructive",
-    });
+    onResultsUpdate([...results]);
+    setRunning(false);
   };
 
   return (
-    <div className="flex items-center justify-between">
-      <p className="text-sm text-muted-foreground">
-        Test all Stripe backend endpoints and verify HTTPS deployment
-      </p>
-      <Button 
-        onClick={runTests} 
-        disabled={testing}
-        size="sm"
-      >
-        {testing ? (
-          <>
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Testing...
-          </>
-        ) : (
-          <>
-            <TestTube className="h-4 w-4 mr-2" />
-            Run Tests
-          </>
-        )}
-      </Button>
-    </div>
+    <Button onClick={runTests} disabled={running} className="w-full">
+      {running ? (
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Running Prefilled Account Tests...
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Play className="h-4 w-4" />
+          Run Prefilled Account Creation Tests
+        </div>
+      )}
+    </Button>
   );
 };
 
