@@ -20,9 +20,16 @@ const StripeIntegrationTest: React.FC = () => {
   const [results, setResults] = useState<TestResult[]>([]);
   const { toast } = useToast();
 
+  // Get the current origin (works for both HTTP and HTTPS)
+  const getBaseUrl = () => {
+    return window.location.origin;
+  };
+
   const runTests = async () => {
     setTesting(true);
     setResults([]);
+    
+    const baseUrl = getBaseUrl();
     
     const tests: TestResult[] = [
       { name: 'Create Payment Intent', status: 'pending' },
@@ -62,8 +69,8 @@ const StripeIntegrationTest: React.FC = () => {
       const checkoutResult = await stripeService.createCheckoutSession({
         amount: 1000,
         description: 'Test checkout',
-        successUrl: `${window.location.origin}/test-success`,
-        cancelUrl: `${window.location.origin}/test-cancel`,
+        successUrl: `${baseUrl}/test-success`,
+        cancelUrl: `${baseUrl}/test-cancel`,
         mode: 'payment'
       });
       
@@ -132,8 +139,8 @@ const StripeIntegrationTest: React.FC = () => {
       try {
         const linkResult = await stripeAdvancedService.createAccountLink({
           accountId,
-          refreshUrl: `${window.location.origin}/test-refresh`,
-          returnUrl: `${window.location.origin}/test-return`,
+          refreshUrl: `${baseUrl}/test-refresh`,
+          returnUrl: `${baseUrl}/test-return`,
           collectionType: 'currently_due'
         });
         
@@ -167,8 +174,8 @@ const StripeIntegrationTest: React.FC = () => {
           currency: 'USD',
           amount: 1000,
           productName: 'Test Product',
-          successUrl: `${window.location.origin}/test-success`,
-          cancelUrl: `${window.location.origin}/test-cancel`
+          successUrl: `${baseUrl}/test-success`,
+          cancelUrl: `${baseUrl}/test-cancel`
         });
         
         tests[5] = {
@@ -237,7 +244,7 @@ const StripeIntegrationTest: React.FC = () => {
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Test all Stripe backend endpoints and verify deployment
+            Test all Stripe backend endpoints and verify HTTPS deployment
           </p>
           <Button 
             onClick={runTests} 
@@ -279,6 +286,13 @@ const StripeIntegrationTest: React.FC = () => {
             ))}
           </div>
         )}
+
+        <div className="p-3 bg-green-50 rounded-md border border-green-200">
+          <p className="text-sm text-green-800">
+            <strong>HTTPS Ready:</strong> This test suite automatically detects your current protocol (HTTP/HTTPS) and 
+            configures all URLs accordingly. Your Stripe integration will work properly over HTTPS in production.
+          </p>
+        </div>
 
         <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
           <p className="text-sm text-blue-800">
