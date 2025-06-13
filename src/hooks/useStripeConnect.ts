@@ -20,9 +20,9 @@ export const useStripeConnect = (connectedAccountId: string | undefined) => {
           throw new Error(response.error || 'Failed to create account session');
         }
 
-        // Initialize Stripe Connect
+        // Initialize Stripe Connect with live publishable key
         const stripeConnect = await loadConnectAndInitialize({
-          publishableKey: 'pk_test_51RBGS0K9RLxvHin2JCK7Je4iyeXWHqv68tbCJhp9oJ4jPVOo0136djQllZARFQDYkldgWvc16aLm3Ps8j8dApYBl00I0D5ibcC',
+          publishableKey: 'pk_live_51RBGS0K9RLxvHin2BAeEEZasJJp3IHcwM2QCBIksHEUaDa1GC5MDwwGYbMDejH2Pa9y6ZXvCdoDGTPIEqvmqhcr500r2MxBFkC',
           fetchClientSecret: async () => response.client_secret!,
         });
 
