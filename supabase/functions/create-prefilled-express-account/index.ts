@@ -224,16 +224,22 @@ serve(async (req) => {
     
     console.log('Express account created for Jillian Seaton:', account.id);
     
-    // Create account link for onboarding if needed
+    // Handle response and create account link if needed
     let accountLinkUrl;
     if (!account.details_submitted) {
+      console.log('Account requires additional onboarding, creating account link...');
+      
       const accountLink = await stripe.accountLinks.create({
         account: account.id,
-        refresh_url: `${req.headers.get('origin') || 'https://app-boost-workbench.lovable.app'}/stripe-onboarding?refresh=true&account=${account.id}`,
-        return_url: `${req.headers.get('origin') || 'https://app-boost-workbench.lovable.app'}/stripe-onboarding?success=true&account=${account.id}`,
+        refresh_url: `${req.headers.get('origin') || 'https://app-boost-workbench.lovable.app'}/reauth`,
+        return_url: `${req.headers.get('origin') || 'https://app-boost-workbench.lovable.app'}/success`,
         type: 'account_onboarding',
       });
+      
       accountLinkUrl = accountLink.url;
+      console.log('Account link created:', accountLinkUrl);
+    } else {
+      console.log('Account details already submitted, no additional onboarding required');
     }
     
     return new Response(JSON.stringify({
@@ -250,6 +256,9 @@ serve(async (req) => {
         businessName: accountData.business_profile.name,
         email: accountData.email,
       },
+      message: account.details_submitted 
+        ? 'Account created and ready for use' 
+        : 'Account created, additional onboarding required',
       timestamp: new Date().toISOString(),
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
