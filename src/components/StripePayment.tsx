@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { loadStripe, StripeElementsOptions } from '@stripe/stripe-js';
 import {
@@ -13,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { stripeService } from '@/services/stripeService';
+import { ArrowLeft } from 'lucide-react';
 
 const stripePromise = loadStripe('pk_live_51RBGS0K9RLxvHin2BAeEEZasJJp3IHcwM2QCBIksHEUaDa1GC5MDwwGYbMDejH2Pa9y6ZXvCdoDGTPIEqvmqhcr500r2MxBFkC');
 
@@ -21,6 +21,7 @@ interface StripePaymentProps {
   description?: string;
   onSuccess?: (paymentIntentId: string) => void;
   onError?: (error: string) => void;
+  onBack?: () => void;
 }
 
 const PaymentForm: React.FC<StripePaymentProps> = ({ amount, description = "Payment", onSuccess, onError }) => {
@@ -144,16 +145,30 @@ const StripePayment: React.FC<StripePaymentProps> = (props) => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Payment Details</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Elements stripe={stripePromise} options={options}>
-          <PaymentForm {...props} />
-        </Elements>
-      </CardContent>
-    </Card>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+      <div className="container mx-auto max-w-2xl space-y-6">
+        {props.onBack && (
+          <div className="flex items-center gap-4">
+            <Button onClick={props.onBack} variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <h1 className="text-3xl font-bold text-primary">Payment</h1>
+          </div>
+        )}
+        
+        <Card className="w-full max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle>Payment Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Elements stripe={stripePromise} options={options}>
+              <PaymentForm {...props} />
+            </Elements>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 
