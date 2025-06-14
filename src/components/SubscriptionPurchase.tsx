@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, CreditCard, Check, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
   phoneNumber: string;
@@ -20,23 +20,26 @@ interface SubscriptionPurchaseProps {
 
 const SubscriptionPurchase: React.FC<SubscriptionPurchaseProps> = ({ user, onBack, onSuccess }) => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvv, setCvv] = useState('');
-  const [cardName, setCardName] = useState('');
   const { toast } = useToast();
   const { createSubscription } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubscriptionPurchase = async () => {
-    if (!cardNumber || !expiryDate || !cvv || !cardName) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all payment details.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // You should replace this with your actual Stripe price ID
+  const OPERATOR_LICENSE_PRICE_ID = "price_1234567890"; // Replace with your actual price ID
 
+  const handleEmbeddedCheckout = () => {
+    setIsProcessing(true);
+    
+    toast({
+      title: "Redirecting to Checkout",
+      description: "Taking you to the secure payment form...",
+    });
+
+    // Navigate to embedded checkout page
+    navigate(`/checkout/${OPERATOR_LICENSE_PRICE_ID}`);
+  };
+
+  const handleSimulatedPurchase = async () => {
     setIsProcessing(true);
 
     try {
@@ -62,29 +65,6 @@ const SubscriptionPurchase: React.FC<SubscriptionPurchaseProps> = ({ user, onBac
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const formatCardNumber = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
-    const parts = [];
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return v;
-    }
-  };
-
-  const formatExpiryDate = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4);
-    }
-    return v;
   };
 
   return (
@@ -141,61 +121,6 @@ const SubscriptionPurchase: React.FC<SubscriptionPurchaseProps> = ({ user, onBac
               </div>
             </div>
 
-            {/* Payment Form */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Payment Information</h3>
-              
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Cardholder Name</label>
-                  <Input
-                    type="text"
-                    placeholder="John Doe"
-                    value={cardName}
-                    onChange={(e) => setCardName(e.target.value)}
-                    disabled={isProcessing}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Card Number</label>
-                  <Input
-                    type="text"
-                    placeholder="1234 5678 9012 3456"
-                    value={cardNumber}
-                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                    maxLength={19}
-                    disabled={isProcessing}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Expiry Date</label>
-                    <Input
-                      type="text"
-                      placeholder="MM/YY"
-                      value={expiryDate}
-                      onChange={(e) => setExpiryDate(formatExpiryDate(e.target.value))}
-                      maxLength={5}
-                      disabled={isProcessing}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">CVV</label>
-                    <Input
-                      type="text"
-                      placeholder="123"
-                      value={cvv}
-                      onChange={(e) => setCvv(e.target.value.replace(/\D/g, ''))}
-                      maxLength={4}
-                      disabled={isProcessing}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Security Notice */}
             <div className="flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
               <Shield className="h-5 w-5 text-green-600 mt-0.5" />
@@ -205,25 +130,53 @@ const SubscriptionPurchase: React.FC<SubscriptionPurchaseProps> = ({ user, onBac
               </div>
             </div>
 
-            {/* Purchase Button */}
-            <Button
-              onClick={handleSubscriptionPurchase}
-              disabled={isProcessing}
-              size="lg"
-              className="w-full"
-            >
-              {isProcessing ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Processing Payment...</span>
-                </div>
-              ) : (
+            {/* Payment Options */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold">Choose Payment Method</h3>
+              
+              {/* Embedded Checkout Option */}
+              <Button
+                onClick={handleEmbeddedCheckout}
+                disabled={isProcessing}
+                size="lg"
+                className="w-full"
+              >
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />
-                  <span>Purchase License - $9.99/month</span>
+                  <span>Pay with Stripe Embedded Checkout - $9.99/month</span>
                 </div>
-              )}
-            </Button>
+              </Button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or</span>
+                </div>
+              </div>
+
+              {/* Simulated Purchase Option */}
+              <Button
+                onClick={handleSimulatedPurchase}
+                disabled={isProcessing}
+                size="lg"
+                variant="outline"
+                className="w-full"
+              >
+                {isProcessing ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                    <span>Processing Payment...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    <span>Simulate Purchase (Demo Mode)</span>
+                  </div>
+                )}
+              </Button>
+            </div>
 
             {/* Terms */}
             <p className="text-xs text-muted-foreground text-center">

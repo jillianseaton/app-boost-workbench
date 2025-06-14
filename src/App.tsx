@@ -18,6 +18,8 @@ import AccountSetupSimulation from "./pages/AccountSetupSimulation";
 import WithdrawalSuccess from "./pages/WithdrawalSuccess";
 import WithdrawalCancelled from "./pages/WithdrawalCancelled";
 import StripeTestPage from "./pages/StripeTestPage";
+import EmbeddedCheckoutPage from "./pages/EmbeddedCheckoutPage";
+import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +45,8 @@ const App: React.FC = () => {
             <Route path="/account-setup-simulation" element={<AccountSetupSimulation />} />
             <Route path="/withdrawal-success" element={<WithdrawalSuccess />} />
             <Route path="/withdrawal-cancelled" element={<WithdrawalCancelled />} />
+            <Route path="/checkout/:priceId" element={<EmbeddedCheckoutPage />} />
+            <Route path="/subscription-success" element={<SubscriptionSuccess />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
