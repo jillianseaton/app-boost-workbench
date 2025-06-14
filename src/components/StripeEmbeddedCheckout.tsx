@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { createClient } from '@supabase/supabase-js';
 
 const stripePromise = loadStripe('pk_live_51RBGS0K9RLxvHin2BAeEEZasJJp3IHcwM2QCBIksHEUaDa1GC5MDwwGYbMDejH2Pa9y6ZXvCdoDGTPIEqvmqhcr500r2MxBFkC');
 
@@ -32,25 +33,30 @@ const StripeEmbeddedCheckout: React.FC<StripeEmbeddedCheckoutProps> = ({
     const createCheckoutSession = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/create-checkout-session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+        
+        const supabase = createClient(
+          import.meta.env.VITE_SUPABASE_URL,
+          import.meta.env.VITE_SUPABASE_ANON_KEY
+        );
+
+        const { data, error } = await supabase.functions.invoke('create-embedded-checkout', {
+          body: {
             priceId,
             mode: 'subscription',
             ui_mode: 'embedded',
             return_url: `${window.location.origin}/subscription-success`,
-          }),
+          },
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to create checkout session');
+        if (error) {
+          throw new Error(error.message || 'Failed to create checkout session');
         }
 
-        const { clientSecret } = await response.json();
-        setClientSecret(clientSecret);
+        if (!data.success || !data.data?.clientSecret) {
+          throw new Error(data.error || 'Failed to get client secret');
+        }
+
+        setClientSecret(data.data.clientSecret);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to initialize checkout');
       } finally {
