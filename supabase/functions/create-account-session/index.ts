@@ -32,10 +32,20 @@ serve(async (req) => {
       account: account,
       components: {
         account_onboarding: { enabled: true },
+        payouts: {
+          enabled: true,
+          features: {
+            instant_payouts: true,
+            standard_payouts: true,
+            edit_payout_schedule: true,
+            external_account_collection: true,
+          },
+        },
       }
     });
 
     console.log('Account session created for account:', account);
+    console.log('Payouts component enabled with all features');
 
     return new Response(JSON.stringify({
       client_secret: accountSession.client_secret
