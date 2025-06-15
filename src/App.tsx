@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import BitcoinWalletPage from "./pages/BitcoinWalletPage";
 import StripePaymentPage from "./pages/StripePaymentPage";
 import StripeConnect from "./components/StripeConnect";
+import StripeConnectLinkPage from "./pages/StripeConnectLinkPage";
 import DestinationCheckoutPage from "./pages/DestinationCheckoutPage";
 import CustomStripeOnboardingPage from "./pages/CustomStripeOnboardingPage";
 import AccountSetupSuccess from "./pages/AccountSetupSuccess";
