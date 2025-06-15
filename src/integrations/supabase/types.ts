@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      bank_account_audit_log: {
+        Row: {
+          action: string
+          bank_account_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          bank_account_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          bank_account_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_account_audit_log_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "user_bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -66,6 +107,60 @@ export type Database = {
           start_date?: string
           status?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_bank_accounts: {
+        Row: {
+          account_holder_name: string
+          account_number_last4: string
+          bank_account_id: string
+          bank_name: string
+          created_at: string
+          id: string
+          is_primary: boolean
+          metadata: Json | null
+          routing_number_last4: string
+          stripe_account_id: string
+          updated_at: string
+          user_id: string
+          verification_method: string
+          verification_status: string
+          verified_at: string | null
+        }
+        Insert: {
+          account_holder_name: string
+          account_number_last4: string
+          bank_account_id: string
+          bank_name: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          metadata?: Json | null
+          routing_number_last4: string
+          stripe_account_id: string
+          updated_at?: string
+          user_id: string
+          verification_method?: string
+          verification_status?: string
+          verified_at?: string | null
+        }
+        Update: {
+          account_holder_name?: string
+          account_number_last4?: string
+          bank_account_id?: string
+          bank_name?: string
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          metadata?: Json | null
+          routing_number_last4?: string
+          stripe_account_id?: string
+          updated_at?: string
+          user_id?: string
+          verification_method?: string
+          verification_status?: string
+          verified_at?: string | null
         }
         Relationships: []
       }

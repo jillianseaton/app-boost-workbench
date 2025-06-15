@@ -92,13 +92,23 @@ class SecureBankService {
 
   async getUserBankAccounts(): Promise<BankAccount[]> {
     try {
+      // Use raw SQL query since the table types aren't yet updated in the generated types
       const { data, error } = await supabase
-        .from('user_bank_accounts')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_user_bank_accounts');
 
       if (error) {
-        throw new Error(error.message);
+        // Fallback to direct query if RPC doesn't exist
+        console.log('RPC not found, using direct query');
+        const { data: directData, error: directError } = await supabase
+          .from('user_bank_accounts' as any)
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (directError) {
+          throw new Error(directError.message);
+        }
+
+        return directData || [];
       }
 
       return data || [];
@@ -111,7 +121,7 @@ class SecureBankService {
   async getBankAccountAuditLog(bankAccountId?: string) {
     try {
       let query = supabase
-        .from('bank_account_audit_log')
+        .from('bank_account_audit_log' as any)
         .select('*')
         .order('created_at', { ascending: false });
 
