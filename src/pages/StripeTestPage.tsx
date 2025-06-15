@@ -4,6 +4,8 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import StripeIntegrationTest from '@/components/StripeIntegrationTest';
+import StripeChargeCapture from '@/components/StripeChargeCapture';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const StripeTestPage = () => {
   const navigate = useNavigate();
@@ -19,7 +21,20 @@ const StripeTestPage = () => {
           <h1 className="text-3xl font-bold text-primary">Stripe Integration Test</h1>
         </div>
 
-        <StripeIntegrationTest />
+        <Tabs defaultValue="integration" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="integration">Integration Tests</TabsTrigger>
+            <TabsTrigger value="capture">Charge Capture</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="integration" className="space-y-4">
+            <StripeIntegrationTest />
+          </TabsContent>
+          
+          <TabsContent value="capture" className="space-y-4">
+            <StripeChargeCapture />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

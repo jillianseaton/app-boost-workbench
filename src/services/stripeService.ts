@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface StripePayoutRequest {
@@ -84,6 +83,26 @@ export interface VerifyPaymentResponse {
     customerEmail?: string;
     created: number;
     confirmed: boolean;
+  };
+  error?: string;
+  timestamp: string;
+}
+
+export interface CaptureChargeRequest {
+  chargeId: string;
+  amount?: number; // Optional: partial capture amount in cents
+}
+
+export interface CaptureChargeResponse {
+  success: boolean;
+  data?: {
+    chargeId: string;
+    status: string;
+    amount: number;
+    amountCaptured: number;
+    currency: string;
+    captured: boolean;
+    created: number;
   };
   error?: string;
   timestamp: string;
@@ -181,6 +200,25 @@ class StripeService {
       return data;
     } catch (error) {
       console.error('Payment Verification Error:', error);
+      throw error;
+    }
+  }
+
+  async captureCharge(request: CaptureChargeRequest): Promise<CaptureChargeResponse> {
+    try {
+      console.log('Capturing charge:', request);
+      
+      const { data, error } = await supabase.functions.invoke('capture-charge', {
+        body: request,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Charge capture failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Charge Capture Error:', error);
       throw error;
     }
   }
