@@ -35,8 +35,8 @@ serve(async (req) => {
       throw new Error('Insufficient balance. Cannot deposit more than your current EarnFlow balance.');
     }
     
-    if (amount > 500) {
-      throw new Error('Maximum deposit amount is $500.00 per transaction');
+    if (amount > 5000) {
+      throw new Error('Maximum deposit amount is $5,000.00 per transaction');
     }
     
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');

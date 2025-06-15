@@ -28,7 +28,7 @@ const DepositToBank: React.FC<DepositToBankProps> = ({
   const { toast } = useToast();
 
   const amount = parseFloat(depositAmount) || 0;
-  const isValidAmount = amount >= 10 && amount <= currentBalance && amount <= 500;
+  const isValidAmount = amount >= 10 && amount <= currentBalance && amount <= 5000;
 
   const handleDepositConfirm = async () => {
     if (!isValidAmount) return;
@@ -80,7 +80,7 @@ const DepositToBank: React.FC<DepositToBankProps> = ({
   const getErrorMessage = () => {
     if (amount < 10) return 'Minimum deposit amount is $10.00';
     if (amount > currentBalance) return 'Cannot deposit more than your current balance';
-    if (amount > 500) return 'Maximum deposit per transaction is $500.00';
+    if (amount > 5000) return 'Maximum deposit per transaction is $5,000.00';
     return '';
   };
 
@@ -127,7 +127,7 @@ const DepositToBank: React.FC<DepositToBankProps> = ({
               value={depositAmount}
               onChange={(e) => setDepositAmount(e.target.value)}
               min="10"
-              max={Math.min(currentBalance, 500)}
+              max={Math.min(currentBalance, 5000)}
               step="0.01"
               className={!isValidAmount && amount > 0 ? 'border-red-500' : ''}
             />
@@ -141,8 +141,8 @@ const DepositToBank: React.FC<DepositToBankProps> = ({
 
           <div className="text-xs text-muted-foreground space-y-1">
             <p>• Minimum: $10.00</p>
-            <p>• Maximum per transaction: $500.00</p>
-            <p>• Maximum per day: $2,000.00</p>
+            <p>• Maximum per transaction: $5,000.00</p>
+            <p>• Maximum per day: $10,000.00</p>
             <p>• Funds will be deducted from your EarnFlow balance immediately</p>
           </div>
         </div>
