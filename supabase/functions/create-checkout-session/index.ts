@@ -94,10 +94,8 @@ serve(async (req) => {
           quantity: 1,
         },
       ];
-    } else if (mode === 'setup') {
-      sessionConfig.payment_method_types = ['card'];
-      // Removed the invalid 'usage' parameter - this is for Payment Intents, not Checkout Sessions
     }
+    // Removed payment_method_types for setup mode - Stripe will automatically determine available methods
     
     const session = await stripe.checkout.sessions.create(sessionConfig);
     
