@@ -1,15 +1,15 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Banknote, History, AlertTriangle, CheckCircle, Plus } from 'lucide-react';
+import { Shield, Banknote, History, AlertTriangle, CheckCircle, Plus, Edit } from 'lucide-react';
 import { secureBankService, BankAccount } from '@/services/secureBankService';
 import { useToast } from '@/hooks/use-toast';
 import BankAccountForm from './BankAccountForm';
 import BankAccountVerification from './BankAccountVerification';
 import SecureDepositForm from './SecureDepositForm';
+import BankAccountUpdateForm from './BankAccountUpdateForm';
 
 interface SecureBankDashboardProps {
   currentBalance: number;
@@ -28,6 +28,7 @@ const SecureBankDashboard: React.FC<SecureBankDashboardProps> = ({
   const [auditLog, setAuditLog] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('accounts');
+  const [selectedAccountForUpdate, setSelectedAccountForUpdate] = useState<BankAccount | null>(null);
   const { toast } = useToast();
 
   const loadBankAccounts = async () => {
@@ -77,6 +78,13 @@ const SecureBankDashboard: React.FC<SecureBankDashboardProps> = ({
   const handleDepositSuccess = (amount: number) => {
     onDepositSuccess(amount);
     loadAuditLog();
+  };
+
+  const handleAccountUpdated = () => {
+    loadBankAccounts();
+    loadAuditLog();
+    setSelectedAccountForUpdate(null);
+    setActiveTab('verification');
   };
 
   const verifiedAccounts = bankAccounts.filter(account => account.verification_status === 'verified');
@@ -134,9 +142,10 @@ const SecureBankDashboard: React.FC<SecureBankDashboardProps> = ({
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="accounts">Accounts</TabsTrigger>
               <TabsTrigger value="verification">Verification</TabsTrigger>
+              <TabsTrigger value="update">Update</TabsTrigger>
               <TabsTrigger value="deposit">Secure Deposit</TabsTrigger>
               <TabsTrigger value="history">History</TabsTrigger>
             </TabsList>
@@ -156,28 +165,52 @@ const SecureBankDashboard: React.FC<SecureBankDashboardProps> = ({
                 <BankAccountForm onAccountCreated={handleAccountCreated} />
               ) : (
                 <div className="space-y-4">
-                  {bankAccounts.map((account) => (
-                    <Card key={account.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-semibold">{account.account_holder_name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {account.bank_name} • ****{account.account_number_last4}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Added {new Date(account.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <Badge className={getStatusBadge(account.verification_status)}>
-                            {account.verification_status}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  {bankAccounts.length < 3 && (
-                    <BankAccountForm onAccountCreated={handleAccountCreated} />
+                  {bankAccounts.length > 0 && (
+                    <div className="space-y-4">
+                      {bankAccounts.map((account) => (
+                        <Card key={account.id}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-semibold">{account.account_holder_name}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  {account.bank_name} • ****{account.account_number_last4}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Added {new Date(account.created_at).toLocaleDateString()}
+                                </p>
+                                {account.updated_by_user_at && (
+                                  <p className="text-xs text-orange-600">
+                                    Updated {new Date(account.updated_by_user_at).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge className={getStatusBadge(account.verification_status)}>
+                                  {account.verification_status}
+                                </Badge>
+                                {account.verification_status === 'verified' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedAccountForUpdate(account);
+                                      setActiveTab('update');
+                                    }}
+                                  >
+                                    <Edit className="h-3 w-3 mr-1" />
+                                    Update
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      {bankAccounts.length < 3 && (
+                        <BankAccountForm onAccountCreated={handleAccountCreated} />
+                      )}
+                    </div>
                   )}
                 </div>
               )}
@@ -200,6 +233,33 @@ const SecureBankDashboard: React.FC<SecureBankDashboardProps> = ({
                     />
                   ))}
                 </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="update" className="space-y-4">
+              <h3 className="text-lg font-semibold">Update Bank Account Information</h3>
+              {!selectedAccountForUpdate ? (
+                <Card>
+                  <CardContent className="text-center p-8">
+                    <Edit className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-2">No account selected for update</p>
+                    <p className="text-sm text-muted-foreground">
+                      Select an account from the Accounts tab to update its information
+                    </p>
+                    <Button 
+                      onClick={() => setActiveTab('accounts')} 
+                      className="mt-4"
+                      variant="outline"
+                    >
+                      Go to Accounts
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <BankAccountUpdateForm
+                  bankAccount={selectedAccountForUpdate}
+                  onUpdateComplete={handleAccountUpdated}
+                />
               )}
             </TabsContent>
 

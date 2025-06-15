@@ -120,9 +120,13 @@ export type Database = {
           id: string
           is_primary: boolean
           metadata: Json | null
+          previous_account_number_last4: string | null
+          previous_routing_number_last4: string | null
           routing_number_last4: string
           stripe_account_id: string
+          update_reason: string | null
           updated_at: string
+          updated_by_user_at: string | null
           user_id: string
           verification_method: string
           verification_status: string
@@ -137,9 +141,13 @@ export type Database = {
           id?: string
           is_primary?: boolean
           metadata?: Json | null
+          previous_account_number_last4?: string | null
+          previous_routing_number_last4?: string | null
           routing_number_last4: string
           stripe_account_id: string
+          update_reason?: string | null
           updated_at?: string
+          updated_by_user_at?: string | null
           user_id: string
           verification_method?: string
           verification_status?: string
@@ -154,9 +162,13 @@ export type Database = {
           id?: string
           is_primary?: boolean
           metadata?: Json | null
+          previous_account_number_last4?: string | null
+          previous_routing_number_last4?: string | null
           routing_number_last4?: string
           stripe_account_id?: string
+          update_reason?: string | null
           updated_at?: string
+          updated_by_user_at?: string | null
           user_id?: string
           verification_method?: string
           verification_status?: string

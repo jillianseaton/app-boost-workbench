@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface BankAccountCreationRequest {
@@ -6,6 +5,13 @@ export interface BankAccountCreationRequest {
   routingNumber: string;
   accountNumber: string;
   accountType: 'checking' | 'savings';
+}
+
+export interface BankAccountUpdateRequest {
+  bankAccountId: string;
+  routingNumber: string;
+  accountNumber: string;
+  updateReason: string;
 }
 
 export interface BankAccountVerificationRequest {
@@ -30,6 +36,10 @@ export interface BankAccount {
   is_primary: boolean;
   created_at: string;
   verified_at?: string;
+  previous_routing_number_last4?: string;
+  previous_account_number_last4?: string;
+  update_reason?: string;
+  updated_by_user_at?: string;
 }
 
 class SecureBankService {
@@ -48,6 +58,25 @@ class SecureBankService {
       return data;
     } catch (error) {
       console.error('Bank Account Creation Error:', error);
+      throw error;
+    }
+  }
+
+  async updateBankAccount(request: BankAccountUpdateRequest) {
+    try {
+      console.log('Updating bank account via service');
+      
+      const { data, error } = await supabase.functions.invoke('update-bank-account', {
+        body: request,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to update bank account');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Bank Account Update Error:', error);
       throw error;
     }
   }
