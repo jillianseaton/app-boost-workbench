@@ -1,39 +1,33 @@
 
-project_id = "laoltiyaaagiiutahypb"
+project_id = "pwpqwttjsukrpgxufbpc"
 
 [api]
 enabled = true
 port = 54321
-schemas = ["public", "storage", "graphql_public"]
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54324
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://pwpqwttjsukrpgxufbpc.lovableproject.com"]
+jwt_expiry = 3600
+enable_signup = true
+enable_email_confirmations = false
+enable_sms_confirmations = false
 
 [db]
 port = 54322
 
-[studio]
+[edge_functions]
+enabled = true
 port = 54323
 
-[inbucket]
-port = 54324
-
-[storage]
-port = 5000
-
-[auth]
-port = 9999
-
-[vector]
-port = 7777
-
-[functions]
-port = 8000
-serve_port = 54321
-[functions.stripe-payout]
-verify_jwt = true
-[functions.stripe-account-setup]
-verify_jwt = true
-[functions.create-payment-intent]
+[functions.stripe-webhook]
 verify_jwt = false
-[functions.verify-payment]
-verify_jwt = false
-[functions.create-checkout-session]
-verify_jwt = false
+
+[rest]
+enabled = true
+port = 54321
