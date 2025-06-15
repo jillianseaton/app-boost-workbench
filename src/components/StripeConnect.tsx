@@ -1,16 +1,15 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, CreditCard, ExternalLink, DollarSign } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import { useStripeConnect } from '@/hooks/useStripeConnect';
 import { stripeConnectService } from '@/services/stripeConnectService';
 import { useToast } from '@/hooks/use-toast';
-import {
-  ConnectAccountOnboarding,
-  ConnectComponentsProvider,
-} from '@stripe/react-connect-js';
+import AccountCreationStep from './stripe-connect/AccountCreationStep';
+import OnboardingFlow from './stripe-connect/OnboardingFlow';
+import PayoutsSection from './stripe-connect/PayoutsSection';
+import DevelopmentInfo from './stripe-connect/DevelopmentInfo';
+import DocumentationNote from './stripe-connect/DocumentationNote';
 
 const StripeConnect: React.FC = () => {
   const [accountCreatePending, setAccountCreatePending] = useState(false);
@@ -19,29 +18,7 @@ const StripeConnect: React.FC = () => {
   const [connectedAccountId, setConnectedAccountId] = useState<string>();
   const [showPayouts, setShowPayouts] = useState(false);
   const stripeConnectInstance = useStripeConnect(connectedAccountId);
-  const payoutsContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  // Initialize payouts component when Stripe Connect instance is ready
-  useEffect(() => {
-    if (stripeConnectInstance && showPayouts && payoutsContainerRef.current) {
-      try {
-        // Clear any existing content
-        payoutsContainerRef.current.innerHTML = '';
-        
-        // Create and append the payouts component
-        const payouts = stripeConnectInstance.create('payouts');
-        payoutsContainerRef.current.appendChild(payouts);
-      } catch (error) {
-        console.error('Error creating payouts component:', error);
-        toast({
-          title: "Payouts Error",
-          description: "Failed to load payouts component",
-          variant: "destructive",
-        });
-      }
-    }
-  }, [stripeConnectInstance, showPayouts, toast]);
 
   const handleCreateAccount = async () => {
     setAccountCreatePending(true);
@@ -102,126 +79,33 @@ const StripeConnect: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {!connectedAccountId && (
-              <div className="text-center space-y-4">
-                <h3 className="text-xl font-semibold">Get ready to start earning</h3>
-                <p className="text-muted-foreground">
-                  Create your Stripe Connect account to begin accepting payments and receiving payouts.
-                </p>
-                
-                {!accountCreatePending ? (
-                  <Button 
-                    onClick={handleCreateAccount}
-                    size="lg"
-                    className="w-full max-w-sm"
-                  >
-                    Create Stripe Account
-                  </Button>
-                ) : (
-                  <Button disabled size="lg" className="w-full max-w-sm">
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating Account...
-                  </Button>
-                )}
-              </div>
+              <AccountCreationStep
+                onCreateAccount={handleCreateAccount}
+                isLoading={accountCreatePending}
+                hasError={error}
+              />
             )}
 
-            {connectedAccountId && !stripeConnectInstance && (
-              <div className="text-center space-y-4">
-                <h3 className="text-xl font-semibold">Complete your account setup</h3>
-                <p className="text-muted-foreground">
-                  Loading onboarding form to complete your account information...
-                </p>
-                <div className="flex justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              </div>
-            )}
+            <OnboardingFlow
+              stripeConnectInstance={stripeConnectInstance}
+              onboardingExited={onboardingExited}
+              onOnboardingExit={handleOnboardingExit}
+            />
 
-            {stripeConnectInstance && !onboardingExited && (
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-center">Complete Your Onboarding</h3>
-                <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
-                  <ConnectAccountOnboarding
-                    onExit={handleOnboardingExit}
-                  />
-                </ConnectComponentsProvider>
-              </div>
-            )}
+            <DevelopmentInfo
+              connectedAccountId={connectedAccountId}
+              accountCreatePending={accountCreatePending}
+              onboardingExited={onboardingExited}
+            />
 
-            {error && (
-              <div className="text-center p-4 bg-destructive/10 border border-destructive/20 rounded-md">
-                <p className="text-destructive font-medium">Something went wrong!</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Please try again or contact support if the issue persists.
-                </p>
-              </div>
-            )}
-
-            {(connectedAccountId || accountCreatePending || onboardingExited) && (
-              <div className="space-y-3 p-4 bg-muted rounded-md">
-                <h4 className="font-semibold text-sm">Development Information</h4>
-                {connectedAccountId && (
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">Account ID:</Badge>
-                    <code className="text-xs bg-background px-2 py-1 rounded font-mono">
-                      {connectedAccountId}
-                    </code>
-                  </div>
-                )}
-                {accountCreatePending && (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Creating connected account...</span>
-                  </div>
-                )}
-                {onboardingExited && (
-                  <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-                    Onboarding Completed
-                  </Badge>
-                )}
-              </div>
-            )}
-
-            <div className="p-4 bg-blue-50 rounded-md border border-blue-200">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> This is a Connect onboarding implementation using Stripe's embedded components.{' '}
-                <a 
-                  href="https://docs.stripe.com/connect/onboarding/quickstart?connect-onboarding-surface=embedded" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 underline hover:no-underline"
-                >
-                  View documentation
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </p>
-            </div>
+            <DocumentationNote />
           </CardContent>
         </Card>
 
-        {showPayouts && onboardingExited && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Payouts Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-muted-foreground">
-                  Manage your payouts, view payout schedules, and configure external accounts for receiving funds.
-                </p>
-                <div 
-                  ref={payoutsContainerRef}
-                  className="min-h-[400px] border rounded-md p-4 bg-background"
-                >
-                  {/* Payouts component will be rendered here */}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <PayoutsSection
+          stripeConnectInstance={stripeConnectInstance}
+          showPayouts={showPayouts && onboardingExited}
+        />
       </div>
     </div>
   );
