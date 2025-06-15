@@ -9,7 +9,7 @@ import {
   CreditCard, 
   RefreshCw, 
   DollarSign, 
-  Transfer,
+  ArrowRight,
   ExternalLink 
 } from 'lucide-react';
 import { BalanceTransaction as BalanceTransactionType } from '@/types/balanceTransaction';
@@ -31,7 +31,7 @@ const BalanceTransaction: React.FC<BalanceTransactionProps> = ({
       case 'refund':
         return RefreshCw;
       case 'transfer':
-        return Transfer;
+        return ArrowRight;
       case 'payout':
         return DollarSign;
       default:

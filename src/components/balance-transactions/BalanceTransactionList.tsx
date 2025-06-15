@@ -31,7 +31,7 @@ const BalanceTransactionList: React.FC = () => {
   const handleFilterChange = (key: keyof BalanceTransactionFilters, value: string) => {
     const newFilters = { ...filters };
     if (value) {
-      newFilters[key] = value as any;
+      (newFilters as any)[key] = value;
     } else {
       delete newFilters[key];
     }
