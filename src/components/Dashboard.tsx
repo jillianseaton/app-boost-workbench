@@ -6,7 +6,7 @@ import DashboardStats from './DashboardStats';
 import { useDashboardActions } from './DashboardActions';
 import TaskOptimization from './TaskOptimization';
 import WithdrawalSection from './WithdrawalSection';
-import DepositToBank from './DepositToBank';
+import SecureBankDashboard from './SecureBankDashboard';
 import PartnerServices from './PartnerServices';
 import TransactionHistory from './TransactionHistory';
 import { Transaction } from '@/utils/transactionUtils';
@@ -85,24 +85,24 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     }, 1000);
   };
 
-  const handleBankDeposit = (amount: number) => {
+  const handleSecureBankDeposit = (amount: number) => {
     const transactionId = addTransaction({
       type: 'withdrawal',
       amount: amount,
       status: 'pending',
-      address: 'Bank Account Transfer',
+      address: 'Verified Bank Account Transfer',
     });
 
     setEarnings(prev => prev - amount);
 
     toast({
-      title: "Balance Updated",
-      description: `$${amount.toFixed(2)} deducted from your EarnFlow balance.`,
+      title: "Secure Deposit Initiated",
+      description: `$${amount.toFixed(2)} securely transferred to your verified bank account.`,
     });
 
     setTimeout(() => {
       updateTransaction(transactionId, { status: 'confirmed' });
-    }, 1000);
+    }, 2000);
   };
 
   return (
@@ -124,9 +124,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         onResetAccount={resetAccount}
       />
 
-      <DepositToBank
+      <SecureBankDashboard
         currentBalance={earnings}
-        onDepositSuccess={handleBankDeposit}
+        onDepositSuccess={handleSecureBankDeposit}
         userEmail={user.phoneNumber}
         userId={user.username}
       />
