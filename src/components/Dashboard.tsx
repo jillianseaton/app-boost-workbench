@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import CurrentTime from './CurrentTime';
 import DashboardStats from './DashboardStats';
-import DashboardActions from './DashboardActions';
+import { useDashboardActions } from './DashboardActions';
 import TaskOptimization from './TaskOptimization';
 import WithdrawalSection from './WithdrawalSection';
 import DepositToBank from './DepositToBank';
 import PartnerServices from './PartnerServices';
 import TransactionHistory from './TransactionHistory';
+import { Transaction } from '@/utils/transactionUtils';
 
 interface User {
   phoneNumber: string;
@@ -17,16 +18,6 @@ interface User {
 
 interface DashboardProps {
   user: User;
-}
-
-interface Transaction {
-  id: string;
-  type: 'withdrawal' | 'earning';
-  amount: number;
-  address?: string;
-  status: 'pending' | 'confirmed' | 'failed';
-  timestamp: Date;
-  txHash?: string;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ user }) => {
@@ -38,22 +29,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   const maxTasks = 20;
 
-  const resetTasks = () => {
-    if (tasksCompleted < maxTasks) {
-      toast({
-        title: "Cannot reset tasks",
-        description: `Complete all ${maxTasks} tasks before resetting.`,
-        variant: "destructive",
-      });
-      return;
+  const { resetTasks, resetAccount } = useDashboardActions(
+    tasksCompleted,
+    maxTasks,
+    () => {
+      setTasksCompleted(0);
+    },
+    () => {
+      setEarnings(0);
+      setTasksCompleted(0);
+      setHasWithdrawn(false);
+      setTransactions([]);
     }
-
-    setTasksCompleted(0);
-    toast({
-      title: "Tasks Reset Successfully",
-      description: `You can now complete ${maxTasks} more optimization tasks!`,
-    });
-  };
+  );
 
   const addTransaction = (transaction: Omit<Transaction, 'id' | 'timestamp'>) => {
     const newTransaction: Transaction = {
@@ -115,17 +103,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     setTimeout(() => {
       updateTransaction(transactionId, { status: 'confirmed' });
     }, 1000);
-  };
-
-  const resetAccount = () => {
-    setEarnings(0);
-    setTasksCompleted(0);
-    setHasWithdrawn(false);
-    setTransactions([]);
-    toast({
-      title: "Account Reset",
-      description: "Ready for a new day of earning!",
-    });
   };
 
   return (

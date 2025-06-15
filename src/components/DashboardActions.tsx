@@ -45,7 +45,6 @@ const DashboardActions: React.FC<DashboardActionsProps> = ({
   return null; // This component provides actions but doesn't render anything
 };
 
-export { DashboardActions };
 export const useDashboardActions = (
   tasksCompleted: number,
   maxTasks: number,
