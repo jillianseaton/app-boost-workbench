@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Clock, Wallet, TrendingUp, Users, Star, RotateCcw } from 'lucide-react';
 import TaskOptimization from './TaskOptimization';
 import WithdrawalSection from './WithdrawalSection';
+import DepositToBank from './DepositToBank';
 import PartnerServices from './PartnerServices';
 import TransactionHistory from './TransactionHistory';
 
@@ -110,6 +111,29 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     }, 1000);
   };
 
+  const handleBankDeposit = (amount: number) => {
+    // Add bank deposit transaction (outgoing from EarnFlow balance)
+    const transactionId = addTransaction({
+      type: 'withdrawal', // Using withdrawal type for outgoing transactions
+      amount: amount,
+      status: 'pending',
+      address: 'Bank Account Transfer', // Special identifier for bank deposits
+    });
+
+    // Deduct amount from earnings balance
+    setEarnings(prev => prev - amount);
+
+    toast({
+      title: "Balance Updated",
+      description: `$${amount.toFixed(2)} deducted from your EarnFlow balance.`,
+    });
+
+    // Update transaction to confirmed after successful deposit
+    setTimeout(() => {
+      updateTransaction(transactionId, { status: 'confirmed' });
+    }, 1000);
+  };
+
   const resetAccount = () => {
     setEarnings(0);
     setTasksCompleted(0);
@@ -195,6 +219,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         hasWithdrawn={hasWithdrawn}
         onTaskComplete={handleTaskComplete}
         onResetAccount={resetAccount}
+      />
+
+      {/* Bank Deposit Section - New Feature */}
+      <DepositToBank
+        currentBalance={earnings}
+        onDepositSuccess={handleBankDeposit}
+        userEmail={user.phoneNumber}
+        userId={user.username}
       />
 
       {/* Withdrawal Section */}

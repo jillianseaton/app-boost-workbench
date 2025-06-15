@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Bitcoin, Clock, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { Bitcoin, Clock, CheckCircle, AlertCircle, ExternalLink, Banknote } from 'lucide-react';
 
 interface Transaction {
   id: string;
@@ -58,6 +58,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
     window.open(generateMempoolUrl(txHash, network), '_blank');
   };
 
+  const isBankDeposit = (transaction: Transaction) => {
+    return transaction.type === 'withdrawal' && transaction.address === 'Bank Account Transfer';
+  };
+
   if (transactions.length === 0) {
     return (
       <Card>
@@ -108,12 +112,16 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
               <TableRow key={transaction.id}>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {transaction.type === 'withdrawal' ? (
+                    {isBankDeposit(transaction) ? (
+                      <Banknote className="h-4 w-4 text-blue-500" />
+                    ) : transaction.type === 'withdrawal' ? (
                       <Bitcoin className="h-4 w-4 text-orange-500" />
                     ) : (
                       <div className="h-4 w-4 bg-green-500 rounded-full" />
                     )}
-                    <span className="capitalize">{transaction.type}</span>
+                    <span className="capitalize">
+                      {isBankDeposit(transaction) ? 'Bank Deposit' : transaction.type}
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -123,7 +131,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
                 </TableCell>
                 <TableCell>
                   {transaction.address ? (
-                    <div className="font-mono text-xs break-all max-w-[200px]">
+                    <div className={`text-xs ${isBankDeposit(transaction) ? 'text-blue-600 font-medium' : 'font-mono break-all max-w-[200px]'}`}>
                       {transaction.address}
                     </div>
                   ) : (
@@ -147,7 +155,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
                   </div>
                 </TableCell>
                 <TableCell>
-                  {transaction.txHash ? (
+                  {transaction.txHash && !isBankDeposit(transaction) ? (
                     <Button
                       variant="outline"
                       size="sm"
@@ -157,6 +165,8 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
                       <ExternalLink className="h-3 w-3" />
                       View
                     </Button>
+                  ) : isBankDeposit(transaction) ? (
+                    <span className="text-blue-600 text-sm">Bank Transfer</span>
                   ) : (
                     <span className="text-muted-foreground text-sm">-</span>
                   )}
@@ -170,14 +180,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
           <div className="mt-4 p-3 bg-blue-50 rounded-md">
             <p className="text-sm text-blue-800">
               <strong>Pending Transactions:</strong> Bitcoin mainnet transactions typically take 10-60 minutes to confirm. 
-              You can track them in real-time on mempool.space.
+              Bank deposits take 1-2 business days to process. You can track Bitcoin transactions in real-time on mempool.space.
             </p>
           </div>
         )}
         
         <div className="mt-4 p-3 bg-gray-50 rounded-md">
           <p className="text-sm text-gray-700">
-            <strong>Block Explorer:</strong> All transactions can be viewed on{' '}
+            <strong>Block Explorer:</strong> Bitcoin transactions can be viewed on{' '}
             <a 
               href="https://mempool.space" 
               target="_blank" 
@@ -186,7 +196,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ transactions })
             >
               mempool.space
             </a>
-            {' '}for detailed blockchain information including fees, confirmations, and network stats.
+            {' '}for detailed blockchain information. Bank deposits are processed through Stripe and will appear in your bank account within 1-2 business days.
           </p>
         </div>
       </CardContent>
