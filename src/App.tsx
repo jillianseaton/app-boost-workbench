@@ -11,6 +11,7 @@ import BitcoinWalletPage from "./pages/BitcoinWalletPage";
 import StripePaymentPage from "./pages/StripePaymentPage";
 import StripeConnect from "./components/StripeConnect";
 import StripeConnectLinkPage from "./pages/StripeConnectLinkPage";
+import StripeConnectOAuthPage from "./pages/StripeConnectOAuthPage";
 import DestinationCheckoutPage from "./pages/DestinationCheckoutPage";
 import CustomStripeOnboardingPage from "./pages/CustomStripeOnboardingPage";
 import AccountSetupSuccess from "./pages/AccountSetupSuccess";
@@ -40,6 +41,7 @@ const App: React.FC = () => {
             <Route path="/stripe-payment" element={<StripePaymentPage />} />
             <Route path="/stripe-connect" element={<StripeConnect />} />
             <Route path="/stripe-connect-link" element={<StripeConnectLinkPage />} />
+            <Route path="/stripe-connect-oauth" element={<StripeConnectOAuthPage />} />
             <Route path="/stripe-test" element={<StripeTestPage />} />
             <Route path="/destination-checkout" element={<DestinationCheckoutPage />} />
             <Route path="/custom-stripe-onboarding" element={<CustomStripeOnboardingPage />} />

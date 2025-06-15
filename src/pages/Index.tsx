@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, FileText } from 'lucide-react';
+import { LogOut, FileText, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PrivacyPolicy from '@/components/PrivacyPolicy';
 import PartnerAgreement from '@/components/PartnerAgreement';
@@ -117,6 +118,10 @@ const EarnFlow = () => {
             <Button onClick={() => window.location.href = '/bitcoin-wallet'} variant="outline" size="sm">
               <FileText className="h-4 w-4 mr-2" />
               Bitcoin Wallet
+            </Button>
+            <Button onClick={() => window.location.href = '/stripe-connect-oauth'} variant="outline" size="sm">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Connect Stripe
             </Button>
             <Button onClick={() => setShowPrivacyPolicy(true)} variant="outline" size="sm">
               <FileText className="h-4 w-4 mr-2" />
