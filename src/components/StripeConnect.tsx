@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, CreditCard, ExternalLink } from 'lucide-react';
+import { Loader2, CreditCard, ExternalLink, DollarSign } from 'lucide-react';
 import { useStripeConnect } from '@/hooks/useStripeConnect';
 import { stripeConnectService } from '@/services/stripeConnectService';
 import { useToast } from '@/hooks/use-toast';
@@ -17,8 +17,31 @@ const StripeConnect: React.FC = () => {
   const [onboardingExited, setOnboardingExited] = useState(false);
   const [error, setError] = useState(false);
   const [connectedAccountId, setConnectedAccountId] = useState<string>();
+  const [showPayouts, setShowPayouts] = useState(false);
   const stripeConnectInstance = useStripeConnect(connectedAccountId);
+  const payoutsContainerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Initialize payouts component when Stripe Connect instance is ready
+  useEffect(() => {
+    if (stripeConnectInstance && showPayouts && payoutsContainerRef.current) {
+      try {
+        // Clear any existing content
+        payoutsContainerRef.current.innerHTML = '';
+        
+        // Create and append the payouts component
+        const payouts = stripeConnectInstance.create('payouts');
+        payoutsContainerRef.current.appendChild(payouts);
+      } catch (error) {
+        console.error('Error creating payouts component:', error);
+        toast({
+          title: "Payouts Error",
+          description: "Failed to load payouts component",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [stripeConnectInstance, showPayouts, toast]);
 
   const handleCreateAccount = async () => {
     setAccountCreatePending(true);
@@ -51,6 +74,15 @@ const StripeConnect: React.FC = () => {
     } finally {
       setAccountCreatePending(false);
     }
+  };
+
+  const handleOnboardingExit = () => {
+    setOnboardingExited(true);
+    setShowPayouts(true);
+    toast({
+      title: "Onboarding Complete",
+      description: "You can now manage your payouts and start accepting payments!",
+    });
   };
 
   return (
@@ -105,18 +137,12 @@ const StripeConnect: React.FC = () => {
               </div>
             )}
 
-            {stripeConnectInstance && (
+            {stripeConnectInstance && !onboardingExited && (
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold text-center">Complete Your Onboarding</h3>
                 <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
                   <ConnectAccountOnboarding
-                    onExit={() => {
-                      setOnboardingExited(true);
-                      toast({
-                        title: "Onboarding Complete",
-                        description: "You can now start accepting payments!",
-                      });
-                    }}
+                    onExit={handleOnboardingExit}
                   />
                 </ConnectComponentsProvider>
               </div>
@@ -172,6 +198,30 @@ const StripeConnect: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {showPayouts && onboardingExited && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Payouts Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-muted-foreground">
+                  Manage your payouts, view payout schedules, and configure external accounts for receiving funds.
+                </p>
+                <div 
+                  ref={payoutsContainerRef}
+                  className="min-h-[400px] border rounded-md p-4 bg-background"
+                >
+                  {/* Payouts component will be rendered here */}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
