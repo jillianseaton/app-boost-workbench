@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CreditCard, Building, AlertTriangle } from 'lucide-react';
+import { Loader2, CreditCard, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { adRevenueService } from '@/services/adRevenueService';
 
@@ -16,7 +16,6 @@ const ConnectAccountSetup: React.FC<ConnectAccountSetupProps> = ({ onAccountCrea
   const [loading, setLoading] = useState(false);
   const [businessEmail, setBusinessEmail] = useState('');
   const [businessName, setBusinessName] = useState('');
-  const [simulationMode, setSimulationMode] = useState(false);
   const { toast } = useToast();
 
   const handleCreateAccount = async () => {
@@ -41,24 +40,15 @@ const ConnectAccountSetup: React.FC<ConnectAccountSetupProps> = ({ onAccountCrea
       if (result.success && result.data) {
         onAccountCreated(result.data.accountId);
         
-        // Check if this is a simulation
-        if (result.simulation) {
-          setSimulationMode(true);
-          toast({
-            title: "Simulation Account Created",
-            description: "A simulation account has been created for testing purposes.",
-          });
-        } else {
-          if (result.data.onboardingUrl) {
-            // Open onboarding in new tab if needed
-            window.open(result.data.onboardingUrl, '_blank');
-          }
-          
-          toast({
-            title: "Account Created",
-            description: "Your ad revenue collection account has been set up successfully.",
-          });
+        if (result.data.onboardingUrl) {
+          // Open onboarding in new tab
+          window.open(result.data.onboardingUrl, '_blank');
         }
+        
+        toast({
+          title: "Account Created Successfully",
+          description: "Your ad revenue collection account has been set up. Complete the onboarding process in the new tab.",
+        });
       } else {
         throw new Error(result.error || 'Failed to create account');
       }
@@ -86,19 +76,6 @@ const ConnectAccountSetup: React.FC<ConnectAccountSetupProps> = ({ onAccountCrea
         <p className="text-muted-foreground text-center">
           Create a Stripe Connect Express account to start receiving payments from advertising partners.
         </p>
-        
-        {simulationMode && (
-          <div className="p-4 bg-yellow-50 rounded-md border border-yellow-200">
-            <div className="flex items-center gap-2 text-yellow-800">
-              <AlertTriangle className="h-4 w-4" />
-              <p className="text-sm font-medium">Simulation Mode Active</p>
-            </div>
-            <p className="text-sm text-yellow-700 mt-1">
-              This is a test account for demonstration purposes. To create a live account, 
-              please configure a full Stripe secret key with Connect permissions.
-            </p>
-          </div>
-        )}
         
         <div className="space-y-4">
           <div>
@@ -133,7 +110,7 @@ const ConnectAccountSetup: React.FC<ConnectAccountSetupProps> = ({ onAccountCrea
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Setting up account...
+                Creating account...
               </>
             ) : (
               <>
@@ -148,6 +125,7 @@ const ConnectAccountSetup: React.FC<ConnectAccountSetupProps> = ({ onAccountCrea
           <p className="text-sm text-blue-800">
             <strong>What happens next:</strong> We'll create a Stripe Connect Express account for your business.
             This allows you to receive payments from advertising partners and manage payouts to your bank account.
+            You'll be redirected to complete the onboarding process.
           </p>
         </div>
       </CardContent>
