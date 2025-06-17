@@ -23,6 +23,7 @@ import StripeTestPage from "./pages/StripeTestPage";
 import EmbeddedCheckoutPage from "./pages/EmbeddedCheckoutPage";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import BalanceTransactionsPage from "./pages/BalanceTransactionsPage";
+import AdRevenuePage from "./pages/AdRevenuePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
