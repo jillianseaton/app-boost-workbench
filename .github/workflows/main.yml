@@ -35,10 +35,9 @@ jobs:
         name: build-files
         path: dist/
         
-    # Uncomment the section below if you want to deploy to GitHub Pages
-    # - name: Deploy to GitHub Pages
-    #   if: github.ref == 'refs/heads/main'
-    #   uses: peaceiris/actions-gh-pages@v3
-    #   with:
-    #     github_token: ${{ secrets.GITHUB_TOKEN }}
-    #     publish_dir: ./dist
+    - name: Deploy to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
