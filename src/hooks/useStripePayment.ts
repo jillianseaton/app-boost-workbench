@@ -85,7 +85,9 @@ export const useStripePayment = ({ amount, description }: UseStripePaymentProps)
         },
       });
 
-      const paymentElementInstance = elementsInstance.create('payment');
+      const paymentElementInstance = elementsInstance.create('payment', {
+        paymentMethodTypes: ['card']
+      });
       setElements(elementsInstance);
       setPaymentElement(paymentElementInstance);
 
