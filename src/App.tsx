@@ -9,6 +9,7 @@ import LoginSignup from '@/components/LoginSignup';
 import { useAuth } from '@/hooks/useAuth';
 import AdRevenuePage from '@/pages/AdRevenuePage';
 import SecureBankTransferPage from '@/pages/SecureBankTransferPage';
+import AffiliateRevenuePage from '@/pages/AffiliateRevenuePage';
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ function App() {
           />
           <Route path="/ad-revenue" element={<AdRevenuePage />} />
           <Route path="/secure-bank-transfer" element={<SecureBankTransferPage />} />
+          <Route path="/affiliate-revenue" element={<AffiliateRevenuePage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

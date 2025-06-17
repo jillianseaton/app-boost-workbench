@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ArrowRight } from 'lucide-react';
+import { Shield, ArrowRight, TrendingUp } from 'lucide-react';
 
 const Index = () => {
   return (
@@ -33,7 +34,7 @@ const Index = () => {
       </header>
       
       <main className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
           <Link
             to="/dashboard"
             className="group block p-8 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-green-200"
@@ -116,6 +117,25 @@ const Index = () => {
             </p>
             <div className="mt-4 text-sm text-green-600 font-medium">
               → Access Dashboard
+            </div>
+          </Link>
+          
+          <Link
+            to="/affiliate-revenue"
+            className="group block p-8 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-green-200"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <TrendingUp className="h-12 w-12 text-orange-600 group-hover:scale-110 transition-transform duration-300" />
+              <ArrowRight className="h-6 w-6 text-gray-400 group-hover:text-orange-600 group-hover:translate-x-1 transition-all duration-300" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-orange-800 transition-colors">
+              Affiliate Revenue Center
+            </h3>
+            <p className="text-gray-600 group-hover:text-gray-700 transition-colors">
+              Earn commissions by recommending partner services to your users with full tracking
+            </p>
+            <div className="mt-4 text-sm text-orange-600 font-medium">
+              → Start Earning
             </div>
           </Link>
           
