@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import CurrentTime from './CurrentTime';
 import DashboardStats from './DashboardStats';
 import { useDashboardActions } from './DashboardActions';
@@ -11,16 +12,8 @@ import PartnerServices from './PartnerServices';
 import TransactionHistory from './TransactionHistory';
 import { Transaction } from '@/utils/transactionUtils';
 
-interface User {
-  phoneNumber: string;
-  username: string;
-}
-
-interface DashboardProps {
-  user: User;
-}
-
-const Dashboard: React.FC<DashboardProps> = ({ user }) => {
+const Dashboard: React.FC = () => {
+  const { user } = useAuth();
   const [earnings, setEarnings] = useState(0);
   const [tasksCompleted, setTasksCompleted] = useState(0);
   const [hasWithdrawn, setHasWithdrawn] = useState(false);
@@ -105,6 +98,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     }, 2000);
   };
 
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
+  const userEmail = user.email || '';
+  const userId = user.id || '';
+
   return (
     <div className="space-y-6">
       <CurrentTime />
@@ -127,16 +127,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       <SecureBankDashboard
         currentBalance={earnings}
         onDepositSuccess={handleSecureBankDeposit}
-        userEmail={user.phoneNumber}
-        userId={user.username}
+        userEmail={userEmail}
+        userId={userId}
       />
 
       <WithdrawalSection 
         earnings={earnings}
         hasWithdrawn={hasWithdrawn}
         onWithdraw={handleWithdraw}
-        userEmail={user.phoneNumber}
-        userId={user.username}
+        userEmail={userEmail}
+        userId={userId}
       />
 
       <TransactionHistory transactions={transactions} />

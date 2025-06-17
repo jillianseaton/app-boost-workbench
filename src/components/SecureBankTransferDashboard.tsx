@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,7 +72,10 @@ const SecureBankTransferDashboard: React.FC<SecureBankTransferDashboardProps> = 
       // Calculate transfer stats from audit log
       const stats = log.reduce((acc, entry) => {
         if (entry.action === 'secure_deposit_processed') {
-          acc.totalTransferred += entry.details?.amount || 0;
+          const amount = typeof entry.details === 'object' && entry.details && 'amount' in entry.details 
+            ? Number(entry.details.amount) || 0 
+            : 0;
+          acc.totalTransferred += amount;
           acc.completedTransfers += 1;
         } else if (entry.action === 'secure_deposit_pending') {
           acc.pendingTransfers += 1;
@@ -280,24 +282,30 @@ const SecureBankTransferDashboard: React.FC<SecureBankTransferDashboardProps> = 
                       <p className="text-center text-muted-foreground py-4">No recent transfers</p>
                     ) : (
                       <div className="space-y-3">
-                        {getRecentTransfers().map((transfer) => (
-                          <div key={transfer.id} className="flex items-center justify-between p-3 bg-muted rounded-md">
-                            <div className="flex items-center gap-3">
-                              <ArrowUpRight className="h-4 w-4 text-green-500" />
-                              <div>
-                                <p className="text-sm font-medium">
-                                  ${transfer.details?.amount?.toFixed(2) || '0.00'}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {new Date(transfer.created_at).toLocaleDateString()}
-                                </p>
+                        {getRecentTransfers().map((transfer) => {
+                          const amount = typeof transfer.details === 'object' && transfer.details && 'amount' in transfer.details 
+                            ? Number(transfer.details.amount) || 0 
+                            : 0;
+                          
+                          return (
+                            <div key={transfer.id} className="flex items-center justify-between p-3 bg-muted rounded-md">
+                              <div className="flex items-center gap-3">
+                                <ArrowUpRight className="h-4 w-4 text-green-500" />
+                                <div>
+                                  <p className="text-sm font-medium">
+                                    ${amount.toFixed(2)}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(transfer.created_at).toLocaleDateString()}
+                                  </p>
+                                </div>
                               </div>
+                              <Badge variant="outline" className="text-xs">
+                                {transfer.action.replace('secure_deposit_', '')}
+                              </Badge>
                             </div>
-                            <Badge variant="outline" className="text-xs">
-                              {transfer.action.replace('secure_deposit_', '')}
-                            </Badge>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </CardContent>
@@ -463,43 +471,52 @@ const SecureBankTransferDashboard: React.FC<SecureBankTransferDashboardProps> = 
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {auditLog.slice(0, 20).map((log) => (
-                    <Card key={log.id}>
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-2 h-2 rounded-full ${
-                              log.action.includes('verified') ? 'bg-green-500' :
-                              log.action.includes('failed') ? 'bg-red-500' :
-                              log.action.includes('deposit') ? 'bg-blue-500' :
-                              'bg-gray-500'
-                            }`} />
-                            <div>
-                              <p className="font-medium text-sm">
-                                {log.action.replace(/_/g, ' ').toUpperCase()}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(log.created_at).toLocaleString()}
-                              </p>
+                  {auditLog.slice(0, 20).map((log) => {
+                    const amount = typeof log.details === 'object' && log.details && 'amount' in log.details 
+                      ? Number(log.details.amount) || 0 
+                      : 0;
+                    const verificationConfirmed = typeof log.details === 'object' && log.details && 'verification_confirmed' in log.details 
+                      ? Boolean(log.details.verification_confirmed) 
+                      : false;
+                    
+                    return (
+                      <Card key={log.id}>
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-2 h-2 rounded-full ${
+                                log.action.includes('verified') ? 'bg-green-500' :
+                                log.action.includes('failed') ? 'bg-red-500' :
+                                log.action.includes('deposit') ? 'bg-blue-500' :
+                                'bg-gray-500'
+                              }`} />
+                              <div>
+                                <p className="font-medium text-sm">
+                                  {log.action.replace(/_/g, ' ').toUpperCase()}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(log.created_at).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {amount > 0 && (
+                                <Badge variant="outline">
+                                  ${amount.toFixed(2)}
+                                </Badge>
+                              )}
+                              {verificationConfirmed && (
+                                <Badge className="bg-green-100 text-green-800">
+                                  <Lock className="h-3 w-3 mr-1" />
+                                  Verified
+                                </Badge>
+                              )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {log.details?.amount && (
-                              <Badge variant="outline">
-                                ${log.details.amount.toFixed(2)}
-                              </Badge>
-                            )}
-                            {log.details?.verification_confirmed && (
-                              <Badge className="bg-green-100 text-green-800">
-                                <Lock className="h-3 w-3 mr-1" />
-                                Verified
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </TabsContent>

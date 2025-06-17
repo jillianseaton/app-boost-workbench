@@ -1,17 +1,20 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import Index from '@/pages/Index';
 import Dashboard from '@/components/Dashboard';
 import LoginSignup from '@/components/LoginSignup';
 import { useAuth } from '@/hooks/useAuth';
 import AdRevenuePage from '@/pages/AdRevenuePage';
-import { QueryClient } from 'react-query';
 import SecureBankTransferPage from '@/pages/SecureBankTransferPage';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClient>
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Toaster />
         <Routes>
@@ -28,7 +31,7 @@ function App() {
           <Route path="/secure-bank-transfer" element={<SecureBankTransferPage />} />
         </Routes>
       </BrowserRouter>
-    </QueryClient>
+    </QueryClientProvider>
   );
 }
 
@@ -51,7 +54,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
               Please sign in to access the dashboard
             </p>
           </div>
-          <LoginSignup />
+          <LoginSignup onLogin={() => {}} />
         </div>
       </div>
     );

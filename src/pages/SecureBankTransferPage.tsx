@@ -33,11 +33,14 @@ const SecureBankTransferPage: React.FC = () => {
               Please sign in to access your secure bank transfer dashboard
             </p>
           </div>
-          <LoginSignup />
+          <LoginSignup onLogin={() => {}} />
         </div>
       </div>
     );
   }
+
+  const userEmail = user.email || '';
+  const userId = user.id || '';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -54,8 +57,8 @@ const SecureBankTransferPage: React.FC = () => {
         <SecureBankTransferDashboard
           currentBalance={currentBalance}
           onDepositSuccess={handleDepositSuccess}
-          userEmail={user.phoneNumber || user.username || ''}
-          userId={user.username || ''}
+          userEmail={userEmail}
+          userId={userId}
         />
       </div>
     </div>
