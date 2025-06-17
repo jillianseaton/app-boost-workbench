@@ -1,21 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Shield, 
-  Banknote, 
-  History, 
   AlertTriangle, 
   CheckCircle, 
   Plus, 
-  Edit,
-  ArrowUpRight,
-  ArrowDownLeft,
-  CreditCard,
-  Lock
+  Edit
 } from 'lucide-react';
 import { secureBankService, BankAccount } from '@/services/secureBankService';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +17,11 @@ import BankAccountForm from './BankAccountForm';
 import BankAccountVerification from './BankAccountVerification';
 import SecureDepositForm from './SecureDepositForm';
 import BankAccountUpdateForm from './BankAccountUpdateForm';
+import OverviewStats from './secure-bank/OverviewStats';
+import QuickActions from './secure-bank/QuickActions';
+import RecentTransfers from './secure-bank/RecentTransfers';
+import BankAccountsList from './secure-bank/BankAccountsList';
+import AuditHistory from './secure-bank/AuditHistory';
 
 interface SecureBankTransferDashboardProps {
   currentBalance: number;
@@ -72,7 +71,10 @@ const SecureBankTransferDashboard: React.FC<SecureBankTransferDashboardProps> = 
       // Calculate transfer stats from audit log
       const stats = log.reduce((acc, entry) => {
         if (entry.action === 'secure_deposit_processed') {
-          const amount = typeof entry.details === 'object' && entry.details && 'amount' in entry.details 
+          const amount = typeof entry.details === 'object' && 
+                        entry.details && 
+                        typeof entry.details === 'object' && 
+                        'amount' in entry.details 
             ? Number(entry.details.amount) || 0 
             : 0;
           acc.totalTransferred += amount;
@@ -131,18 +133,17 @@ const SecureBankTransferDashboard: React.FC<SecureBankTransferDashboardProps> = 
     setActiveTab('verification');
   };
 
+  const handleNavigateToTab = (tab: string) => {
+    setActiveTab(tab);
+  };
+
+  const handleUpdateAccount = (account: BankAccount) => {
+    setSelectedAccountForUpdate(account);
+    setActiveTab('update');
+  };
+
   const verifiedAccounts = bankAccounts.filter(account => account.verification_status === 'verified');
   const pendingAccounts = bankAccounts.filter(account => account.verification_status !== 'verified');
-
-  const getStatusBadge = (status: string) => {
-    const colors = {
-      verified: 'bg-green-100 text-green-800',
-      verifying: 'bg-yellow-100 text-yellow-800',
-      failed: 'bg-red-100 text-red-800',
-      pending: 'bg-gray-100 text-gray-800',
-    };
-    return colors[status as keyof typeof colors] || colors.pending;
-  };
 
   const getRecentTransfers = () => {
     return auditLog
@@ -185,131 +186,21 @@ const SecureBankTransferDashboard: React.FC<SecureBankTransferDashboardProps> = 
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Available Balance</p>
-                        <p className="text-2xl font-bold text-green-600">${currentBalance.toFixed(2)}</p>
-                      </div>
-                      <Banknote className="h-8 w-8 text-green-500" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Verified Accounts</p>
-                        <p className="text-2xl font-bold text-blue-600">{verifiedAccounts.length}</p>
-                      </div>
-                      <CheckCircle className="h-8 w-8 text-blue-500" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Total Transferred</p>
-                        <p className="text-2xl font-bold text-purple-600">${transferStats.totalTransferred.toFixed(2)}</p>
-                      </div>
-                      <ArrowUpRight className="h-8 w-8 text-purple-500" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Completed Transfers</p>
-                        <p className="text-2xl font-bold text-orange-600">{transferStats.completedTransfers}</p>
-                      </div>
-                      <History className="h-8 w-8 text-orange-500" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <OverviewStats
+                currentBalance={currentBalance}
+                verifiedAccountsCount={verifiedAccounts.length}
+                totalTransferred={transferStats.totalTransferred}
+                completedTransfers={transferStats.completedTransfers}
+              />
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <CreditCard className="h-5 w-5" />
-                      Quick Actions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {verifiedAccounts.length === 0 ? (
-                      <Button onClick={() => setActiveTab('accounts')} className="w-full">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Your First Bank Account
-                      </Button>
-                    ) : (
-                      <>
-                        <Button onClick={() => setActiveTab('transfer')} className="w-full">
-                          <ArrowUpRight className="h-4 w-4 mr-2" />
-                          Transfer to Bank Account
-                        </Button>
-                        <Button onClick={() => setActiveTab('accounts')} variant="outline" className="w-full">
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Another Account
-                        </Button>
-                      </>
-                    )}
-                    {pendingAccounts.length > 0 && (
-                      <Button onClick={() => setActiveTab('verification')} variant="outline" className="w-full">
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Complete Verification ({pendingAccounts.length})
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
+                <QuickActions
+                  verifiedAccountsCount={verifiedAccounts.length}
+                  pendingAccountsCount={pendingAccounts.length}
+                  onNavigateToTab={handleNavigateToTab}
+                />
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <History className="h-5 w-5" />
-                      Recent Transfer Activity
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {getRecentTransfers().length === 0 ? (
-                      <p className="text-center text-muted-foreground py-4">No recent transfers</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {getRecentTransfers().map((transfer) => {
-                          const amount = typeof transfer.details === 'object' && transfer.details && 'amount' in transfer.details 
-                            ? Number(transfer.details.amount) || 0 
-                            : 0;
-                          
-                          return (
-                            <div key={transfer.id} className="flex items-center justify-between p-3 bg-muted rounded-md">
-                              <div className="flex items-center gap-3">
-                                <ArrowUpRight className="h-4 w-4 text-green-500" />
-                                <div>
-                                  <p className="text-sm font-medium">
-                                    ${amount.toFixed(2)}
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {new Date(transfer.created_at).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
-                              <Badge variant="outline" className="text-xs">
-                                {transfer.action.replace('secure_deposit_', '')}
-                              </Badge>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <RecentTransfers transfers={getRecentTransfers()} />
               </div>
 
               {pendingAccounts.length > 0 && (
@@ -338,46 +229,10 @@ const SecureBankTransferDashboard: React.FC<SecureBankTransferDashboardProps> = 
                 <BankAccountForm onAccountCreated={handleAccountCreated} />
               ) : (
                 <div className="space-y-4">
-                  {bankAccounts.map((account) => (
-                    <Card key={account.id}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-semibold">{account.account_holder_name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {account.bank_name} • ****{account.account_number_last4}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Added {new Date(account.created_at).toLocaleDateString()}
-                            </p>
-                            {account.updated_by_user_at && (
-                              <p className="text-xs text-orange-600">
-                                Updated {new Date(account.updated_by_user_at).toLocaleDateString()}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={getStatusBadge(account.verification_status)}>
-                              {account.verification_status}
-                            </Badge>
-                            {account.verification_status === 'verified' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedAccountForUpdate(account);
-                                  setActiveTab('update');
-                                }}
-                              >
-                                <Edit className="h-3 w-3 mr-1" />
-                                Update
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  <BankAccountsList
+                    bankAccounts={bankAccounts}
+                    onUpdateAccount={handleUpdateAccount}
+                  />
                   {bankAccounts.length < 3 && (
                     <BankAccountForm onAccountCreated={handleAccountCreated} />
                   )}
@@ -464,61 +319,7 @@ const SecureBankTransferDashboard: React.FC<SecureBankTransferDashboardProps> = 
 
             <TabsContent value="history" className="space-y-4">
               <h3 className="text-lg font-semibold">Transfer History & Security Audit</h3>
-              {auditLog.length === 0 ? (
-                <div className="text-center p-8">
-                  <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No transfer history yet</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {auditLog.slice(0, 20).map((log) => {
-                    const amount = typeof log.details === 'object' && log.details && 'amount' in log.details 
-                      ? Number(log.details.amount) || 0 
-                      : 0;
-                    const verificationConfirmed = typeof log.details === 'object' && log.details && 'verification_confirmed' in log.details 
-                      ? Boolean(log.details.verification_confirmed) 
-                      : false;
-                    
-                    return (
-                      <Card key={log.id}>
-                        <CardContent className="p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-2 h-2 rounded-full ${
-                                log.action.includes('verified') ? 'bg-green-500' :
-                                log.action.includes('failed') ? 'bg-red-500' :
-                                log.action.includes('deposit') ? 'bg-blue-500' :
-                                'bg-gray-500'
-                              }`} />
-                              <div>
-                                <p className="font-medium text-sm">
-                                  {log.action.replace(/_/g, ' ').toUpperCase()}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {new Date(log.created_at).toLocaleString()}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {amount > 0 && (
-                                <Badge variant="outline">
-                                  ${amount.toFixed(2)}
-                                </Badge>
-                              )}
-                              {verificationConfirmed && (
-                                <Badge className="bg-green-100 text-green-800">
-                                  <Lock className="h-3 w-3 mr-1" />
-                                  Verified
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
+              <AuditHistory auditLog={auditLog} />
             </TabsContent>
           </Tabs>
         </CardContent>

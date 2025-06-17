@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 interface SecureDepositRequest {
-  amount: number; // Amount in USD
+  amount: number;
   bankAccountId: string;
   userBalance: number;
 }
@@ -41,22 +41,14 @@ serve(async (req) => {
     const body: SecureDepositRequest = await req.json();
     const { amount, bankAccountId, userBalance } = body;
 
-    console.log('Processing secure deposit:', { amount, bankAccountId, userId: user.id });
+    console.log('Processing secure deposit:', { amount, bankAccountId, userBalance });
 
-    // Validation checks
-    if (!amount || amount < 10) {
-      throw new Error('Minimum deposit amount is $10.00');
+    // Validate amount
+    if (amount <= 0 || amount > userBalance) {
+      throw new Error('Invalid deposit amount');
     }
 
-    if (amount > userBalance) {
-      throw new Error('Insufficient balance');
-    }
-
-    if (amount > 5000) {
-      throw new Error('Maximum deposit amount is $5,000.00 per transaction');
-    }
-
-    // Get and verify bank account
+    // Get bank account from database
     const { data: bankAccount, error: bankError } = await supabase
       .from('user_bank_accounts')
       .select('*')
@@ -65,12 +57,11 @@ serve(async (req) => {
       .single();
 
     if (bankError || !bankAccount) {
-      throw new Error('Bank account not found');
+      throw new Error('Bank account not found or not verified');
     }
 
-    // CRITICAL: Only allow deposits to verified bank accounts
     if (bankAccount.verification_status !== 'verified') {
-      throw new Error('Bank account must be verified before processing deposits. Current status: ' + bankAccount.verification_status);
+      throw new Error('Bank account must be verified to process deposits');
     }
 
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
@@ -80,7 +71,7 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
 
-    // Create transfer to the verified bank account
+    // Create a transfer to the connected account's bank account
     const transfer = await stripe.transfers.create({
       amount: Math.round(amount * 100), // Convert to cents
       currency: 'usd',
@@ -88,11 +79,11 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         bank_account_id: bankAccountId,
-        source: 'earnflow_balance',
+        deposit_type: 'secure_transfer',
       },
     });
 
-    // Log the secure deposit
+    // Log the secure deposit action
     await supabase.from('bank_account_audit_log').insert({
       user_id: user.id,
       bank_account_id: bankAccountId,
@@ -101,24 +92,21 @@ serve(async (req) => {
         amount: amount,
         stripe_transfer_id: transfer.id,
         verification_confirmed: true,
+        transfer_status: transfer.status,
       },
       ip_address: req.headers.get('x-forwarded-for') || 'unknown',
       user_agent: req.headers.get('user-agent') || 'unknown',
     });
 
-    const depositId = `secure_deposit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
     return new Response(JSON.stringify({
       success: true,
       data: {
-        depositId,
-        amount: amount,
-        status: 'processing',
-        estimatedArrival: '1-2 business days',
         transferId: transfer.id,
-        bankAccountLast4: bankAccount.account_number_last4,
-        verificationConfirmed: true,
-        message: 'Secure deposit initiated successfully to verified bank account.',
+        amount: amount,
+        status: transfer.status,
+        bankAccountId: bankAccountId,
+        estimatedArrival: '1-2 business days',
+        message: `Secure deposit of $${amount.toFixed(2)} has been initiated successfully.`,
       },
       timestamp: new Date().toISOString(),
     }), {

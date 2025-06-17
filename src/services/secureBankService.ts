@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface BankAccountCreationRequest {
@@ -121,7 +122,6 @@ class SecureBankService {
 
   async getUserBankAccounts(): Promise<BankAccount[]> {
     try {
-      // Use direct query to the user_bank_accounts table
       const { data, error } = await supabase
         .from('user_bank_accounts')
         .select('*')
