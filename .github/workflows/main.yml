@@ -1,43 +1,44 @@
-# Clone your repository
-git clone https://github.com/yourusername/earnflow-app.git
 
-# Navigate to the project directory
-cd earnflow-app
+name: Build and Deploy
 
-# Install dependencies
-npm install
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-# Start development server
-npm run dev
-# Extract the ZIP file to a folder
-# Navigate to that folder in terminal
-cd path/to/extracted/earnflow-code
-
-# Initialize git (if not already initialized)
-git init
-
-# Add your repository as remote origin
-git remote add origin https://github.com/yourusername/earnflow-app.git
-
-# Add all files
-git add .
-
-# Commit the code
-git commit -m "Initial commit - EarnFlow app from Lovable"
-
-# Push to GitHub
-git push -u origin main
-# Make changes to your code
-# Then commit and push changes
-git add .
-git commit -m "Add new feature"
-git push origin main
-# Install gh-pages package
-npm install --save-dev gh-pages
-
-# Add to package.json scripts:
-"deploy": "gh-pages -d dist"
-
-# Build and deploy
-npm run build
-npm run deploy
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      env:
+        VITE_RUBY_BACKEND_URL: ${{ secrets.VITE_RUBY_BACKEND_URL }}
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-files
+        path: dist/
+        
+    # Uncomment the section below if you want to deploy to GitHub Pages
+    # - name: Deploy to GitHub Pages
+    #   if: github.ref == 'refs/heads/main'
+    #   uses: peaceiris/actions-gh-pages@v3
+    #   with:
+    #     github_token: ${{ secrets.GITHUB_TOKEN }}
+    #     publish_dir: ./dist
