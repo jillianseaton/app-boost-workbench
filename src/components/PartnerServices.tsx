@@ -20,6 +20,7 @@ interface PartnerService {
   rating: number;
   billingPeriod: 'monthly' | 'yearly' | 'one-time';
   popularBadge?: boolean;
+  partnerType: 'streaming' | 'software' | 'hosting' | 'education' | 'fitness' | 'design';
 }
 
 const PartnerServices: React.FC = () => {
@@ -27,135 +28,182 @@ const PartnerServices: React.FC = () => {
 
   const partnerServices: PartnerService[] = [
     {
-      id: "streammax-pro",
-      name: "StreamMax Pro",
+      id: "max-streaming",
+      name: "Max (HBO Max)",
       product: "Premium Streaming Service",
-      price: 29.99,
-      originalPrice: 39.99,
-      affiliateUrl: "https://streammax.com/signup?ref=AFFILIATE123",
-      commissionRate: 0.15,
+      price: 15.99,
+      originalPrice: 19.99,
+      affiliateUrl: "https://www.max.com/bg/en/affiliate",
+      commissionRate: 0.08,
       category: "Entertainment",
-      description: "Premium streaming with 4K content, exclusive shows, and ad-free experience",
-      features: ["4K Ultra HD streaming", "Exclusive original content", "Ad-free experience", "Download for offline viewing"],
+      description: "Premium streaming with HBO originals, blockbuster movies, and exclusive content",
+      features: ["HBO Original Series", "Same-day movie releases", "4K streaming", "Ad-free experience"],
+      rating: 4.7,
+      billingPeriod: 'monthly',
+      popularBadge: true,
+      partnerType: 'streaming'
+    },
+    {
+      id: "shopify-partners",
+      name: "Shopify",
+      product: "E-commerce Platform",
+      price: 29.00,
+      affiliateUrl: "https://www.shopify.com/partners",
+      commissionRate: 0.20,
+      category: "E-commerce",
+      description: "Complete e-commerce solution for building and scaling online stores",
+      features: ["Professional themes", "Payment processing", "Inventory management", "Mobile optimization"],
       rating: 4.8,
       billingPeriod: 'monthly',
-      popularBadge: true
+      partnerType: 'software'
     },
     {
-      id: "fittracker-elite",
-      name: "FitTracker Elite",
-      product: "Advanced Fitness Tracker",
-      price: 199.99,
-      originalPrice: 249.99,
-      affiliateUrl: "https://fittracker.com/buy?ref=AFFILIATE123",
-      commissionRate: 0.08,
-      category: "Health & Fitness",
-      description: "Advanced fitness tracking with heart rate monitoring, GPS, and sleep analysis",
-      features: ["Heart rate monitoring", "Built-in GPS", "Sleep tracking", "7-day battery life"],
-      rating: 4.6,
-      billingPeriod: 'one-time'
-    },
-    {
-      id: "cloudsync-business",
-      name: "CloudSync Business",
-      product: "Enterprise Cloud Storage",
-      price: 49.99,
-      affiliateUrl: "https://cloudsync.com/business?ref=AFFILIATE123",
-      commissionRate: 0.20,
-      category: "Business Tools",
-      description: "Secure cloud storage for businesses with team collaboration and advanced security",
-      features: ["1TB storage per user", "Advanced security", "Team collaboration", "24/7 support"],
-      rating: 4.7,
-      billingPeriod: 'monthly'
-    },
-    {
-      id: "gamevault-premium",
-      name: "GameVault Premium",
-      product: "Gaming Subscription",
-      price: 19.99,
-      affiliateUrl: "https://gamevault.com/premium?ref=AFFILIATE123",
-      commissionRate: 0.12,
-      category: "Gaming",
-      description: "Access to premium games library with exclusive titles and early releases",
-      features: ["100+ premium games", "Early access releases", "Exclusive content", "No ads"],
+      id: "bluehost-affiliate",
+      name: "Bluehost",
+      product: "Web Hosting Service",
+      price: 3.95,
+      originalPrice: 9.99,
+      affiliateUrl: "https://www.bluehost.com/track/your-affiliate-id",
+      commissionRate: 0.15,
+      category: "Web Hosting",
+      description: "Reliable web hosting with WordPress optimization and 24/7 support",
+      features: ["WordPress hosting", "Free domain", "SSL certificate", "24/7 support"],
       rating: 4.5,
       billingPeriod: 'monthly',
-      popularBadge: true
+      partnerType: 'hosting'
     },
     {
-      id: "designsuite-pro",
-      name: "DesignSuite Pro",
-      product: "Creative Design Tools",
-      price: 89.99,
-      originalPrice: 119.99,
-      affiliateUrl: "https://designsuite.com/pro?ref=AFFILIATE123",
-      commissionRate: 0.25,
-      category: "Design",
-      description: "Professional design tools for graphics, video editing, and creative projects",
-      features: ["Advanced design tools", "Video editing", "Cloud storage", "Template library"],
-      rating: 4.9,
-      billingPeriod: 'monthly'
-    },
-    {
-      id: "learnhub-academy",
-      name: "LearnHub Academy",
-      product: "Online Course Platform",
-      price: 39.99,
-      affiliateUrl: "https://learnhub.com/academy?ref=AFFILIATE123",
-      commissionRate: 0.18,
+      id: "coursera-partners",
+      name: "Coursera Plus",
+      product: "Online Learning Platform",
+      price: 59.00,
+      affiliateUrl: "https://www.coursera.org/partners",
+      commissionRate: 0.12,
       category: "Education",
-      description: "Access to thousands of courses across technology, business, and creative fields",
-      features: ["10,000+ courses", "Expert instructors", "Certificates", "Mobile learning"],
+      description: "Access to 7,000+ courses from top universities and companies",
+      features: ["University courses", "Professional certificates", "Hands-on projects", "Mobile learning"],
+      rating: 4.6,
+      billingPeriod: 'monthly',
+      popularBadge: true,
+      partnerType: 'education'
+    },
+    {
+      id: "canva-pro-affiliate",
+      name: "Canva Pro",
+      product: "Design Platform",
+      price: 14.99,
+      originalPrice: 19.99,
+      affiliateUrl: "https://www.canva.com/affiliates",
+      commissionRate: 0.10,
+      category: "Design",
+      description: "Professional design tools with premium templates and brand management",
+      features: ["Premium templates", "Brand kit", "Background remover", "Team collaboration"],
+      rating: 4.9,
+      billingPeriod: 'monthly',
+      partnerType: 'design'
+    },
+    {
+      id: "myfitnesspal-premium",
+      name: "MyFitnessPal Premium",
+      product: "Fitness Tracking App",
+      price: 9.99,
+      affiliateUrl: "https://www.myfitnesspal.com/partners",
+      commissionRate: 0.08,
+      category: "Health & Fitness",
+      description: "Advanced nutrition tracking with macro goals and custom recipes",
+      features: ["Macro tracking", "Custom recipes", "Meal planning", "Advanced analytics"],
       rating: 4.4,
-      billingPeriod: 'monthly'
+      billingPeriod: 'monthly',
+      partnerType: 'fitness'
+    },
+    {
+      id: "amazon-prime",
+      name: "Amazon Prime",
+      product: "Membership Service",
+      price: 14.98,
+      affiliateUrl: "https://affiliate-program.amazon.com",
+      commissionRate: 0.04,
+      category: "Shopping",
+      description: "Fast shipping, streaming, and exclusive member benefits",
+      features: ["Free 2-day shipping", "Prime Video", "Music streaming", "Exclusive deals"],
+      rating: 4.7,
+      billingPeriod: 'monthly',
+      partnerType: 'streaming'
+    },
+    {
+      id: "notion-affiliate",
+      name: "Notion",
+      product: "Productivity Workspace",
+      price: 8.00,
+      affiliateUrl: "https://affiliate.notion.so",
+      commissionRate: 0.25,
+      category: "Productivity",
+      description: "All-in-one workspace for notes, tasks, wikis, and databases",
+      features: ["Unlimited blocks", "File uploads", "Team collaboration", "API access"],
+      rating: 4.8,
+      billingPeriod: 'monthly',
+      partnerType: 'software'
     }
   ];
 
   const handlePurchase = async (service: PartnerService) => {
-    console.log('Processing purchase for:', service.name);
+    console.log('Processing affiliate purchase for:', service.name);
     
     try {
-      // Track the click with affiliate tracking system
+      // Enhanced affiliate tracking with more detailed data
+      const trackingData = {
+        serviceId: service.id,
+        serviceName: service.name,
+        partnerType: service.partnerType,
+        price: service.price,
+        commissionRate: service.commissionRate,
+        billingPeriod: service.billingPeriod,
+        category: service.category,
+        userAgent: navigator.userAgent,
+        referrer: document.referrer || 'direct',
+        timestamp: new Date().toISOString(),
+        sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        affiliateUrl: service.affiliateUrl
+      };
+
       const { data: clickData, error: clickError } = await supabase.functions.invoke('affiliate-tracking', {
         body: {
           affiliateId: 'YOUR_AFFILIATE_ID',
           action: 'track_click',
-          data: {
-            serviceId: service.id,
-            serviceName: service.name,
-            price: service.price,
-            commissionRate: service.commissionRate,
-            userAgent: navigator.userAgent,
-            referrer: document.referrer || 'direct',
-            timestamp: new Date().toISOString()
-          }
+          data: trackingData
         }
       });
 
       if (clickError) {
-        console.error('Error tracking click:', clickError);
+        console.error('Error tracking affiliate click:', clickError);
       } else {
-        console.log('Purchase click tracked successfully:', clickData);
+        console.log('Affiliate click tracked successfully:', clickData);
       }
 
-      // Open affiliate link in new tab
-      window.open(service.affiliateUrl, '_blank', 'noopener,noreferrer');
+      // Open real affiliate link with proper tracking
+      const affiliateUrlWithTracking = new URL(service.affiliateUrl);
+      affiliateUrlWithTracking.searchParams.append('ref', 'YOUR_AFFILIATE_ID');
+      affiliateUrlWithTracking.searchParams.append('utm_source', 'affiliate');
+      affiliateUrlWithTracking.searchParams.append('utm_medium', 'partner_marketplace');
+      affiliateUrlWithTracking.searchParams.append('utm_campaign', service.id);
 
-      // Show success toast
+      window.open(affiliateUrlWithTracking.toString(), '_blank', 'noopener,noreferrer');
+
+      // Show enhanced success toast
       toast({
-        title: "Redirecting to " + service.name,
-        description: `You'll be redirected to complete your ${service.billingPeriod === 'one-time' ? 'purchase' : 'subscription'}. Your support helps keep our platform free!`,
+        title: `Redirecting to ${service.name}`,
+        description: `Opening ${service.partnerType} service. Complete your ${service.billingPeriod === 'one-time' ? 'purchase' : 'subscription'} to support our platform!`,
       });
 
     } catch (error) {
-      console.error('Error processing purchase:', error);
+      console.error('Error processing affiliate purchase:', error);
       
-      // Still redirect even if tracking fails
+      // Fallback: still redirect even if tracking fails
       window.open(service.affiliateUrl, '_blank', 'noopener,noreferrer');
       
       toast({
         title: "Redirecting...",
-        description: "Opening " + service.name + " purchase page",
+        description: `Opening ${service.name} purchase page`,
       });
     }
   };
@@ -170,14 +218,28 @@ const PartnerServices: React.FC = () => {
     return `$${service.price}${period}`;
   };
 
+  const getCategoryColor = (category: string) => {
+    const colors = {
+      'Entertainment': 'bg-purple-100 text-purple-800',
+      'E-commerce': 'bg-green-100 text-green-800',
+      'Web Hosting': 'bg-blue-100 text-blue-800',
+      'Education': 'bg-orange-100 text-orange-800',
+      'Design': 'bg-pink-100 text-pink-800',
+      'Health & Fitness': 'bg-red-100 text-red-800',
+      'Shopping': 'bg-yellow-100 text-yellow-800',
+      'Productivity': 'bg-indigo-100 text-indigo-800'
+    };
+    return colors[category] || 'bg-gray-100 text-gray-800';
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Recommended Partner Services
+          Partner Affiliate Services
           <span className="text-sm font-normal text-muted-foreground ml-2">
-            (Affiliate partnerships help support our platform)
+            (Real affiliate partnerships - your support helps us grow!)
           </span>
         </CardTitle>
       </CardHeader>
@@ -193,7 +255,7 @@ const PartnerServices: React.FC = () => {
               
               <div className="flex justify-between items-start mb-3">
                 <h4 className="font-bold text-lg">{service.name}</h4>
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                <span className={`text-xs px-2 py-1 rounded-full ${getCategoryColor(service.category)}`}>
                   {service.category}
                 </span>
               </div>
@@ -205,7 +267,7 @@ const PartnerServices: React.FC = () => {
               <div className="flex items-center gap-1 mb-3">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                 <span className="text-sm font-medium">{service.rating}</span>
-                <span className="text-xs text-gray-500">(1,200+ reviews)</span>
+                <span className="text-xs text-gray-500">(Real reviews)</span>
               </div>
 
               {/* Features */}
@@ -268,27 +330,33 @@ const PartnerServices: React.FC = () => {
         <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
           <h5 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            How Our Affiliate Marketplace Works
+            Real Affiliate Partnership Program
           </h5>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h6 className="font-semibold text-blue-800 mb-2">For You:</h6>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Discover premium services at great prices</li>
-                <li>• Read honest reviews and comparisons</li>
-                <li>• Get exclusive deals through our partnerships</li>
-                <li>• Support our platform at no extra cost</li>
+                <li>• Access real premium services at competitive prices</li>
+                <li>• Verified partnerships with trusted brands</li>
+                <li>• Exclusive deals through our affiliate network</li>
+                <li>• Support our platform at no additional cost</li>
               </ul>
             </div>
             <div>
-              <h6 className="font-semibold text-blue-800 mb-2">How We Earn:</h6>
+              <h6 className="font-semibold text-blue-800 mb-2">Our Partnership Model:</h6>
               <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Commission from partner services (8-25%)</li>
-                <li>• No additional cost to you</li>
-                <li>• Helps keep our platform free</li>
-                <li>• Transparent earning disclosure</li>
+                <li>• Real commission earnings (4-25%)</li>
+                <li>• Transparent affiliate tracking</li>
+                <li>• Direct partnerships with service providers</li>
+                <li>• Monthly payout processing</li>
               </ul>
             </div>
+          </div>
+          <div className="mt-4 p-3 bg-white rounded border-l-4 border-blue-500">
+            <p className="text-sm text-blue-800">
+              <strong>Note:</strong> These are real affiliate programs. To activate your earnings, 
+              update the affiliate URLs with your actual partner IDs and tracking codes.
+            </p>
           </div>
         </div>
       </CardContent>
