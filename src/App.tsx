@@ -1,67 +1,63 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import Index from '@/pages/Index';
+import Dashboard from '@/components/Dashboard';
+import LoginSignup from '@/components/LoginSignup';
+import { useAuth } from '@/hooks/useAuth';
+import AdRevenuePage from '@/pages/AdRevenuePage';
+import { QueryClient } from 'react-query';
+import SecureBankTransferPage from '@/pages/SecureBankTransferPage';
 
-import React from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import BitcoinWalletPage from "./pages/BitcoinWalletPage";
-import StripePaymentPage from "./pages/StripePaymentPage";
-import StripeConnect from "./components/StripeConnect";
-import StripeConnectLinkPage from "./pages/StripeConnectLinkPage";
-import StripeConnectOAuthPage from "./pages/StripeConnectOAuthPage";
-import DestinationCheckoutPage from "./pages/DestinationCheckoutPage";
-import CustomStripeOnboardingPage from "./pages/CustomStripeOnboardingPage";
-import AccountSetupSuccess from "./pages/AccountSetupSuccess";
-import AccountSetupCancelled from "./pages/AccountSetupCancelled";
-import AccountSetupSimulation from "./pages/AccountSetupSimulation";
-import WithdrawalSuccess from "./pages/WithdrawalSuccess";
-import WithdrawalCancelled from "./pages/WithdrawalCancelled";
-import StripeTestPage from "./pages/StripeTestPage";
-import EmbeddedCheckoutPage from "./pages/EmbeddedCheckoutPage";
-import SubscriptionSuccess from "./pages/SubscriptionSuccess";
-import BalanceTransactionsPage from "./pages/BalanceTransactionsPage";
-import AdRevenuePage from "./pages/AdRevenuePage";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
-
-const App: React.FC = () => {
+function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
+    <QueryClient>
+      <BrowserRouter>
         <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/bitcoin-wallet" element={<BitcoinWalletPage />} />
-            <Route path="/stripe-payment" element={<StripePaymentPage />} />
-            <Route path="/stripe-connect" element={<StripeConnect />} />
-            <Route path="/stripe-connect-link" element={<StripeConnectLinkPage />} />
-            <Route path="/stripe-connect-oauth" element={<StripeConnectOAuthPage />} />
-            <Route path="/stripe-test" element={<StripeTestPage />} />
-            <Route path="/destination-checkout" element={<DestinationCheckoutPage />} />
-            <Route path="/custom-stripe-onboarding" element={<CustomStripeOnboardingPage />} />
-            <Route path="/account-setup-success" element={<AccountSetupSuccess />} />
-            <Route path="/account-setup-cancelled" element={<AccountSetupCancelled />} />
-            <Route path="/account-setup-simulation" element={<AccountSetupSimulation />} />
-            <Route path="/withdrawal-success" element={<WithdrawalSuccess />} />
-            <Route path="/withdrawal-cancelled" element={<WithdrawalCancelled />} />
-            <Route path="/balance-transactions" element={<BalanceTransactionsPage />} />
-            <Route path="/checkout/:priceId" element={<EmbeddedCheckoutPage />} />
-            <Route path="/subscription-success" element={<SubscriptionSuccess />} />
-            <Route path="/ad-revenue" element={<AdRevenuePage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route
+            path="/dashboard"
+            element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            }
+          />
+          <Route path="/ad-revenue" element={<AdRevenuePage />} />
+          <Route path="/secure-bank-transfer" element={<SecureBankTransferPage />} />
+        </Routes>
+      </BrowserRouter>
+    </QueryClient>
   );
-};
+}
+
+function RequireAuth({ children }: { children: JSX.Element }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Dashboard Access
+            </h1>
+            <p className="text-gray-600">
+              Please sign in to access the dashboard
+            </p>
+          </div>
+          <LoginSignup />
+        </div>
+      </div>
+    );
+  }
+
+  return children;
+}
 
 export default App;

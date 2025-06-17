@@ -1,152 +1,128 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Shield, ArrowRight } from 'lucide-react';
 
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { LogOut, FileText, CreditCard, DollarSign } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import PrivacyPolicy from '@/components/PrivacyPolicy';
-import PartnerAgreement from '@/components/PartnerAgreement';
-import SubscriptionPurchase from '@/components/SubscriptionPurchase';
-import SubscriptionGate from '@/components/SubscriptionGate';
-import Dashboard from '@/components/Dashboard';
-import { useAuth } from '@/hooks/useAuth';
-
-const EarnFlow = () => {
-  const { user, profile, loading, hasActiveSubscription, signOut } = useAuth();
-  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
-  const [showPartnerAgreement, setShowPartnerAgreement] = useState(false);
-  const [showSubscriptionPurchase, setShowSubscriptionPurchase] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-
-  // Redirect to auth if not authenticated
-  useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth', { replace: true });
-    }
-  }, [user, loading, navigate]);
-
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      toast({
-        title: "Logged out successfully",
-        description: "Your session has been ended securely.",
-      });
-      // Force navigation to auth page
-      window.location.href = '/auth';
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast({
-        title: "Logout failed",
-        description: "There was an error logging out. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSubscriptionSuccess = () => {
-    setShowSubscriptionPurchase(false);
-    toast({
-      title: "Subscription Activated!",
-      description: "You now have access to the EarnFlow platform.",
-    });
-    // Refresh the page to update subscription status
-    window.location.reload();
-  };
-
-  // Show loading screen while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading EarnFlow...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render anything if no user (will redirect)
-  if (!user || !profile) {
-    return null;
-  }
-
-  if (showPrivacyPolicy) {
-    return <PrivacyPolicy onBack={() => setShowPrivacyPolicy(false)} />;
-  }
-
-  if (showPartnerAgreement) {
-    return <PartnerAgreement onBack={() => setShowPartnerAgreement(false)} />;
-  }
-
-  if (showSubscriptionPurchase) {
-    return (
-      <SubscriptionPurchase 
-        user={{ phoneNumber: profile.phone_number || '', username: profile.username || '' }}
-        onBack={() => setShowSubscriptionPurchase(false)}
-        onSuccess={handleSubscriptionSuccess}
-      />
-    );
-  }
-
-  // Show subscription required screen if no active subscription
-  if (!hasActiveSubscription) {
-    return (
-      <SubscriptionGate 
-        user={{ phoneNumber: profile.phone_number || '', username: profile.username || '' }}
-        onPurchase={() => setShowSubscriptionPurchase(true)}
-        onLogout={handleLogout}
-      />
-    );
-  }
-
+const Index = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <div className="container mx-auto max-w-6xl space-y-6">
-        {/* Header with logout and subscription status */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold text-primary mb-2">EarnFlow</h1>
-            <p className="text-lg text-muted-foreground">Welcome back, {profile.username}!</p>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-green-600 font-medium">Operator License Active</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => window.location.href = '/ad-revenue'} variant="outline" size="sm">
-              <DollarSign className="h-4 w-4 mr-2" />
-              Ad Revenue
-            </Button>
-            <Button onClick={() => window.location.href = '/bitcoin-wallet'} variant="outline" size="sm">
-              <FileText className="h-4 w-4 mr-2" />
-              Bitcoin Wallet
-            </Button>
-            <Button onClick={() => window.location.href = '/stripe-connect-oauth'} variant="outline" size="sm">
-              <CreditCard className="h-4 w-4 mr-2" />
-              Connect Stripe
-            </Button>
-            <Button onClick={() => setShowPrivacyPolicy(true)} variant="outline" size="sm">
-              <FileText className="h-4 w-4 mr-2" />
-              Privacy Policy
-            </Button>
-            <Button onClick={() => setShowPartnerAgreement(true)} variant="outline" size="sm">
-              <FileText className="h-4 w-4 mr-2" />
-              Partner Agreement
-            </Button>
-            <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2">
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <header className="bg-white shadow-md">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/" className="text-2xl font-bold text-blue-700">
+            EarnFlow
+          </Link>
+          <nav>
+            <ul className="flex space-x-6">
+              <li>
+                <Link to="/dashboard" className="text-blue-500 hover:text-blue-700">
+                  Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link to="/about" className="text-blue-500 hover:text-blue-700">
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-blue-500 hover:text-blue-700">
+                  Contact
+                </Link>
+              </li>
+            </ul>
+          </nav>
         </div>
-
-        {/* Dashboard */}
-        <Dashboard user={{ phoneNumber: profile.phone_number || '', username: profile.username || '' }} />
-      </div>
+      </header>
+      
+      <main className="container mx-auto px-4 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <Link
+            to="/dashboard"
+            className="group block p-8 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-green-200"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-12 w-12 text-blue-600 group-hover:scale-110 transition-transform duration-300"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" x2="12" y1="3" y2="15"></line>
+              </svg>
+              <ArrowRight className="h-6 w-6 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-300" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-blue-800 transition-colors">
+              Task Dashboard
+            </h3>
+            <p className="text-gray-600 group-hover:text-gray-700 transition-colors">
+              Manage tasks, track earnings, and optimize your workflow for maximum efficiency.
+            </p>
+            <div className="mt-4 text-sm text-blue-600 font-medium">
+              → Access Dashboard
+            </div>
+          </Link>
+          
+          <Link
+            to="/ad-revenue"
+            className="group block p-8 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-green-200"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-12 w-12 text-purple-600 group-hover:scale-110 transition-transform duration-300"
+              >
+                <path d="M12 5v14M5 12H19"></path>
+              </svg>
+              <ArrowRight className="h-6 w-6 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all duration-300" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-purple-800 transition-colors">
+              Ad Revenue Collection
+            </h3>
+            <p className="text-gray-600 group-hover:text-gray-700 transition-colors">
+              Collect ad revenue from multiple partners and manage your earnings efficiently.
+            </p>
+            <div className="mt-4 text-sm text-purple-600 font-medium">
+              → Collect Revenue
+            </div>
+          </Link>
+          
+          <Link
+            to="/secure-bank-transfer"
+            className="group block p-8 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-green-200"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <Shield className="h-12 w-12 text-green-600 group-hover:scale-110 transition-transform duration-300" />
+              <ArrowRight className="h-6 w-6 text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all duration-300" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-green-800 transition-colors">
+              Secure Bank Transfer Dashboard
+            </h3>
+            <p className="text-gray-600 group-hover:text-gray-700 transition-colors">
+              Comprehensive bank account management with secure transfers, verification, and audit trails
+            </p>
+            <div className="mt-4 text-sm text-green-600 font-medium">
+              → Access Dashboard
+            </div>
+          </Link>
+          
+        </div>
+      </main>
     </div>
   );
 };
 
-export default EarnFlow;
+export default Index;
