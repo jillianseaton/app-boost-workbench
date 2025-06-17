@@ -53,6 +53,7 @@ const App: React.FC = () => {
             <Route path="/balance-transactions" element={<BalanceTransactionsPage />} />
             <Route path="/checkout/:priceId" element={<EmbeddedCheckoutPage />} />
             <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+            <Route path="/ad-revenue" element={<AdRevenuePage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

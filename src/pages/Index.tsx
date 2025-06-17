@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, FileText, CreditCard } from 'lucide-react';
+import { LogOut, FileText, CreditCard, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PrivacyPolicy from '@/components/PrivacyPolicy';
 import PartnerAgreement from '@/components/PartnerAgreement';
@@ -115,6 +115,10 @@ const EarnFlow = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button onClick={() => window.location.href = '/ad-revenue'} variant="outline" size="sm">
+              <DollarSign className="h-4 w-4 mr-2" />
+              Ad Revenue
+            </Button>
             <Button onClick={() => window.location.href = '/bitcoin-wallet'} variant="outline" size="sm">
               <FileText className="h-4 w-4 mr-2" />
               Bitcoin Wallet
