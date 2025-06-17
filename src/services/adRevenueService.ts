@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface CreateExpressAccountRequest {
@@ -24,6 +23,8 @@ export interface ExpressAccountResponse {
     payoutsEnabled: boolean;
   };
   error?: string;
+  simulation?: boolean;
+  note?: string;
 }
 
 export interface PaymentResponse {
