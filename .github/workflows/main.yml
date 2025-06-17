@@ -1,0 +1,43 @@
+# Clone your repository
+git clone https://github.com/yourusername/earnflow-app.git
+
+# Navigate to the project directory
+cd earnflow-app
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+# Extract the ZIP file to a folder
+# Navigate to that folder in terminal
+cd path/to/extracted/earnflow-code
+
+# Initialize git (if not already initialized)
+git init
+
+# Add your repository as remote origin
+git remote add origin https://github.com/yourusername/earnflow-app.git
+
+# Add all files
+git add .
+
+# Commit the code
+git commit -m "Initial commit - EarnFlow app from Lovable"
+
+# Push to GitHub
+git push -u origin main
+# Make changes to your code
+# Then commit and push changes
+git add .
+git commit -m "Add new feature"
+git push origin main
+# Install gh-pages package
+npm install --save-dev gh-pages
+
+# Add to package.json scripts:
+"deploy": "gh-pages -d dist"
+
+# Build and deploy
+npm run build
+npm run deploy
