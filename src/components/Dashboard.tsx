@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -122,6 +121,8 @@ const Dashboard: React.FC = () => {
         hasWithdrawn={hasWithdrawn}
         onTaskComplete={handleTaskComplete}
         onResetAccount={resetAccount}
+        userEmail={userEmail}
+        userId={userId}
       />
 
       <SecureBankDashboard

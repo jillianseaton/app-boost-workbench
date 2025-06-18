@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { partnerServices } from '@/data/partnerServicesData';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, CreditCard } from 'lucide-react';
+import TaskPaymentModal from './TaskPaymentModal';
 
 interface TaskOptimizationProps {
   tasksCompleted: number;
@@ -12,6 +13,8 @@ interface TaskOptimizationProps {
   hasWithdrawn: boolean;
   onTaskComplete: (commission: number) => void;
   onResetAccount: () => void;
+  userEmail?: string;
+  userId?: string;
 }
 
 interface AppService {
@@ -30,10 +33,15 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
   maxTasks, 
   hasWithdrawn, 
   onTaskComplete, 
-  onResetAccount 
+  onResetAccount,
+  userEmail = '',
+  userId = ''
 }) => {
   const [currentAppIndex, setCurrentAppIndex] = useState(0);
   const [showingApp, setShowingApp] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentTaskType, setCurrentTaskType] = useState('');
+  const [taskPrice] = useState(3.00); // $3 per task
   const { toast } = useToast();
 
   // Real affiliate services - these are YOUR revenue sources
@@ -74,6 +82,15 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
     if (showingApp || tasksCompleted >= maxTasks) return;
     
     const selectedApp = getRandomApp();
+    setCurrentTaskType(selectedApp.name);
+    
+    // Show payment modal before starting task
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    // Payment succeeded, now run the optimization task
+    const selectedApp = getRandomApp();
     
     // Find the index for display purposes
     const allApps = [...realAffiliateServices, ...simulatedApps];
@@ -90,7 +107,7 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
     const currentApp = selectedApp;
     
     setTimeout(() => {
-      // Complete the task and earn commission - NO external URL opening
+      // Complete the task and earn commission
       onTaskComplete(commission);
       setShowingApp(false);
       
@@ -98,15 +115,20 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
       if (currentApp.isRealAffiliate) {
         toast({
           title: "💰 Commission Earned!",
-          description: `You earned $${commission.toFixed(2)} from ${currentApp.name} (Your Affiliate Partner!)`,
+          description: `You earned $${commission.toFixed(2)} from ${currentApp.name} (Your Affiliate Partner!) after paying $${taskPrice.toFixed(2)} for the task.`,
         });
       } else {
         toast({
           title: "Task Completed!",
-          description: `Earned $${commission.toFixed(2)} from ${currentApp.name}`,
+          description: `Earned $${commission.toFixed(2)} from ${currentApp.name} after paying $${taskPrice.toFixed(2)} for the task.`,
         });
       }
     }, 3000);
+
+    toast({
+      title: "Payment Successful!",
+      description: `Task payment of $${taskPrice.toFixed(2)} completed. Starting optimization...`,
+    });
   };
 
   const allApps = [...realAffiliateServices, ...simulatedApps];
@@ -115,6 +137,17 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
 
   return (
     <>
+      {/* Payment Modal */}
+      <TaskPaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onPaymentSuccess={handlePaymentSuccess}
+        taskType={currentTaskType}
+        taskPrice={taskPrice}
+        userEmail={userEmail}
+        userId={userId}
+      />
+
       {/* Third-party App Display - YOUR Revenue Sources */}
       {showingApp && (
         <Card className={`border-2 animate-pulse ${currentApp?.isRealAffiliate ? 'border-green-500 bg-green-50' : 'border-primary'}`}>
@@ -141,6 +174,9 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
               <div className="text-sm mt-2 opacity-90">
                 Your commission: ${(currentApp?.price * currentApp?.commissionRate).toFixed(2)} ({(currentApp?.commissionRate * 100).toFixed(0)}%)
               </div>
+              <div className="text-sm mt-2 opacity-75">
+                Task cost: ${taskPrice.toFixed(2)}
+              </div>
               {currentApp?.isRealAffiliate && (
                 <div className="text-sm mt-3 bg-white/20 rounded p-2 font-semibold">
                   💰 Processing your commission earnings...
@@ -159,6 +195,16 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
         <CardContent className="p-8 text-center space-y-6">
           {!hasWithdrawn ? (
             <>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-center gap-2 text-yellow-800">
+                  <CreditCard className="h-5 w-5" />
+                  <span className="font-semibold">Pay-Per-Task System</span>
+                </div>
+                <p className="text-sm text-yellow-700 mt-2">
+                  Each optimization task costs ${taskPrice.toFixed(2)}. You'll earn commission from affiliate partnerships after payment.
+                </p>
+              </div>
+
               <Button
                 onClick={startOptimization}
                 disabled={!canStartTask}
@@ -167,13 +213,13 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
               >
                 {showingApp ? "Processing..." : 
                  tasksCompleted >= maxTasks ? "Complete 20/20 - Reset to Continue" :
-                 `Start Optimization Task (${tasksCompleted}/${maxTasks})`}
+                 `Pay $${taskPrice.toFixed(2)} & Start Task (${tasksCompleted}/${maxTasks})`}
               </Button>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
                   {tasksCompleted >= maxTasks ? 
                     "You've completed all daily tasks. Reset to continue earning!" :
-                    "Complete optimization tasks to earn commission from your affiliate partnerships"
+                    "Pay per task to earn commission from your affiliate partnerships"
                   }
                 </p>
                 <p className="text-xs text-green-600 font-medium">
