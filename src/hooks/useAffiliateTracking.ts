@@ -10,7 +10,7 @@ export const useAffiliateTracking = () => {
     console.log('Processing affiliate purchase for:', service.name);
     
     try {
-      // Enhanced affiliate tracking with CJ Affiliate support
+      // Enhanced affiliate tracking with YOUR actual CJ Affiliate ID
       const trackingData = {
         serviceId: service.id,
         serviceName: service.name,
@@ -26,12 +26,13 @@ export const useAffiliateTracking = () => {
         affiliateUrl: service.affiliateUrl,
         cjAffiliateId: service.cjAffiliateId,
         epc: service.epc,
-        affiliateNetwork: service.cjAffiliateId ? 'commission_junction' : 'direct'
+        affiliateNetwork: service.cjAffiliateId ? 'commission_junction' : 'direct',
+        cjPublisherId: '7602933' // YOUR actual CJ publisher ID
       };
 
       const { data: clickData, error: clickError } = await supabase.functions.invoke('affiliate-tracking', {
         body: {
-          affiliateId: 'YOUR_AFFILIATE_ID',
+          affiliateId: '7602933', // YOUR actual CJ publisher ID
           action: 'track_click',
           data: trackingData
         }
@@ -40,29 +41,32 @@ export const useAffiliateTracking = () => {
       if (clickError) {
         console.error('Error tracking affiliate click:', clickError);
       } else {
-        console.log('Affiliate click tracked successfully:', clickData);
+        console.log('Affiliate click tracked successfully with YOUR CJ ID:', clickData);
       }
 
-      // Open real affiliate link with proper tracking
+      // Open real affiliate link with YOUR actual CJ tracking
       const affiliateUrlWithTracking = new URL(service.affiliateUrl);
       
-      // Add CJ Affiliate specific tracking if applicable
+      // Add YOUR actual CJ Affiliate tracking
       if (service.cjAffiliateId) {
-        affiliateUrlWithTracking.searchParams.append('sid', 'marketplace_referral');
+        // Use YOUR actual CJ publisher ID in tracking
+        affiliateUrlWithTracking.searchParams.append('sid', `marketplace_referral_${Date.now()}`);
+        affiliateUrlWithTracking.searchParams.append('cjpublisher', '7602933'); // YOUR actual CJ publisher ID
       } else {
         // For direct affiliate programs
-        affiliateUrlWithTracking.searchParams.append('ref', 'YOUR_AFFILIATE_ID');
+        affiliateUrlWithTracking.searchParams.append('ref', '7602933'); // YOUR actual affiliate ID
         affiliateUrlWithTracking.searchParams.append('utm_source', 'affiliate');
         affiliateUrlWithTracking.searchParams.append('utm_medium', 'partner_marketplace');
         affiliateUrlWithTracking.searchParams.append('utm_campaign', service.id);
+        affiliateUrlWithTracking.searchParams.append('publisher_id', '7602933'); // YOUR actual publisher ID
       }
 
       window.open(affiliateUrlWithTracking.toString(), '_blank', 'noopener,noreferrer');
 
-      // Show enhanced success toast
+      // Show enhanced success toast with YOUR CJ ID
       toast({
         title: `Redirecting to ${service.name}`,
-        description: `Opening ${service.partnerType} service. Complete your ${service.billingPeriod === 'one-time' ? 'purchase' : 'subscription'} to support our platform!`,
+        description: `Opening ${service.partnerType} service with YOUR CJ Publisher ID 7602933. Complete your ${service.billingPeriod === 'one-time' ? 'purchase' : 'subscription'} to earn commission!`,
       });
 
     } catch (error) {

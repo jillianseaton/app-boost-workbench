@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -69,7 +70,7 @@ serve(async (req) => {
 async function trackClick(affiliateId: string, data: any) {
   const clickId = `click_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
-  // Enhanced click tracking with CJ Affiliate support
+  // Enhanced click tracking with YOUR actual CJ Affiliate ID
   const clickData = {
     success: true,
     clickId,
@@ -90,15 +91,15 @@ async function trackClick(affiliateId: string, data: any) {
     country: data.country || 'unknown',
     device: detectDevice(data.userAgent),
     source: 'partner_marketplace',
-    // CJ Affiliate specific data
+    // CJ Affiliate specific data with YOUR actual publisher ID
     affiliateNetwork: data.affiliateNetwork || 'direct',
     cjAffiliateId: data.cjAffiliateId,
     epc: data.epc,
-    cjPublisherId: '101467082' // Your CJ publisher ID (update this)
+    cjPublisherId: '7602933' // YOUR actual CJ publisher ID
   };
 
   // Store click data for analytics
-  console.log('Click tracked:', clickData);
+  console.log('Click tracked with YOUR CJ ID:', clickData);
   
   return clickData;
 }
@@ -122,14 +123,15 @@ async function trackConversion(affiliateId: string, data: any) {
     billingPeriod: data.billingPeriod,
     conversionType: data.conversionType || 'purchase',
     status: 'pending_validation',
-    // CJ Affiliate specific data
+    // CJ Affiliate specific data with YOUR actual publisher ID
     affiliateNetwork: data.affiliateNetwork || 'direct',
     cjAffiliateId: data.cjAffiliateId,
     cjActionId: data.cjActionId,
-    cjCommissionId: data.cjCommissionId
+    cjCommissionId: data.cjCommissionId,
+    cjPublisherId: '7602933' // YOUR actual CJ publisher ID
   };
 
-  console.log('Conversion tracked:', conversionData);
+  console.log('Conversion tracked with YOUR CJ ID:', conversionData);
   
   return conversionData;
 }
