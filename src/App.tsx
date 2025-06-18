@@ -6,6 +6,8 @@ import { Toaster } from 'sonner';
 import Index from '@/pages/Index';
 import Dashboard from '@/components/Dashboard';
 import Auth from '@/pages/Auth';
+import About from '@/pages/About';
+import Contact from '@/pages/Contact';
 import { useAuth } from '@/hooks/useAuth';
 import AdRevenuePage from '@/pages/AdRevenuePage';
 import SecureBankTransferPage from '@/pages/SecureBankTransferPage';
@@ -21,6 +23,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
           <Route
             path="/dashboard"
             element={
