@@ -1,9 +1,17 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ArrowRight, TrendingUp } from 'lucide-react';
+import { Shield, ArrowRight, TrendingUp, ExternalLink } from 'lucide-react';
+import { partnerServices } from '@/data/partnerServicesData';
+import { useAffiliateTracking } from '@/hooks/useAffiliateTracking';
+import { formatPrice, getCategoryColor } from '@/utils/partnerServiceUtils';
 
 const Index = () => {
+  const { handlePurchase } = useAffiliateTracking();
+  
+  // Show the top 4 real affiliate services
+  const featuredServices = partnerServices.slice(0, 4);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <header className="bg-white shadow-md">
@@ -16,6 +24,11 @@ const Index = () => {
               <li>
                 <Link to="/dashboard" className="text-blue-500 hover:text-blue-700">
                   Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link to="/affiliate-revenue" className="text-blue-500 hover:text-blue-700">
+                  Affiliate Partners
                 </Link>
               </li>
               <li>
@@ -33,7 +46,68 @@ const Index = () => {
         </div>
       </header>
       
-      <main className="container mx-auto px-4 py-16">
+      <main className="container mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Real Affiliate Partnerships That Pay
+          </h1>
+          <p className="text-xl text-gray-600 mb-6">
+            Shop with our verified partners and help us earn real commissions through CJ Affiliate and direct partnerships
+          </p>
+          <Link
+            to="/affiliate-revenue"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"
+          >
+            <TrendingUp className="h-5 w-5" />
+            View All Partners
+          </Link>
+        </div>
+
+        {/* Featured Real Affiliate Services */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            Featured Real Affiliate Partners
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredServices.map((service) => (
+              <div key={service.id} className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow border">
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="font-bold text-lg">{service.name}</h3>
+                  {service.cjAffiliateId && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                      CJ Affiliate
+                    </span>
+                  )}
+                </div>
+                
+                <p className="text-sm text-gray-700 mb-2">{service.product}</p>
+                <span className={`text-xs px-2 py-1 rounded-full ${getCategoryColor(service.category)} mb-3 inline-block`}>
+                  {service.category}
+                </span>
+                
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-xl font-bold text-green-600">
+                    {formatPrice(service)}
+                  </div>
+                  <div className="text-xs text-orange-600">
+                    {(service.commissionRate * 100).toFixed(0)}% commission
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => handlePurchase(service)}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-all"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Shop Now
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Dashboard Links */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
           <Link
             to="/dashboard"
@@ -138,7 +212,6 @@ const Index = () => {
               → Start Earning
             </div>
           </Link>
-          
         </div>
       </main>
     </div>
