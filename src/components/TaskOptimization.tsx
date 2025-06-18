@@ -36,7 +36,7 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
   const [showingApp, setShowingApp] = useState(false);
   const { toast } = useToast();
 
-  // Real affiliate services (weighted to appear more frequently)
+  // Real affiliate services - these are YOUR revenue sources
   const realAffiliateServices: AppService[] = partnerServices
     .filter(service => service.billingPeriod === 'one-time')
     .map(service => ({
@@ -54,14 +54,12 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
   const simulatedApps: AppService[] = [
     { name: "StreamMax Pro", product: "Premium Streaming Service", price: 29.99, description: "Unlimited 4K streaming with exclusive content", commissionRate: 0.05, isRealAffiliate: false },
     { name: "FitTracker Elite", product: "Advanced Fitness Tracker", price: 199.99, description: "Monitor your health with precision sensors", commissionRate: 0.05, isRealAffiliate: false },
-    { name: "CloudSync Business", product: "Enterprise Cloud Storage", price: 49.99, description: "Secure your data with 1TB cloud storage", commissionRate: 0.05, isRealAffiliate: false },
-    { name: "GameVault Premium", product: "Gaming Subscription", price: 19.99, description: "Access to 500+ premium games", commissionRate: 0.05, isRealAffiliate: false },
-    { name: "DesignSuite Pro", product: "Creative Design Tools", price: 89.99, description: "Professional design software suite", commissionRate: 0.05, isRealAffiliate: false }
+    { name: "CloudSync Business", product: "Enterprise Cloud Storage", price: 49.99, description: "Secure your data with 1TB cloud storage", commissionRate: 0.05, isRealAffiliate: false }
   ];
 
-  // Weight real affiliate services to appear 70% of the time
+  // Prioritize YOUR real affiliate services (90% chance)
   const getRandomApp = (): AppService => {
-    const shouldShowRealAffiliate = Math.random() < 0.7; // 70% chance
+    const shouldShowRealAffiliate = Math.random() < 0.9; // 90% chance of YOUR affiliate services
     
     if (shouldShowRealAffiliate && realAffiliateServices.length > 0) {
       const randomIndex = Math.floor(Math.random() * realAffiliateServices.length);
@@ -92,30 +90,22 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
     const currentApp = selectedApp;
     
     setTimeout(() => {
-      // If it's a real affiliate service, open the affiliate URL
-      if (currentApp.isRealAffiliate && currentApp.affiliateUrl) {
-        // Add tracking parameters to the affiliate URL
-        const affiliateUrl = new URL(currentApp.affiliateUrl);
-        if (currentApp.cjAffiliateId) {
-          affiliateUrl.searchParams.append('sid', 'task_optimization');
-        }
-        
-        // Open in new tab
-        window.open(affiliateUrl.toString(), '_blank', 'noopener,noreferrer');
-        
-        toast({
-          title: "🎉 Real Affiliate Partner!",
-          description: `Opened ${currentApp.name} - Complete your purchase to earn commission!`,
-        });
-      }
-      
+      // Complete the task and earn commission - NO external URL opening
       onTaskComplete(commission);
       setShowingApp(false);
       
-      toast({
-        title: "Task Completed!",
-        description: `Earned $${commission.toFixed(2)} from ${currentApp.name}${currentApp.isRealAffiliate ? ' (Real Affiliate Partner!)' : ''}`,
-      });
+      // Show success message for YOUR revenue
+      if (currentApp.isRealAffiliate) {
+        toast({
+          title: "💰 Commission Earned!",
+          description: `You earned $${commission.toFixed(2)} from ${currentApp.name} (Your Affiliate Partner!)`,
+        });
+      } else {
+        toast({
+          title: "Task Completed!",
+          description: `Earned $${commission.toFixed(2)} from ${currentApp.name}`,
+        });
+      }
     }, 3000);
   };
 
@@ -125,7 +115,7 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
 
   return (
     <>
-      {/* Third-party App Display */}
+      {/* Third-party App Display - YOUR Revenue Sources */}
       {showingApp && (
         <Card className={`border-2 animate-pulse ${currentApp?.isRealAffiliate ? 'border-green-500 bg-green-50' : 'border-primary'}`}>
           <CardHeader>
@@ -133,7 +123,7 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
               {currentApp?.name}
               {currentApp?.isRealAffiliate && (
                 <span className="text-xs px-2 py-1 rounded-full bg-green-500 text-white font-bold animate-pulse">
-                  🎉 REAL PARTNER
+                  💰 YOUR REVENUE
                 </span>
               )}
               {currentApp?.cjAffiliateId && (
@@ -149,17 +139,16 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
               <p className="text-lg mb-4">{currentApp?.description}</p>
               <div className="text-3xl font-bold">${currentApp?.price}</div>
               <div className="text-sm mt-2 opacity-90">
-                You earn: ${(currentApp?.price * currentApp?.commissionRate).toFixed(2)} ({(currentApp?.commissionRate * 100).toFixed(0)}% commission)
+                Your commission: ${(currentApp?.price * currentApp?.commissionRate).toFixed(2)} ({(currentApp?.commissionRate * 100).toFixed(0)}%)
               </div>
               {currentApp?.isRealAffiliate && (
-                <div className="text-sm mt-3 bg-white/20 rounded p-2 font-semibold flex items-center justify-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  Opening real affiliate link...
+                <div className="text-sm mt-3 bg-white/20 rounded p-2 font-semibold">
+                  💰 Processing your commission earnings...
                 </div>
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              {currentApp?.isRealAffiliate ? 'Processing real affiliate interaction and opening purchase page...' : 'Processing your interaction...'}
+              {currentApp?.isRealAffiliate ? 'Completing your affiliate commission task...' : 'Processing optimization task...'}
             </p>
           </CardContent>
         </Card>
@@ -184,11 +173,11 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
                 <p className="text-sm text-muted-foreground">
                   {tasksCompleted >= maxTasks ? 
                     "You've completed all daily tasks. Reset to continue earning!" :
-                    "Click start to interact with partner advertisements and earn real commissions"
+                    "Complete optimization tasks to earn commission from your affiliate partnerships"
                   }
                 </p>
                 <p className="text-xs text-green-600 font-medium">
-                  70% chance of real affiliate partners (1-800-FLORALS, Birthday Flowers, etc.)
+                  💰 90% chance of YOUR affiliate partners (1-800-FLORALS, Birthday Flowers, etc.)
                 </p>
               </div>
             </>
