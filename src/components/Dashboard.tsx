@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -51,13 +52,13 @@ const Dashboard: React.FC = () => {
     );
   };
 
-  const handleTaskComplete = (commission: number) => {
-    setEarnings(prev => prev + commission);
+  const handleTaskComplete = (adRevenue: number) => {
+    setEarnings(prev => prev + adRevenue);
     setTasksCompleted(prev => prev + 1);
     
     addTransaction({
       type: 'earning',
-      amount: commission,
+      amount: adRevenue,
       status: 'confirmed',
     });
   };
