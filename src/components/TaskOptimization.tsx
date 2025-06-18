@@ -13,6 +13,17 @@ interface TaskOptimizationProps {
   onResetAccount: () => void;
 }
 
+interface AppService {
+  name: string;
+  product: string;
+  price: number;
+  description: string;
+  commissionRate: number;
+  isRealAffiliate: boolean;
+  affiliateUrl?: string;
+  cjAffiliateId?: string;
+}
+
 const TaskOptimization: React.FC<TaskOptimizationProps> = ({ 
   tasksCompleted, 
   maxTasks, 
@@ -25,18 +36,20 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
   const { toast } = useToast();
 
   // Combine real affiliate services with simulated third-party apps
-  const allApps = [
-    // Real affiliate partner services
-    ...partnerServices.map(service => ({
-      name: service.name,
-      product: service.product,
-      price: service.price,
-      description: service.description,
-      commissionRate: service.commissionRate,
-      isRealAffiliate: true,
-      affiliateUrl: service.affiliateUrl,
-      cjAffiliateId: service.cjAffiliateId
-    })),
+  const allApps: AppService[] = [
+    // Real affiliate partner services (one-time purchases only)
+    ...partnerServices
+      .filter(service => service.billingPeriod === 'one-time')
+      .map(service => ({
+        name: service.name,
+        product: service.product,
+        price: service.price,
+        description: service.description,
+        commissionRate: service.commissionRate,
+        isRealAffiliate: true,
+        affiliateUrl: service.affiliateUrl,
+        cjAffiliateId: service.cjAffiliateId
+      })),
     // Simulated third-party apps
     { name: "StreamMax Pro", product: "Premium Streaming Service", price: 29.99, description: "Unlimited 4K streaming with exclusive content", commissionRate: 0.05, isRealAffiliate: false },
     { name: "FitTracker Elite", product: "Advanced Fitness Tracker", price: 199.99, description: "Monitor your health with precision sensors", commissionRate: 0.05, isRealAffiliate: false },
