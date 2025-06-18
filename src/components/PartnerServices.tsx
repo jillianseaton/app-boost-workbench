@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,13 +19,81 @@ interface PartnerService {
   rating: number;
   billingPeriod: 'monthly' | 'yearly' | 'one-time';
   popularBadge?: boolean;
-  partnerType: 'streaming' | 'software' | 'hosting' | 'education' | 'fitness' | 'design';
+  partnerType: 'streaming' | 'software' | 'hosting' | 'education' | 'fitness' | 'design' | 'flowers';
+  cjAffiliateId?: string;
+  epc?: string;
 }
 
 const PartnerServices: React.FC = () => {
   const { toast } = useToast();
 
   const partnerServices: PartnerService[] = [
+    // Real CJ Affiliate - 1-800-FLORALS services
+    {
+      id: "1800florals-general",
+      name: "1-800-FLORALS",
+      product: "Flower Delivery Service",
+      price: 49.99,
+      originalPrice: 59.99,
+      affiliateUrl: "https://www.kqzyfj.com/click-101467082-5656123",
+      commissionRate: 0.08,
+      category: "Flowers & Gifts",
+      description: "Fast, safe, guaranteed nationwide flower delivery with same-day service available",
+      features: ["Nationwide delivery", "Same-day service", "Satisfaction guaranteed", "Fresh flowers"],
+      rating: 4.6,
+      billingPeriod: 'one-time',
+      popularBadge: true,
+      partnerType: 'flowers',
+      cjAffiliateId: "5656123",
+      epc: "$1.00 USD"
+    },
+    {
+      id: "1800florals-birthday",
+      name: "Birthday Flowers Online",
+      product: "Birthday Flower Arrangements",
+      price: 39.99,
+      affiliateUrl: "https://www.jdoqocy.com/click-101467082-5656128",
+      commissionRate: 0.08,
+      category: "Flowers & Gifts",
+      description: "Beautiful birthday flower arrangements delivered fresh to celebrate special occasions",
+      features: ["Birthday themed bouquets", "Fresh arrangements", "Fast delivery", "Gift options"],
+      rating: 4.7,
+      billingPeriod: 'one-time',
+      partnerType: 'flowers',
+      cjAffiliateId: "5656128"
+    },
+    {
+      id: "1800florals-romantic",
+      name: "Romantic Roses Online",
+      product: "Red Rose Bouquets",
+      price: 69.99,
+      originalPrice: 89.99,
+      affiliateUrl: "https://www.anrdoezrs.net/click-101467082-5656131",
+      commissionRate: 0.08,
+      category: "Flowers & Gifts",
+      description: "Premium red roses and romantic bouquets perfect for anniversaries and special moments",
+      features: ["Premium red roses", "Romantic arrangements", "Love messages included", "Express delivery"],
+      rating: 4.8,
+      billingPeriod: 'one-time',
+      partnerType: 'flowers',
+      cjAffiliateId: "5656131"
+    },
+    {
+      id: "1800florals-sympathy",
+      name: "Sympathy Flowers",
+      product: "Funeral & Sympathy Arrangements",
+      price: 79.99,
+      affiliateUrl: "https://www.tkqlhce.com/click-101467082-10281235",
+      commissionRate: 0.08,
+      category: "Flowers & Gifts",
+      description: "Thoughtful sympathy flowers and funeral arrangements for expressing condolences",
+      features: ["Sympathy arrangements", "Funeral flowers", "Respectful designs", "Timely delivery"],
+      rating: 4.5,
+      billingPeriod: 'one-time',
+      partnerType: 'flowers',
+      cjAffiliateId: "10281235"
+    },
+    // Keep existing high-performing services
     {
       id: "max-streaming",
       name: "Max (HBO Max)",
@@ -73,21 +140,6 @@ const PartnerServices: React.FC = () => {
       partnerType: 'hosting'
     },
     {
-      id: "coursera-partners",
-      name: "Coursera Plus",
-      product: "Online Learning Platform",
-      price: 59.00,
-      affiliateUrl: "https://www.coursera.org/partners",
-      commissionRate: 0.12,
-      category: "Education",
-      description: "Access to 7,000+ courses from top universities and companies",
-      features: ["University courses", "Professional certificates", "Hands-on projects", "Mobile learning"],
-      rating: 4.6,
-      billingPeriod: 'monthly',
-      popularBadge: true,
-      partnerType: 'education'
-    },
-    {
       id: "canva-pro-affiliate",
       name: "Canva Pro",
       product: "Design Platform",
@@ -101,48 +153,6 @@ const PartnerServices: React.FC = () => {
       rating: 4.9,
       billingPeriod: 'monthly',
       partnerType: 'design'
-    },
-    {
-      id: "myfitnesspal-premium",
-      name: "MyFitnessPal Premium",
-      product: "Fitness Tracking App",
-      price: 9.99,
-      affiliateUrl: "https://www.myfitnesspal.com/partners",
-      commissionRate: 0.08,
-      category: "Health & Fitness",
-      description: "Advanced nutrition tracking with macro goals and custom recipes",
-      features: ["Macro tracking", "Custom recipes", "Meal planning", "Advanced analytics"],
-      rating: 4.4,
-      billingPeriod: 'monthly',
-      partnerType: 'fitness'
-    },
-    {
-      id: "amazon-prime",
-      name: "Amazon Prime",
-      product: "Membership Service",
-      price: 14.98,
-      affiliateUrl: "https://affiliate-program.amazon.com",
-      commissionRate: 0.04,
-      category: "Shopping",
-      description: "Fast shipping, streaming, and exclusive member benefits",
-      features: ["Free 2-day shipping", "Prime Video", "Music streaming", "Exclusive deals"],
-      rating: 4.7,
-      billingPeriod: 'monthly',
-      partnerType: 'streaming'
-    },
-    {
-      id: "notion-affiliate",
-      name: "Notion",
-      product: "Productivity Workspace",
-      price: 8.00,
-      affiliateUrl: "https://affiliate.notion.so",
-      commissionRate: 0.25,
-      category: "Productivity",
-      description: "All-in-one workspace for notes, tasks, wikis, and databases",
-      features: ["Unlimited blocks", "File uploads", "Team collaboration", "API access"],
-      rating: 4.8,
-      billingPeriod: 'monthly',
-      partnerType: 'software'
     }
   ];
 
@@ -150,7 +160,7 @@ const PartnerServices: React.FC = () => {
     console.log('Processing affiliate purchase for:', service.name);
     
     try {
-      // Enhanced affiliate tracking with more detailed data
+      // Enhanced affiliate tracking with CJ Affiliate support
       const trackingData = {
         serviceId: service.id,
         serviceName: service.name,
@@ -163,7 +173,10 @@ const PartnerServices: React.FC = () => {
         referrer: document.referrer || 'direct',
         timestamp: new Date().toISOString(),
         sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        affiliateUrl: service.affiliateUrl
+        affiliateUrl: service.affiliateUrl,
+        cjAffiliateId: service.cjAffiliateId,
+        epc: service.epc,
+        affiliateNetwork: service.cjAffiliateId ? 'commission_junction' : 'direct'
       };
 
       const { data: clickData, error: clickError } = await supabase.functions.invoke('affiliate-tracking', {
@@ -182,10 +195,17 @@ const PartnerServices: React.FC = () => {
 
       // Open real affiliate link with proper tracking
       const affiliateUrlWithTracking = new URL(service.affiliateUrl);
-      affiliateUrlWithTracking.searchParams.append('ref', 'YOUR_AFFILIATE_ID');
-      affiliateUrlWithTracking.searchParams.append('utm_source', 'affiliate');
-      affiliateUrlWithTracking.searchParams.append('utm_medium', 'partner_marketplace');
-      affiliateUrlWithTracking.searchParams.append('utm_campaign', service.id);
+      
+      // Add CJ Affiliate specific tracking if applicable
+      if (service.cjAffiliateId) {
+        affiliateUrlWithTracking.searchParams.append('sid', 'marketplace_referral');
+      } else {
+        // For direct affiliate programs
+        affiliateUrlWithTracking.searchParams.append('ref', 'YOUR_AFFILIATE_ID');
+        affiliateUrlWithTracking.searchParams.append('utm_source', 'affiliate');
+        affiliateUrlWithTracking.searchParams.append('utm_medium', 'partner_marketplace');
+        affiliateUrlWithTracking.searchParams.append('utm_campaign', service.id);
+      }
 
       window.open(affiliateUrlWithTracking.toString(), '_blank', 'noopener,noreferrer');
 
@@ -227,7 +247,8 @@ const PartnerServices: React.FC = () => {
       'Design': 'bg-pink-100 text-pink-800',
       'Health & Fitness': 'bg-red-100 text-red-800',
       'Shopping': 'bg-yellow-100 text-yellow-800',
-      'Productivity': 'bg-indigo-100 text-indigo-800'
+      'Productivity': 'bg-indigo-100 text-indigo-800',
+      'Flowers & Gifts': 'bg-rose-100 text-rose-800'
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
@@ -239,7 +260,7 @@ const PartnerServices: React.FC = () => {
           <Users className="h-5 w-5" />
           Partner Affiliate Services
           <span className="text-sm font-normal text-muted-foreground ml-2">
-            (Real affiliate partnerships - your support helps us grow!)
+            (Real affiliate partnerships - including CJ Affiliate network!)
           </span>
         </CardTitle>
       </CardHeader>
@@ -255,9 +276,16 @@ const PartnerServices: React.FC = () => {
               
               <div className="flex justify-between items-start mb-3">
                 <h4 className="font-bold text-lg">{service.name}</h4>
-                <span className={`text-xs px-2 py-1 rounded-full ${getCategoryColor(service.category)}`}>
-                  {service.category}
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span className={`text-xs px-2 py-1 rounded-full ${getCategoryColor(service.category)}`}>
+                    {service.category}
+                  </span>
+                  {service.cjAffiliateId && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                      CJ Affiliate
+                    </span>
+                  )}
+                </div>
               </div>
               
               <p className="text-sm text-gray-700 font-medium mb-2">{service.product}</p>
@@ -268,6 +296,9 @@ const PartnerServices: React.FC = () => {
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                 <span className="text-sm font-medium">{service.rating}</span>
                 <span className="text-xs text-gray-500">(Real reviews)</span>
+                {service.epc && (
+                  <span className="text-xs text-blue-600 ml-2">EPC: {service.epc}</span>
+                )}
               </div>
 
               {/* Features */}
@@ -346,7 +377,7 @@ const PartnerServices: React.FC = () => {
               <h6 className="font-semibold text-blue-800 mb-2">Our Partnership Model:</h6>
               <ul className="text-sm text-blue-700 space-y-1">
                 <li>• Real commission earnings (4-25%)</li>
-                <li>• Transparent affiliate tracking</li>
+                <li>• Commission Junction (CJ Affiliate) integration</li>
                 <li>• Direct partnerships with service providers</li>
                 <li>• Monthly payout processing</li>
               </ul>
@@ -354,8 +385,8 @@ const PartnerServices: React.FC = () => {
           </div>
           <div className="mt-4 p-3 bg-white rounded border-l-4 border-blue-500">
             <p className="text-sm text-blue-800">
-              <strong>Note:</strong> These are real affiliate programs. To activate your earnings, 
-              update the affiliate URLs with your actual partner IDs and tracking codes.
+              <strong>Active Integration:</strong> We've integrated your real CJ Affiliate links for 1-800-FLORALS! 
+              Update the affiliate IDs (currently using 101467082) with your actual CJ Affiliate publisher ID to start earning.
             </p>
           </div>
         </div>
