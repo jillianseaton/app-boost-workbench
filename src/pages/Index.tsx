@@ -9,8 +9,10 @@ import { formatPrice, getCategoryColor } from '@/utils/partnerServiceUtils';
 const Index = () => {
   const { handlePurchase } = useAffiliateTracking();
   
-  // Show the top 4 real affiliate services
-  const featuredServices = partnerServices.slice(0, 4);
+  // Show only one-time purchase services (no subscriptions) - top 4
+  const featuredServices = partnerServices
+    .filter(service => service.billingPeriod === 'one-time')
+    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -64,10 +66,10 @@ const Index = () => {
           </Link>
         </div>
 
-        {/* Featured Real Affiliate Services */}
+        {/* Featured Real Affiliate Services - One-time purchases only */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Featured Real Affiliate Partners
+            Featured Real Affiliate Partners (One-time Purchases)
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredServices.map((service) => (
