@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import Index from '@/pages/Index';
 import Dashboard from '@/components/Dashboard';
-import LoginSignup from '@/components/LoginSignup';
+import Auth from '@/pages/Auth';
 import { useAuth } from '@/hooks/useAuth';
 import AdRevenuePage from '@/pages/AdRevenuePage';
 import SecureBankTransferPage from '@/pages/SecureBankTransferPage';
@@ -20,6 +20,7 @@ function App() {
         <Toaster />
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
           <Route
             path="/dashboard"
             element={
@@ -56,7 +57,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
               Please sign in to access the dashboard
             </p>
           </div>
-          <LoginSignup onLogin={() => {}} />
+          <Auth />
         </div>
       </div>
     );

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ArrowRight, TrendingUp, ExternalLink } from 'lucide-react';
+import { Shield, ArrowRight, TrendingUp, ExternalLink, LogIn } from 'lucide-react';
 import { partnerServices } from '@/data/partnerServicesData';
 import { useAffiliateTracking } from '@/hooks/useAffiliateTracking';
 import { formatPrice, getCategoryColor } from '@/utils/partnerServiceUtils';
@@ -23,6 +23,12 @@ const Index = () => {
           </Link>
           <nav>
             <ul className="flex space-x-6">
+              <li>
+                <Link to="/auth" className="flex items-center gap-2 text-blue-500 hover:text-blue-700">
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </Link>
+              </li>
               <li>
                 <Link to="/dashboard" className="text-blue-500 hover:text-blue-700">
                   Dashboard
