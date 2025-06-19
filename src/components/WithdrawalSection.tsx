@@ -26,25 +26,24 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 }) => {
   const [withdrawalMethod, setWithdrawalMethod] = useState<WithdrawalMethod>('bank');
   const [currencyType] = useState('USD');
-  const { loading, createCheckoutSession } = useStripeCheckout();
+  const { loading, createPayout } = useStripeCheckout();
 
-  const handleBankSetup = async () => {
+  const handleBankWithdraw = async () => {
     try {
-      console.log('Starting bank setup with email:', userEmail);
+      console.log('Starting bank withdrawal for user:', userEmail);
       
-      const result = await createCheckoutSession({
-        amount: 100,
-        description: 'Bank Account Setup Verification',
-        successUrl: `${window.location.origin}/account-setup-success`,
-        cancelUrl: `${window.location.origin}/account-setup-cancelled`,
-        customerEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
-        mode: 'setup',
-        paymentMethod: 'card'
+      await createPayout({
+        amount: earnings,
+        description: `Withdraw $${earnings.toFixed(2)} to Bank Account`,
+        userEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
+        userId: userId,
+        method: 'bank_transfer'
       });
       
-      console.log('Bank setup session created, redirecting...');
+      console.log('Bank withdrawal completed successfully');
+      onWithdraw();
     } catch (error) {
-      console.error('Bank setup failed:', error);
+      console.error('Bank withdrawal failed:', error);
     }
   };
 
@@ -52,41 +51,37 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     try {
       console.log('Processing Cash App Pay withdrawal:', { amount: earnings });
       
-      const result = await createCheckoutSession({
-        amount: Math.round(earnings * 100),
+      await createPayout({
+        amount: earnings,
         description: `Withdraw $${earnings.toFixed(2)} via Cash App Pay`,
-        successUrl: `${window.location.origin}/withdrawal-success`,
-        cancelUrl: `${window.location.origin}/withdrawal-cancelled`,
-        customerEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
-        mode: 'payment',
-        paymentMethod: 'cashapp'
+        userEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
+        userId: userId,
+        method: 'cashapp'
       });
       
-      console.log('Cash App Pay withdrawal session created, redirecting...');
+      console.log('Cash App Pay withdrawal completed successfully');
       onWithdraw();
     } catch (error) {
       console.error('Cash App Pay withdrawal failed:', error);
     }
   };
 
-  const handleBankWithdraw = async () => {
+  const handleBankSetup = async () => {
     try {
-      console.log('Starting withdrawal with email:', userEmail);
+      console.log('Setting up bank account for user:', userEmail);
       
-      const result = await createCheckoutSession({
-        amount: Math.round(earnings * 100),
-        description: `Withdraw $${earnings.toFixed(2)} to Bank Account`,
-        successUrl: `${window.location.origin}/withdrawal-success`,
-        cancelUrl: `${window.location.origin}/withdrawal-cancelled`,
-        customerEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
-        mode: 'payment',
-        paymentMethod: 'card'
+      // For bank setup, we can use a small verification amount
+      await createPayout({
+        amount: 0.50, // Minimum verification amount
+        description: 'Bank Account Setup Verification',
+        userEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
+        userId: userId,
+        method: 'bank_transfer'
       });
       
-      console.log('Withdrawal session created, redirecting...');
-      onWithdraw();
+      console.log('Bank setup verification completed');
     } catch (error) {
-      console.error('Withdrawal failed:', error);
+      console.error('Bank setup failed:', error);
     }
   };
 
@@ -136,7 +131,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
             <div className="p-3 bg-blue-50 rounded-md">
               <p className="text-sm text-blue-800">
                 <strong>Processing Time:</strong> Bank transfers typically take 1-2 business days to arrive. 
-                Your withdrawal will be processed securely through Stripe Checkout.
+                Your withdrawal will be processed securely through Stripe.
               </p>
             </div>
             
@@ -208,7 +203,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
             <div className="p-3 bg-green-50 rounded-md">
               <p className="text-sm text-green-800">
                 <strong>Cash App Pay:</strong> Withdrawals are processed through Stripe's Cash App Pay integration. 
-                You'll be redirected to complete the withdrawal with your Cash App account.
+                Your earnings will be deposited to your Cash App account.
               </p>
             </div>
             
@@ -261,8 +256,8 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
         <div className="p-3 bg-gray-50 rounded-md">
           <p className="text-sm text-gray-800">
-            <strong>Secure Withdrawals:</strong> Both withdrawal methods are processed through Stripe's secure checkout system. 
-            Cash App Pay integration requires it to be enabled in your Stripe Dashboard.
+            <strong>Secure Withdrawals:</strong> All withdrawals are processed through Stripe's secure payout system. 
+            Money will be deposited directly to your selected account.
           </p>
         </div>
 
