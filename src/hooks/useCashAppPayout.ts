@@ -12,9 +12,11 @@ export const useCashAppPayout = () => {
   const setupCashAppAccount = useCallback(async (email: string, userId: string, cashAppTag: string) => {
     setSetupLoading(true);
     try {
-      console.log('Setting up Cash App account:', { email, userId, cashAppTag });
+      console.log('useCashAppPayout: Setting up Cash App account:', { email, userId, cashAppTag });
       
       const result = await cashAppPayoutService.setupCashAppAccount(email, userId, cashAppTag);
+      
+      console.log('useCashAppPayout: Setup result received:', result);
       
       if (!result.success || !result.data) {
         throw new Error(result.error || 'Cash App account setup failed');
@@ -24,21 +26,29 @@ export const useCashAppPayout = () => {
       
       // Open onboarding in new tab
       if (result.data.onboardingUrl) {
+        console.log('useCashAppPayout: Opening onboarding URL:', result.data.onboardingUrl);
         window.open(result.data.onboardingUrl, '_blank');
         
         toast({
           title: "Cash App Setup Started",
           description: "Complete the onboarding process in the new tab to enable Cash App payouts.",
         });
+      } else {
+        toast({
+          title: "Cash App Account Created",
+          description: "Your Cash App Connect account has been created successfully.",
+        });
       }
       
       return result.data;
     } catch (error) {
-      console.error('Cash App setup error:', error);
+      console.error('useCashAppPayout: Cash App setup error:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : "Failed to setup Cash App account";
       
       toast({
         title: "Cash App Setup Failed",
-        description: error instanceof Error ? error.message : "Failed to setup Cash App account",
+        description: errorMessage,
         variant: "destructive",
       });
       
@@ -51,7 +61,7 @@ export const useCashAppPayout = () => {
   const createCashAppPayout = useCallback(async (request: CashAppPayoutRequest) => {
     setLoading(true);
     try {
-      console.log('Creating Cash App payout:', request);
+      console.log('useCashAppPayout: Creating Cash App payout:', request);
       
       const result = await cashAppPayoutService.createCashAppPayout(request);
       
@@ -66,7 +76,7 @@ export const useCashAppPayout = () => {
       
       return result.data;
     } catch (error) {
-      console.error('Cash App payout error:', error);
+      console.error('useCashAppPayout: Cash App payout error:', error);
       
       toast({
         title: "Cash App Payout Failed",

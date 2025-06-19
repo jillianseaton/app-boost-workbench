@@ -38,27 +38,42 @@ export interface CashAppAccountSetupResponse {
 class CashAppPayoutService {
   async setupCashAppAccount(email: string, userId: string, cashAppTag: string): Promise<CashAppAccountSetupResponse> {
     try {
-      console.log('Setting up Cash App Connect account:', { email, userId, cashAppTag });
+      console.log('CashAppPayoutService: Setting up Cash App Connect account:', { email, userId, cashAppTag });
       
       const { data, error } = await supabase.functions.invoke('setup-cashapp-connect', {
-        body: { email, userId, cashAppTag },
+        body: { 
+          email: email,
+          userId: userId,
+          cashAppTag: cashAppTag
+        },
       });
 
+      console.log('CashAppPayoutService: Edge function response:', { data, error });
+
       if (error) {
+        console.error('CashAppPayoutService: Edge function error:', error);
         throw new Error(error.message || 'Cash App account setup failed');
       }
 
-      console.log('Cash App Connect account setup successful:', data);
+      if (!data) {
+        throw new Error('No response data from Cash App setup');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Cash App account setup failed');
+      }
+
+      console.log('CashAppPayoutService: Cash App Connect account setup successful:', data);
       return data;
     } catch (error) {
-      console.error('Cash App Connect Account Setup Error:', error);
+      console.error('CashAppPayoutService: Cash App Connect Account Setup Error:', error);
       throw new Error(error instanceof Error ? error.message : 'Cash App account setup failed');
     }
   }
 
   async createCashAppPayout(request: CashAppPayoutRequest): Promise<CashAppPayoutResponse> {
     try {
-      console.log('Creating Cash App payout:', request);
+      console.log('CashAppPayoutService: Creating Cash App payout:', request);
       
       // Validate minimum amount for live transactions
       if (request.amount < 1.00) {
@@ -78,17 +93,17 @@ class CashAppPayoutService {
         throw new Error(error.message || 'Cash App payout failed');
       }
 
-      console.log('Cash App payout created successfully:', data);
+      console.log('CashAppPayoutService: Cash App payout created successfully:', data);
       return data;
     } catch (error) {
-      console.error('Cash App Payout Error:', error);
+      console.error('CashAppPayoutService: Cash App Payout Error:', error);
       throw new Error(error instanceof Error ? error.message : 'Cash App payout failed');
     }
   }
 
   async getCashAppAccountStatus(connectAccountId: string) {
     try {
-      console.log('Getting Cash App account status:', connectAccountId);
+      console.log('CashAppPayoutService: Getting Cash App account status:', connectAccountId);
       
       const { data, error } = await supabase.functions.invoke('get-cashapp-account-status', {
         body: { connectAccountId },
@@ -100,7 +115,7 @@ class CashAppPayoutService {
 
       return data;
     } catch (error) {
-      console.error('Cash App Account Status Error:', error);
+      console.error('CashAppPayoutService: Cash App Account Status Error:', error);
       throw new Error(error instanceof Error ? error.message : 'Failed to get account status');
     }
   }
