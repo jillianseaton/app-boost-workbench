@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -188,7 +189,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
             
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium mb-2 block">Withdrawal Type</label>
+                <Label className="text-sm font-medium mb-2 block">Withdrawal Type</Label>
                 <Input
                   type="text"
                   value="Bank Transfer"
@@ -197,7 +198,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">Currency Type</label>
+                <Label className="text-sm font-medium mb-2 block">Currency Type</Label>
                 <Input
                   type="text"
                   value={currencyType}
@@ -302,7 +303,9 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">Currency Type</label>
+                  <Label className="text-sm font-medium mb-2 block">
+                    Currency Type
+                  </Label>
                   <Input
                     type="text"
                     value={currencyType}
