@@ -35,7 +35,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   const [showCashAppSetup, setShowCashAppSetup] = useState(false);
   
   const { loading, createPayout } = useStripeCheckout();
-  const { loading: cashAppLoading, createCashAppPayout } = useCashAppPayout();
+  const { loading: cashAppLoading, createCashAppPayout, setupCashAppAccount, setupLoading } = useCashAppPayout();
   const { toast } = useToast();
 
   const handleBankWithdraw = async () => {
@@ -97,6 +97,28 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
       console.log('Bank setup verification completed');
     } catch (error) {
       console.error('Bank setup failed:', error);
+    }
+  };
+
+  const handleCashAppSetupStart = async () => {
+    if (!cashAppTag.trim()) {
+      toast({
+        title: "Cash App Tag Required",
+        description: "Please enter your Cash App tag before setting up payouts.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log('Starting Cash App setup process:', { cashAppTag, userEmail, userId });
+      
+      await setupCashAppAccount(userEmail, userId, cashAppTag);
+      
+      // The setupCashAppAccount function will handle opening the onboarding URL
+      // and showing appropriate toasts
+    } catch (error) {
+      console.error('Cash App setup initiation failed:', error);
     }
   };
 
@@ -278,13 +300,22 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                 </div>
                 
                 <Button
-                  onClick={() => setShowCashAppSetup(true)}
+                  onClick={handleCashAppSetupStart}
                   variant="outline"
                   className="w-full"
-                  disabled={!cashAppTag.trim()}
+                  disabled={!cashAppTag.trim() || setupLoading}
                 >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Setup Cash App Payouts
+                  {setupLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Setting up...
+                    </>
+                  ) : (
+                    <>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Setup Cash App Payouts
+                    </>
+                  )}
                 </Button>
               </div>
             )}
