@@ -19,7 +19,7 @@ interface PaymentIntentRequest {
   customerEmail?: string;
 }
 
-// Securely calculate the order amount
+// Securely calculate the order amount (matching Ruby implementation)
 function calculateOrderAmount(items: PaymentItem[]): number {
   // Calculate the order total on the server to prevent
   // people from directly manipulating the amount on the client
@@ -88,10 +88,12 @@ serve(async (req) => {
       console.log('Invalid email format provided:', customerEmail, 'proceeding without customer');
     }
     
-    // Create payment intent with calculated amount
+    // Create payment intent with calculated amount (matching Ruby implementation)
     const paymentIntentData: any = {
       amount: Math.round(amount),
       currency: currency.toLowerCase(),
+      // In the latest version of the API, specifying the `automatic_payment_methods` parameter 
+      // is optional because Stripe enables its functionality by default.
       automatic_payment_methods: {
         enabled: true,
       },
@@ -109,10 +111,11 @@ serve(async (req) => {
     
     console.log('Payment Intent created:', paymentIntent.id);
     
+    // Return client secret (matching Ruby response format)
     return new Response(JSON.stringify({
       success: true,
+      clientSecret: paymentIntent.client_secret,
       data: {
-        clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,
         amount: paymentIntent.amount,
         currency: paymentIntent.currency,

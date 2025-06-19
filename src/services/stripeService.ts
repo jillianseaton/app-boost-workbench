@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface StripePayoutRequest {
@@ -37,7 +36,7 @@ export interface PaymentItem {
 
 export interface CreatePaymentIntentRequest {
   amount?: number; // Amount in cents (for backward compatibility)
-  items?: PaymentItem[]; // New items-based approach
+  items?: PaymentItem[]; // New items-based approach (matches Ruby implementation)
   description?: string;
   currency?: string;
   customerEmail?: string;
@@ -45,6 +44,7 @@ export interface CreatePaymentIntentRequest {
 
 export interface CreatePaymentIntentResponse {
   success: boolean;
+  clientSecret?: string; // Direct access to clientSecret (matching Ruby response)
   data?: {
     clientSecret: string;
     paymentIntentId: string;
@@ -192,7 +192,7 @@ class StripeService {
 
   async createPaymentIntent(request: CreatePaymentIntentRequest): Promise<CreatePaymentIntentResponse> {
     try {
-      // Support both legacy amount-based and new items-based approaches
+      // Support both legacy amount-based and new items-based approaches (matching Ruby implementation)
       if (!request.amount && !request.items) {
         throw new Error('Either amount or items must be provided');
       }
@@ -204,11 +204,11 @@ class StripeService {
       };
       
       if (request.items) {
-        console.log('Creating live payment intent with items:', request.items);
+        console.log('Creating payment intent with items (Ruby-style):', request.items);
         requestBody.items = request.items;
       } else if (request.amount) {
-        console.log('Creating live payment intent with amount:', request.amount);
-        // Convert single amount to items format for consistency
+        console.log('Creating payment intent with amount (legacy):', request.amount);
+        // Convert single amount to items format for consistency with Ruby implementation
         requestBody.items = [{ amount: request.amount }];
       }
       
@@ -226,14 +226,22 @@ class StripeService {
       });
 
       if (error) {
-        throw new Error(handleProductionError(error, 'Live Payment Intent Creation'));
+        throw new Error(handleProductionError(error, 'Payment Intent Creation'));
       }
 
-      console.log('Live payment intent created successfully:', data);
-      return data;
+      console.log('Payment intent created successfully:', data);
+      
+      // Return response matching Ruby format with direct clientSecret access
+      return {
+        success: data.success,
+        clientSecret: data.clientSecret, // Direct access like Ruby response
+        data: data.data,
+        error: data.error,
+        timestamp: data.timestamp
+      };
     } catch (error) {
-      console.error('Live Payment Intent Creation Error:', error);
-      throw new Error(handleProductionError(error, 'Live Payment Intent Creation'));
+      console.error('Payment Intent Creation Error:', error);
+      throw new Error(handleProductionError(error, 'Payment Intent Creation'));
     }
   }
 
