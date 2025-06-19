@@ -115,11 +115,7 @@ const handleProductionError = (error: any, context: string): string => {
   
   // Map common Stripe live production errors to user-friendly messages
   if (error.message?.includes('Your account cannot currently make live charges')) {
-    return 'Your live Stripe account is not yet activated for payments. Please complete your account activation in the Stripe Dashboard.';
-  }
-  
-  if (error.message?.includes('cashapp') || error.message?.includes('Cash App')) {
-    return 'Cash App Pay is not enabled for your live Stripe account. Please enable it in your Stripe Dashboard under Payment Methods → Cash App Pay.';
+    return 'Your live Stripe account is not yet activated for payouts. Please complete your account activation in the Stripe Dashboard.';
   }
   
   if (error.message?.includes('Invalid API Key') || error.message?.includes('api_key')) {
@@ -134,22 +130,18 @@ const handleProductionError = (error: any, context: string): string => {
     return 'Rate limit exceeded. Please wait a moment before trying again.';
   }
   
-  if (error.message?.includes('card_declined') || error.message?.includes('payment_failed')) {
-    return 'Payment was declined. Please try a different payment method or contact your bank.';
-  }
-
   if (error.message?.includes('amount_too_small') || error.message?.includes('minimum')) {
-    return 'Transaction amount is too small. Minimum amount for live transactions is $0.50.';
+    return 'Payout amount is too small. Minimum amount for live payouts is $0.50.';
   }
   
   // Generic production error message
-  return error.message || 'A payment processing error occurred in live mode. Please try again or contact support.';
+  return error.message || 'A payout processing error occurred in live mode. Please try again or contact support.';
 };
 
 class StripeService {
   async createPayout(request: StripePayoutRequest): Promise<StripePayoutResponse> {
     try {
-      console.log('Creating live Stripe payout:', { ...request, amount: request.amount });
+      console.log('Creating live Stripe payout (depositing earnings):', { ...request, amount: request.amount });
       
       // Production validation
       if (request.amount < 0.5) {
@@ -164,7 +156,7 @@ class StripeService {
         throw new Error(handleProductionError(error, 'Live Payout Creation'));
       }
 
-      console.log('Live payout created successfully:', data);
+      console.log('Live payout created successfully (earnings deposited):', data);
       return data;
     } catch (error) {
       console.error('Live Stripe Payout Error:', error);
@@ -294,18 +286,14 @@ class StripeService {
     const warnings: string[] = [];
     
     try {
-      console.log('Verifying live production configuration...');
+      console.log('Verifying live production payout configuration...');
       
-      // Test basic live API connectivity with minimal amount
-      const testResponse = await supabase.functions.invoke('create-checkout-session', {
+      // Test basic live API connectivity for payouts
+      const testResponse = await supabase.functions.invoke('stripe-payout', {
         body: {
-          amount: 50, // $0.50 minimum for live
-          description: 'Live Configuration Test',
-          successUrl: window.location.origin + '/test-success',
-          cancelUrl: window.location.origin + '/test-cancel',
-          customerEmail: 'production-test@example.com',
-          mode: 'payment' as const,
-          paymentMethod: 'card' as const
+          amount: 0.50, // $0.50 minimum for live
+          email: 'production-test@example.com',
+          userId: 'test-user-id'
         }
       });
 
@@ -314,59 +302,30 @@ class StripeService {
         if (error.includes('api_key') || error.includes('Invalid API Key')) {
           issues.push('Live API key is not configured or invalid. Please set your live Stripe secret key (sk_live_...)');
         } else if (error.includes('account cannot currently make live charges')) {
-          issues.push('Your Stripe account is not activated for live payments. Complete activation in Stripe Dashboard');
+          issues.push('Your Stripe account is not activated for live payouts. Complete activation in Stripe Dashboard');
         } else {
-          issues.push(`Live API connectivity issue: ${error}`);
+          issues.push(`Live payout API connectivity issue: ${error}`);
         }
       } else {
-        console.log('Live API connectivity verified successfully');
-      }
-
-      // Test Cash App Pay specifically
-      try {
-        const cashAppTest = await supabase.functions.invoke('create-checkout-session', {
-          body: {
-            amount: 50,
-            description: 'Cash App Pay Test',
-            successUrl: window.location.origin + '/test-success',
-            cancelUrl: window.location.origin + '/test-cancel',
-            customerEmail: 'cashapp-test@example.com',
-            mode: 'payment' as const,
-            paymentMethod: 'cashapp' as const
-          }
-        });
-
-        if (!cashAppTest.data?.success) {
-          const error = cashAppTest.data?.error || 'Unknown Cash App Pay error';
-          if (error.includes('cashapp') || error.includes('Cash App')) {
-            issues.push('Cash App Pay is not enabled in your live Stripe account. Enable it in Payment Methods settings');
-          } else {
-            warnings.push('Cash App Pay configuration could not be verified');
-          }
-        } else {
-          console.log('Cash App Pay configuration verified successfully');
-        }
-      } catch (cashAppError) {
-        warnings.push('Could not verify Cash App Pay configuration');
-        console.warn('Cash App Pay verification failed:', cashAppError);
+        console.log('Live payout API connectivity verified successfully');
       }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown configuration error';
-      issues.push(`Configuration verification failed: ${errorMessage}`);
-      console.error('Production config verification error:', error);
+      issues.push(`Payout configuration verification failed: ${errorMessage}`);
+      console.error('Production payout config verification error:', error);
     }
 
     // Add warnings for common production considerations
     if (issues.length === 0) {
-      warnings.push('Ensure your Stripe account has been fully activated for live payments');
-      warnings.push('Verify Cash App Pay is enabled in your Stripe Dashboard under Payment Methods');
-      warnings.push('Test with small amounts before processing larger transactions');
+      warnings.push('Ensure your Stripe account has been fully activated for live payouts');
+      warnings.push('Test with small amounts before processing larger payouts');
+      warnings.push('Verify your bank account is connected for receiving payouts');
     }
 
     const isProductionReady = issues.length === 0;
     
-    console.log('Production readiness check completed:', {
+    console.log('Production payout readiness check completed:', {
       isProductionReady,
       issuesCount: issues.length,
       warningsCount: warnings.length

@@ -3,78 +3,56 @@ import { useState, useCallback } from 'react';
 import { stripeService } from '@/services/stripeService';
 import { useToast } from '@/hooks/use-toast';
 
-interface CheckoutSessionRequest {
-  amount: number; // Amount in cents
+interface PayoutRequest {
+  amount: number; // Amount in dollars
   description: string;
-  successUrl: string;
-  cancelUrl: string;
-  customerEmail?: string;
-  mode?: 'payment' | 'setup';
-  paymentMethod?: 'card' | 'cashapp';
+  userEmail: string;
+  userId: string;
+  method?: 'bank_transfer' | 'cashapp';
 }
 
 export const useStripeCheckout = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const createCheckoutSession = useCallback(async (request: CheckoutSessionRequest) => {
+  const createPayout = useCallback(async (request: PayoutRequest) => {
     setLoading(true);
     try {
-      console.log('Creating Stripe checkout session (Production):', request);
+      console.log('Creating payout to deposit earnings:', request);
       
       // Production validation
-      if (request.mode === 'payment' && request.amount < 50) {
-        throw new Error('Minimum withdrawal amount is $0.50 for live transactions.');
+      if (request.amount < 0.5) {
+        throw new Error('Minimum payout amount is $0.50 for live transactions.');
       }
       
-      const result = await stripeService.createCheckoutSession(request);
-      
-      if (!result.success || !result.data?.url) {
-        throw new Error(result.error || 'Failed to create checkout session');
-      }
-      
-      console.log('Checkout session created successfully (Production), URL:', result.data.url);
-      
-      // Show loading toast immediately
-      toast({
-        title: "Redirecting to Stripe",
-        description: "Opening Stripe checkout in a new window...",
+      const result = await stripeService.createPayout({
+        amount: request.amount,
+        email: request.userEmail,
+        userId: request.userId,
       });
       
-      // Small delay to ensure toast shows, then redirect
-      setTimeout(() => {
-        try {
-          // Try to open in new window first (better UX)
-          const newWindow = window.open(result.data.url, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
-          
-          // Fallback to same window if popup blocked
-          if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-            console.log('Popup blocked, redirecting in same window');
-            window.location.href = result.data.url;
-          } else {
-            console.log('Opened Stripe checkout in new window');
-            toast({
-              title: "Checkout Opened",
-              description: "Complete your payment in the new window that opened.",
-            });
-          }
-        } catch (redirectError) {
-          console.error('Redirect error, trying fallback:', redirectError);
-          window.location.href = result.data.url;
-        }
-      }, 500);
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to create payout');
+      }
+      
+      console.log('Payout created successfully:', result.data);
+      
+      toast({
+        title: "Withdrawal Initiated",
+        description: `$${request.amount.toFixed(2)} will be deposited to your account within 1-2 business days.`,
+      });
       
       return result.data;
     } catch (error) {
-      console.error('Checkout session error (Production):', error);
+      console.error('Payout creation error:', error);
       
-      let errorMessage = 'Failed to create checkout session';
+      let errorMessage = 'Failed to create payout';
       if (error instanceof Error) {
         errorMessage = error.message;
       }
       
       toast({
-        title: "Checkout Failed",
+        title: "Withdrawal Failed",
         description: errorMessage,
         variant: "destructive",
       });
@@ -87,6 +65,6 @@ export const useStripeCheckout = () => {
 
   return {
     loading,
-    createCheckoutSession,
+    createPayout,
   };
 };
