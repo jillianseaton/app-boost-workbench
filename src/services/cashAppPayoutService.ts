@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface CashAppPayoutRequest {
@@ -40,26 +39,38 @@ class CashAppPayoutService {
     try {
       console.log('CashAppPayoutService: Setting up Cash App Connect account:', { email, userId, cashAppTag });
       
+      const requestBody = { 
+        email: email,
+        userId: userId,
+        cashAppTag: cashAppTag
+      };
+      
+      console.log('CashAppPayoutService: Calling edge function with body:', requestBody);
+      
       const { data, error } = await supabase.functions.invoke('setup-cashapp-connect', {
-        body: { 
-          email: email,
-          userId: userId,
-          cashAppTag: cashAppTag
-        },
+        body: requestBody,
       });
 
-      console.log('CashAppPayoutService: Edge function response:', { data, error });
+      console.log('CashAppPayoutService: Edge function raw response:', { data, error });
 
       if (error) {
-        console.error('CashAppPayoutService: Edge function error:', error);
+        console.error('CashAppPayoutService: Edge function returned error:', error);
+        
+        // Check if it's a network error
+        if (error.message?.includes('Failed to fetch') || error.message?.includes('Failed to send a request')) {
+          throw new Error('Network error: Unable to connect to Cash App setup service. Please check your internet connection and try again.');
+        }
+        
         throw new Error(error.message || 'Cash App account setup failed');
       }
 
       if (!data) {
-        throw new Error('No response data from Cash App setup');
+        console.error('CashAppPayoutService: No data returned from edge function');
+        throw new Error('No response data from Cash App setup service');
       }
 
       if (!data.success) {
+        console.error('CashAppPayoutService: Edge function returned unsuccessful response:', data);
         throw new Error(data.error || 'Cash App account setup failed');
       }
 
@@ -67,7 +78,16 @@ class CashAppPayoutService {
       return data;
     } catch (error) {
       console.error('CashAppPayoutService: Cash App Connect Account Setup Error:', error);
-      throw new Error(error instanceof Error ? error.message : 'Cash App account setup failed');
+      
+      // Re-throw with more user-friendly message for network errors
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('Network error')) {
+          throw new Error('Unable to connect to Cash App setup service. Please check your internet connection and try again.');
+        }
+        throw error;
+      }
+      
+      throw new Error('Cash App account setup failed');
     }
   }
 
