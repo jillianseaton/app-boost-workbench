@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, ArrowRight, TrendingUp, ExternalLink, LogIn } from 'lucide-react';
@@ -32,6 +31,11 @@ const Index = () => {
               <li>
                 <Link to="/dashboard" className="text-blue-500 hover:text-blue-700">
                   Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link to="/production-test" className="text-blue-500 hover:text-blue-700">
+                  Production Test
                 </Link>
               </li>
               <li>

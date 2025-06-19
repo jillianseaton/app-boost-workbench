@@ -8,6 +8,7 @@ import Dashboard from '@/components/Dashboard';
 import Auth from '@/pages/Auth';
 import About from '@/pages/About';
 import Contact from '@/pages/Contact';
+import ProductionTestPage from '@/pages/ProductionTestPage';
 import { useAuth } from '@/hooks/useAuth';
 import AdRevenuePage from '@/pages/AdRevenuePage';
 import SecureBankTransferPage from '@/pages/SecureBankTransferPage';
