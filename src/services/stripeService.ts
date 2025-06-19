@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface StripePayoutRequest {
@@ -30,8 +31,13 @@ export interface StripeAccountSetupResponse {
   timestamp: string;
 }
 
+export interface PaymentItem {
+  amount: number;
+}
+
 export interface CreatePaymentIntentRequest {
-  amount: number; // Amount in cents
+  amount?: number; // Amount in cents (for backward compatibility)
+  items?: PaymentItem[]; // New items-based approach
   description?: string;
   currency?: string;
   customerEmail?: string;
@@ -186,15 +192,37 @@ class StripeService {
 
   async createPaymentIntent(request: CreatePaymentIntentRequest): Promise<CreatePaymentIntentResponse> {
     try {
-      console.log('Creating live payment intent:', { ...request, amount: request.amount });
+      // Support both legacy amount-based and new items-based approaches
+      if (!request.amount && !request.items) {
+        throw new Error('Either amount or items must be provided');
+      }
+      
+      const requestBody: any = {
+        description: request.description,
+        currency: request.currency || 'usd',
+        customerEmail: request.customerEmail,
+      };
+      
+      if (request.items) {
+        console.log('Creating live payment intent with items:', request.items);
+        requestBody.items = request.items;
+      } else if (request.amount) {
+        console.log('Creating live payment intent with amount:', request.amount);
+        // Convert single amount to items format for consistency
+        requestBody.items = [{ amount: request.amount }];
+      }
       
       // Production validation
-      if (request.amount < 50) { // $0.50 minimum
+      const totalAmount = request.items 
+        ? request.items.reduce((sum, item) => sum + item.amount, 0)
+        : request.amount || 0;
+        
+      if (totalAmount < 50) { // $0.50 minimum
         throw new Error('Minimum payment amount is $0.50 for live transactions.');
       }
       
       const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: request,
+        body: requestBody,
       });
 
       if (error) {
