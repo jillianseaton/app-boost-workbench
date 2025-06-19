@@ -15,6 +15,7 @@ interface CheckoutSessionRequest {
   cancelUrl: string;
   customerEmail?: string;
   mode?: 'payment' | 'setup';
+  paymentMethod?: 'card' | 'cashapp';
 }
 
 // Email validation helper
@@ -30,9 +31,9 @@ serve(async (req) => {
 
   try {
     const body: CheckoutSessionRequest = await req.json();
-    const { amount, description, successUrl, cancelUrl, customerEmail, mode = 'payment' } = body;
+    const { amount, description, successUrl, cancelUrl, customerEmail, mode = 'payment', paymentMethod = 'card' } = body;
     
-    console.log('Create Checkout Session - Request:', { amount, description, mode, customerEmail });
+    console.log('Create Checkout Session - Request:', { amount, description, mode, customerEmail, paymentMethod });
     
     if (mode === 'payment' && (!amount || amount < 50)) {
       throw new Error('Minimum payment amount is $0.50');
@@ -81,6 +82,13 @@ serve(async (req) => {
       mode: mode,
     };
     
+    // Configure payment method types based on the requested method
+    if (paymentMethod === 'cashapp') {
+      sessionConfig.payment_method_types = ['cashapp'];
+    } else {
+      sessionConfig.payment_method_types = ['card'];
+    }
+    
     if (mode === 'payment') {
       sessionConfig.line_items = [
         {
@@ -95,7 +103,6 @@ serve(async (req) => {
         },
       ];
     }
-    // Removed payment_method_types for setup mode - Stripe will automatically determine available methods
     
     const session = await stripe.checkout.sessions.create(sessionConfig);
     
@@ -121,6 +128,8 @@ serve(async (req) => {
       errorMessage = 'API key permissions error. Checkout session creation may be limited with restricted keys.';
     } else if (error.message.includes('Invalid API Key')) {
       errorMessage = 'Invalid Stripe API key. Please check your key in the Stripe Dashboard.';
+    } else if (error.message.includes('cashapp')) {
+      errorMessage = 'Cash App Pay is not enabled for your Stripe account. Please enable it in your Stripe Dashboard under Payment Methods.';
     }
     
     return new Response(JSON.stringify({

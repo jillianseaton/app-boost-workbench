@@ -57,6 +57,7 @@ export interface CreateCheckoutSessionRequest {
   cancelUrl: string;
   customerEmail?: string;
   mode?: 'payment' | 'setup';
+  paymentMethod?: 'card' | 'cashapp';
 }
 
 export interface CreateCheckoutSessionResponse {
