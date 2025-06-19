@@ -10,6 +10,7 @@ interface CheckoutSessionRequest {
   cancelUrl: string;
   customerEmail?: string;
   mode?: 'payment' | 'setup';
+  paymentMethod?: 'card' | 'cashapp';
 }
 
 export const useStripeCheckout = () => {
