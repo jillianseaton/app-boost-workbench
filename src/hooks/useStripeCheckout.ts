@@ -20,7 +20,12 @@ export const useStripeCheckout = () => {
   const createCheckoutSession = useCallback(async (request: CheckoutSessionRequest) => {
     setLoading(true);
     try {
-      console.log('Creating Stripe checkout session:', request);
+      console.log('Creating Stripe checkout session (Production):', request);
+      
+      // Production validation
+      if (request.mode === 'payment' && request.amount < 50) {
+        throw new Error('Minimum withdrawal amount is $0.50 for live transactions.');
+      }
       
       const result = await stripeService.createCheckoutSession(request);
       
@@ -28,10 +33,9 @@ export const useStripeCheckout = () => {
         throw new Error(result.error || 'Failed to create checkout session');
       }
       
-      console.log('Checkout session created successfully, URL:', result.data.url);
+      console.log('Checkout session created successfully (Production), URL:', result.data.url);
       
-      // Use window.location.href for more reliable redirect instead of window.open
-      // This ensures the redirect works in all browsers and popup blockers don't interfere
+      // Use window.location.href for more reliable redirect
       window.location.href = result.data.url;
       
       if (request.mode === 'setup') {
@@ -40,19 +44,25 @@ export const useStripeCheckout = () => {
           description: "Redirecting to Stripe to verify your bank account...",
         });
       } else {
+        const paymentMethodText = request.paymentMethod === 'cashapp' ? 'Cash App Pay' : 'card';
         toast({
           title: "Redirecting to Checkout",
-          description: "Redirecting to Stripe to complete your withdrawal...",
+          description: `Redirecting to Stripe to complete your ${paymentMethodText} withdrawal...`,
         });
       }
       
       return result.data;
     } catch (error) {
-      console.error('Checkout session error:', error);
+      console.error('Checkout session error (Production):', error);
+      
+      let errorMessage = 'Failed to create checkout session';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       
       toast({
         title: "Checkout Failed",
-        description: error instanceof Error ? error.message : "Failed to create checkout session",
+        description: errorMessage,
         variant: "destructive",
       });
       
