@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CreditCard, Send, Settings, Loader2, Smartphone } from 'lucide-react';
 import { useStripeCheckout } from '@/hooks/useStripeCheckout';
+import { stripeService } from '@/services/stripeService';
+import { useToast } from '@/hooks/use-toast';
 
 interface WithdrawalSectionProps {
   earnings: number;
@@ -27,6 +29,8 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   const [withdrawalMethod, setWithdrawalMethod] = useState<WithdrawalMethod>('bank');
   const [currencyType] = useState('USD');
   const { loading, createPayout } = useStripeCheckout();
+  const [cashAppLoading, setCashAppLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleBankWithdraw = async () => {
     try {
@@ -48,21 +52,36 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   };
 
   const handleCashAppWithdraw = async () => {
+    setCashAppLoading(true);
     try {
-      console.log('Processing Cash App Pay withdrawal:', { amount: earnings });
+      console.log('Creating Cash App Pay checkout session:', { amount: earnings });
       
-      await createPayout({
-        amount: earnings,
+      const result = await stripeService.createCheckoutSession({
+        amount: Math.round(earnings * 100), // Convert to cents
         description: `Withdraw $${earnings.toFixed(2)} via Cash App Pay`,
-        userEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
-        userId: userId,
-        method: 'cashapp'
+        successUrl: `${window.location.origin}/dashboard?withdrawal=success`,
+        cancelUrl: `${window.location.origin}/dashboard?withdrawal=cancelled`,
+        customerEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
+        paymentMethod: 'cashapp',
+        mode: 'payment'
       });
       
-      console.log('Cash App Pay withdrawal completed successfully');
-      onWithdraw();
+      if (result.success && result.data?.url) {
+        console.log('Redirecting to Cash App Pay checkout:', result.data.url);
+        // Redirect to Cash App Pay checkout
+        window.location.href = result.data.url;
+      } else {
+        throw new Error('Failed to create Cash App Pay checkout session');
+      }
     } catch (error) {
       console.error('Cash App Pay withdrawal failed:', error);
+      toast({
+        title: "Cash App Pay Error",
+        description: "Failed to open Cash App Pay checkout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCashAppLoading(false);
     }
   };
 
@@ -202,8 +221,8 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           <div className="space-y-3">
             <div className="p-3 bg-green-50 rounded-md">
               <p className="text-sm text-green-800">
-                <strong>Cash App Pay:</strong> Withdrawals are processed through Stripe's Cash App Pay integration. 
-                Your earnings will be deposited to your Cash App account.
+                <strong>Cash App Pay:</strong> Click the button below to open Cash App Pay checkout. 
+                You'll be redirected to complete your withdrawal securely.
               </p>
             </div>
             
@@ -235,19 +254,19 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
             <Button 
               onClick={handleCashAppWithdraw} 
-              disabled={loading}
+              disabled={cashAppLoading}
               className="w-full"
               variant="default"
             >
-              {loading ? (
+              {cashAppLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
+                  Opening Cash App Pay...
                 </>
               ) : (
                 <>
                   <Smartphone className="h-4 w-4 mr-2" />
-                  Withdraw ${earnings.toFixed(2)} via Cash App Pay
+                  Open Cash App Pay - Withdraw ${earnings.toFixed(2)}
                 </>
               )}
             </Button>
@@ -256,7 +275,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
         <div className="p-3 bg-gray-50 rounded-md">
           <p className="text-sm text-gray-800">
-            <strong>Secure Withdrawals:</strong> All withdrawals are processed through Stripe's secure payout system. 
+            <strong>Secure Withdrawals:</strong> All withdrawals are processed through Stripe's secure payment system. 
             Money will be deposited directly to your selected account.
           </p>
         </div>
