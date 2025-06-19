@@ -19,7 +19,11 @@ serve(async (req) => {
 
   try {
     const body: AccountSessionRequest = await req.json();
-    const { account } = body;
+    const connectedAccountId = body.account;
+
+    if (!connectedAccountId) {
+      throw new Error('Account ID is required');
+    }
 
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (!stripeKey) {
@@ -28,24 +32,15 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
 
+    // Create account session matching Ruby implementation
     const accountSession = await stripe.accountSessions.create({
-      account: account,
+      account: connectedAccountId,
       components: {
         account_onboarding: { enabled: true },
-        payouts: {
-          enabled: true,
-          features: {
-            instant_payouts: true,
-            standard_payouts: true,
-            edit_payout_schedule: true,
-            external_account_collection: true,
-          },
-        },
       }
     });
 
-    console.log('Account session created for account:', account);
-    console.log('Payouts component enabled with all features');
+    console.log('Account session created for account:', connectedAccountId);
 
     return new Response(JSON.stringify({
       client_secret: accountSession.client_secret
@@ -54,7 +49,7 @@ serve(async (req) => {
     });
     
   } catch (error) {
-    console.error('Create Account Session Error:', error);
+    console.error('Account session creation error:', error);
     
     return new Response(JSON.stringify({
       error: error.message

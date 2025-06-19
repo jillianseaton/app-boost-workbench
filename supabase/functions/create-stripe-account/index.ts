@@ -21,10 +21,11 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
 
+    // Create account matching Ruby implementation
     const account = await stripe.accounts.create({
       controller: {
         stripe_dashboard: {
-          type: "none",
+          type: "express",
         },
         fees: {
           payer: "application"
@@ -32,15 +33,10 @@ serve(async (req) => {
         losses: {
           payments: "application"
         },
-        requirement_collection: "application",
       },
-      capabilities: {
-        transfers: { requested: true }
-      },
-      country: "US",
     });
 
-    console.log('Stripe account created:', account.id);
+    console.log('Account created:', account.id);
 
     return new Response(JSON.stringify({
       account: account.id
@@ -49,7 +45,7 @@ serve(async (req) => {
     });
     
   } catch (error) {
-    console.error('Create Stripe Account Error:', error);
+    console.error('Account creation error:', error);
     
     return new Response(JSON.stringify({
       error: error.message

@@ -31,7 +31,7 @@ const StripeConnect: React.FC = () => {
         setConnectedAccountId(result.account);
         toast({
           title: "Account Created",
-          description: "Your Stripe Connect account has been created successfully.",
+          description: "Your Stripe Connect account has been created successfully with Express dashboard access.",
         });
       } else {
         setError(true);
@@ -45,7 +45,7 @@ const StripeConnect: React.FC = () => {
       setError(true);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: "An unexpected error occurred during account creation",
         variant: "destructive",
       });
     } finally {
@@ -58,7 +58,7 @@ const StripeConnect: React.FC = () => {
     setShowPayouts(true);
     toast({
       title: "Onboarding Complete",
-      description: "You can now manage your payouts and start accepting payments!",
+      description: "Your account is now ready for payments and payouts!",
     });
   };
 
@@ -67,14 +67,14 @@ const StripeConnect: React.FC = () => {
       <div className="container mx-auto max-w-4xl space-y-6">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-primary mb-2">Stripe Connect Onboarding</h1>
-          <p className="text-muted-foreground">Set up your account to start accepting payments</p>
+          <p className="text-muted-foreground">QuickStart integration with Express dashboard</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5" />
-              Account Setup Status
+              Express Account Setup
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
