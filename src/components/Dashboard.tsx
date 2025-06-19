@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +9,8 @@ import WithdrawalSection from './WithdrawalSection';
 import SecureBankDashboard from './SecureBankDashboard';
 import PartnerServices from './PartnerServices';
 import TransactionHistory from './TransactionHistory';
+import StripePaymentButton from './StripePaymentButton';
+import StripePayoutButton from './StripePayoutButton';
 import { Transaction } from '@/utils/transactionUtils';
 
 const Dashboard: React.FC = () => {
@@ -115,6 +116,18 @@ const Dashboard: React.FC = () => {
         maxTasks={maxTasks}
         onResetTasks={resetTasks}
       />
+
+      {/* Stripe Payment and Payout Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <StripePaymentButton 
+          title="Accept Payments With This Link"
+          description="Start accepting secure payments instantly with Stripe"
+        />
+        <StripePayoutButton
+          title="Quick Payout"
+          description="Process your payout quickly and securely with Stripe"
+        />
+      </div>
 
       <TaskOptimization 
         tasksCompleted={tasksCompleted}
