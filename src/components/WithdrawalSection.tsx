@@ -1,16 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { CreditCard, Send, Settings, Loader2, Smartphone, RefreshCw, CheckCircle } from 'lucide-react';
 import { useStripeCheckout } from '@/hooks/useStripeCheckout';
-import { stripeService } from '@/services/stripeService';
 import { useToast } from '@/hooks/use-toast';
 import { useCashAppPayout } from '@/hooks/useCashAppPayout';
 import { useCashAppStatus } from '@/hooks/useCashAppStatus';
 import CashAppSetup from './CashAppSetup';
 import CashAppPayoutLink from './CashAppPayoutLink';
+import WithdrawalMethodSelector from './withdrawal/WithdrawalMethodSelector';
+import BankTransferSection from './withdrawal/BankTransferSection';
+import CashAppPaySection from './withdrawal/CashAppPaySection';
+import WithdrawalStatusFooter from './withdrawal/WithdrawalStatusFooter';
 
 interface WithdrawalSectionProps {
   earnings: number;
@@ -210,14 +211,6 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     refreshStatus(cashAppStatus.connectAccountId);
   };
 
-  const formatCashAppTag = (value: string) => {
-    let formatted = value.replace(/^\$+/, '');
-    if (formatted && !formatted.startsWith('$')) {
-      formatted = '$' + formatted;
-    }
-    return formatted;
-  };
-
   // Show withdrawal section if minimum threshold is met and hasn't withdrawn
   if (earnings < 10 || hasWithdrawn) {
     return null;
@@ -255,225 +248,39 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           </p>
         </div>
 
-        {/* Withdrawal Method Selection */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">Select Withdrawal Method</Label>
-          <div className="grid grid-cols-3 gap-3">
-            <Button
-              variant={withdrawalMethod === 'bank' ? 'default' : 'outline'}
-              onClick={() => setWithdrawalMethod('bank')}
-              className="h-20 flex flex-col gap-1"
-            >
-              <CreditCard className="h-5 w-5" />
-              <span className="text-xs">Bank Transfer</span>
-              <span className="text-xs text-muted-foreground">1-2 days</span>
-            </Button>
-            <Button
-              variant={withdrawalMethod === 'cashapp' ? 'default' : 'outline'}
-              onClick={() => setWithdrawalMethod('cashapp')}
-              className="h-20 flex flex-col gap-1"
-            >
-              <Smartphone className="h-5 w-5" />
-              <span className="text-xs">Cash App Pay</span>
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                {statusLoading ? (
-                  <>
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    Checking...
-                  </>
-                ) : cashAppReady ? (
-                  <>
-                    <CheckCircle className="h-3 w-3 text-green-500" />
-                    Ready
-                  </>
-                ) : (
-                  'Setup Required'
-                )}
-              </span>
-            </Button>
-            <Button
-              variant={withdrawalMethod === 'payout-link' ? 'default' : 'outline'}
-              onClick={() => setWithdrawalMethod('payout-link')}
-              className="h-20 flex flex-col gap-1"
-            >
-              <Send className="h-5 w-5" />
-              <span className="text-xs">Payout Link</span>
-              <span className="text-xs text-muted-foreground">Share & Pay</span>
-            </Button>
-          </div>
-        </div>
+        <WithdrawalMethodSelector
+          withdrawalMethod={withdrawalMethod}
+          onMethodChange={setWithdrawalMethod}
+          cashAppReady={cashAppReady}
+          statusLoading={statusLoading}
+        />
 
-        {/* Bank Transfer Section */}
         {withdrawalMethod === 'bank' && (
-          <div className="space-y-3">
-            <div className="p-3 bg-blue-50 rounded-md">
-              <p className="text-sm text-blue-800">
-                <strong>Processing Time:</strong> Bank transfers typically take 1-2 business days to arrive. 
-                Your withdrawal will be processed securely through Stripe.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Withdrawal Type</Label>
-                <Input
-                  type="text"
-                  value="Bank Transfer"
-                  readOnly
-                  className="bg-muted text-muted-foreground"
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Currency Type</Label>
-                <Input
-                  type="text"
-                  value={currencyType}
-                  readOnly
-                  className="bg-muted text-muted-foreground"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleBankWithdraw} 
-                disabled={loading}
-                className="flex-1"
-                variant="default"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Withdraw ${earnings.toFixed(2)}
-                  </>
-                )}
-              </Button>
-              <Button 
-                onClick={handleBankSetup}
-                variant="outline"
-                className="flex-1"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Setting up...
-                  </>
-                ) : (
-                  <>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Setup Bank Account
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
+          <BankTransferSection
+            earnings={earnings}
+            loading={loading}
+            currencyType={currencyType}
+            onWithdraw={handleBankWithdraw}
+            onSetup={handleBankSetup}
+          />
         )}
 
-        {/* Cash App Pay Section */}
         {withdrawalMethod === 'cashapp' && (
-          <div className="space-y-3">
-            <div className={`p-3 rounded-md ${cashAppReady ? 'bg-green-50' : 'bg-yellow-50'}`}>
-              <div className="flex items-center justify-between">
-                <p className={`text-sm ${cashAppReady ? 'text-green-800' : 'text-yellow-800'}`}>
-                  <strong>Cash App Status:</strong> {cashAppReady 
-                    ? 'Ready for instant payouts!' 
-                    : 'Setup required or pending verification.'
-                  }
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleStatusRefresh}
-                  disabled={statusLoading}
-                  className="h-8 w-8 p-0"
-                >
-                  <RefreshCw className={`h-4 w-4 ${statusLoading ? 'animate-spin' : ''}`} />
-                </Button>
-              </div>
-              {cashAppStatus.requiresAction && (
-                <p className="text-xs text-yellow-700 mt-1">
-                  Additional verification may be required. Please complete your onboarding.
-                </p>
-              )}
-            </div>
-            
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="cashAppTagInput" className="text-sm font-medium mb-2 block">
-                  Your Cash App Tag
-                </Label>
-                <Input
-                  id="cashAppTagInput"
-                  type="text"
-                  placeholder="$username"
-                  value={cashAppTag}
-                  onChange={(e) => setCashAppTag(formatCashAppTag(e.target.value))}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enter your Cash App $cashtag to enable payouts
-                </p>
-              </div>
-              
-              {!cashAppReady && (
-                <Button
-                  onClick={handleCashAppSetupStart}
-                  variant="outline"
-                  className="w-full"
-                  disabled={!cashAppTag.trim() || setupLoading}
-                >
-                  {setupLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Setting up...
-                    </>
-                  ) : (
-                    <>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Setup Cash App Payouts
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-
-            <Button 
-              onClick={handleCashAppWithdraw} 
-              disabled={cashAppLoading || !cashAppReady || !cashAppTag.trim()}
-              className="w-full"
-              variant="default"
-            >
-              {cashAppLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Processing Payout...
-                </>
-              ) : !cashAppReady ? (
-                <>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Complete Setup First
-                </>
-              ) : !cashAppTag.trim() ? (
-                <>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Enter Cash App Tag
-                </>
-              ) : (
-                <>
-                  <Smartphone className="h-4 w-4 mr-2" />
-                  Send ${earnings.toFixed(2)} to Cash App
-                </>
-              )}
-            </Button>
-          </div>
+          <CashAppPaySection
+            earnings={earnings}
+            cashAppTag={cashAppTag}
+            onCashAppTagChange={setCashAppTag}
+            cashAppStatus={cashAppStatus}
+            cashAppLoading={cashAppLoading}
+            setupLoading={setupLoading}
+            statusLoading={statusLoading}
+            cashAppReady={cashAppReady}
+            onWithdraw={handleCashAppWithdraw}
+            onSetupStart={handleCashAppSetupStart}
+            onStatusRefresh={handleStatusRefresh}
+          />
         )}
 
-        {/* Payout Link Section */}
         {withdrawalMethod === 'payout-link' && (
           <div className="space-y-3">
             <CashAppPayoutLink
@@ -491,24 +298,11 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           </p>
         </div>
 
-        {/* Withdrawal Method Status */}
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p className="text-center">
-            Secure withdrawals - Minimum withdrawal: $10.00
-          </p>
-          <div className="flex justify-between">
-            <span>Method: {
-              withdrawalMethod === 'bank' ? 'Bank Transfer' : 
-              withdrawalMethod === 'cashapp' ? 'Cash App Pay' : 
-              'Payout Link'
-            }</span>
-            <span>Status: {
-              withdrawalMethod === 'cashapp' 
-                ? (statusLoading ? 'Checking...' : (cashAppReady ? 'Ready' : 'Setup Required'))
-                : 'Available'
-            }</span>
-          </div>
-        </div>
+        <WithdrawalStatusFooter
+          withdrawalMethod={withdrawalMethod}
+          cashAppReady={cashAppReady}
+          statusLoading={statusLoading}
+        />
       </CardContent>
     </Card>
   );
