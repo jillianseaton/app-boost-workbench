@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,8 +35,34 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   const [showCashAppSetup, setShowCashAppSetup] = useState(false);
   
   const { loading, createPayout } = useStripeCheckout();
-  const { loading: cashAppLoading, createCashAppPayout, setupCashAppAccount, setupLoading } = useCashAppPayout();
+  const { loading: cashAppLoading, createCashAppPayout, setupCashAppAccount, setupLoading, connectAccountId } = useCashAppPayout();
   const { toast } = useToast();
+
+  // Check if user has completed Cash App setup by looking for URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const cashAppSetupStatus = urlParams.get('cashapp_setup');
+    const accountId = urlParams.get('account');
+    
+    if (cashAppSetupStatus === 'success' && accountId) {
+      console.log('Cash App setup completed successfully:', accountId);
+      setCashAppSetupComplete(true);
+      
+      // Clean up URL parameters
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      
+      toast({
+        title: "Cash App Setup Complete",
+        description: "You can now withdraw funds to your Cash App account!",
+      });
+    }
+    
+    // Also check if we have a connectAccountId from the hook
+    if (connectAccountId) {
+      setCashAppSetupComplete(true);
+    }
+  }, [connectAccountId, toast]);
 
   const handleBankWithdraw = async () => {
     try {
@@ -278,6 +304,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
               <p className="text-sm text-green-800">
                 <strong>Cash App Payouts:</strong> Receive money directly to your Cash App account. 
                 {!cashAppSetupComplete && ' Setup required for first-time use.'}
+                {cashAppSetupComplete && ' Setup complete - ready for instant payouts!'}
               </p>
             </div>
             
@@ -328,7 +355,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                   </Label>
                   <Input
                     type="text"
-                    value={`Cash App (${cashAppTag})`}
+                    value={`Cash App (${cashAppTag || 'Verified'})`}
                     readOnly
                     className="bg-muted text-muted-foreground"
                   />
@@ -361,7 +388,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
               ) : !cashAppSetupComplete ? (
                 <>
                   <Settings className="h-4 w-4 mr-2" />
-                  Setup Required
+                  Complete Setup First
                 </>
               ) : (
                 <>
