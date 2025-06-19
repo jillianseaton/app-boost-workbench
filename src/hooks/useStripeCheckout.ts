@@ -35,21 +35,34 @@ export const useStripeCheckout = () => {
       
       console.log('Checkout session created successfully (Production), URL:', result.data.url);
       
-      // Use window.location.href for more reliable redirect
-      window.location.href = result.data.url;
+      // Show loading toast immediately
+      toast({
+        title: "Redirecting to Stripe",
+        description: "Opening Stripe checkout in a new window...",
+      });
       
-      if (request.mode === 'setup') {
-        toast({
-          title: "Redirecting to Bank Setup",
-          description: "Redirecting to Stripe to verify your bank account...",
-        });
-      } else {
-        const paymentMethodText = request.paymentMethod === 'cashapp' ? 'Cash App Pay' : 'card';
-        toast({
-          title: "Redirecting to Checkout",
-          description: `Redirecting to Stripe to complete your ${paymentMethodText} withdrawal...`,
-        });
-      }
+      // Small delay to ensure toast shows, then redirect
+      setTimeout(() => {
+        try {
+          // Try to open in new window first (better UX)
+          const newWindow = window.open(result.data.url, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+          
+          // Fallback to same window if popup blocked
+          if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+            console.log('Popup blocked, redirecting in same window');
+            window.location.href = result.data.url;
+          } else {
+            console.log('Opened Stripe checkout in new window');
+            toast({
+              title: "Checkout Opened",
+              description: "Complete your payment in the new window that opened.",
+            });
+          }
+        } catch (redirectError) {
+          console.error('Redirect error, trying fallback:', redirectError);
+          window.location.href = result.data.url;
+        }
+      }, 500);
       
       return result.data;
     } catch (error) {
