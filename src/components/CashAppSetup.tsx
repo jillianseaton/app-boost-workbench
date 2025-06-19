@@ -11,12 +11,14 @@ interface CashAppSetupProps {
   userEmail: string;
   userId: string;
   onSetupComplete?: (connectAccountId: string) => void;
+  onStatusUpdate?: () => void;
 }
 
 const CashAppSetup: React.FC<CashAppSetupProps> = ({
   userEmail,
   userId,
-  onSetupComplete
+  onSetupComplete,
+  onStatusUpdate
 }) => {
   const [cashAppTag, setCashAppTag] = useState('');
   const { setupLoading, setupCashAppAccount } = useCashAppPayout();
@@ -28,8 +30,20 @@ const CashAppSetup: React.FC<CashAppSetupProps> = ({
     
     try {
       const result = await setupCashAppAccount(userEmail, userId, cashAppTag);
-      if (result.connectAccountId && onSetupComplete) {
-        onSetupComplete(result.connectAccountId);
+      if (result.connectAccountId) {
+        console.log('CashAppSetup: Setup completed, triggering status update');
+        
+        if (onSetupComplete) {
+          onSetupComplete(result.connectAccountId);
+        }
+        
+        // Trigger status refresh after a short delay to allow Stripe to update
+        if (onStatusUpdate) {
+          setTimeout(() => {
+            console.log('CashAppSetup: Triggering delayed status update');
+            onStatusUpdate();
+          }, 2000);
+        }
       }
     } catch (error) {
       console.error('Cash App setup failed:', error);

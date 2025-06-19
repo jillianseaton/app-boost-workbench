@@ -4,11 +4,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Send, Settings, Loader2, Smartphone } from 'lucide-react';
+import { CreditCard, Send, Settings, Loader2, Smartphone, RefreshCw, CheckCircle } from 'lucide-react';
 import { useStripeCheckout } from '@/hooks/useStripeCheckout';
 import { stripeService } from '@/services/stripeService';
 import { useToast } from '@/hooks/use-toast';
 import { useCashAppPayout } from '@/hooks/useCashAppPayout';
+import { useCashAppStatus } from '@/hooks/useCashAppStatus';
 import CashAppSetup from './CashAppSetup';
 
 interface WithdrawalSectionProps {
@@ -31,57 +32,40 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   const [withdrawalMethod, setWithdrawalMethod] = useState<WithdrawalMethod>('bank');
   const [currencyType] = useState('USD');
   const [cashAppTag, setCashAppTag] = useState('');
-  const [cashAppSetupComplete, setCashAppSetupComplete] = useState(false);
   const [showCashAppSetup, setShowCashAppSetup] = useState(false);
   
   const { loading, createPayout } = useStripeCheckout();
   const { loading: cashAppLoading, createCashAppPayout, setupCashAppAccount, setupLoading, connectAccountId } = useCashAppPayout();
+  const { status: cashAppStatus, loading: statusLoading, refreshStatus } = useCashAppStatus(userId);
   const { toast } = useToast();
 
   // Persistent storage keys
-  const CASHAPP_SETUP_KEY = `cashapp_setup_${userId}`;
   const CASHAPP_TAG_KEY = `cashapp_tag_${userId}`;
-  const CASHAPP_ACCOUNT_KEY = `cashapp_account_${userId}`;
 
-  // Load persisted state on component mount
+  // Load persisted Cash App tag on component mount
   useEffect(() => {
     if (userId) {
-      const savedSetupStatus = localStorage.getItem(CASHAPP_SETUP_KEY);
       const savedCashAppTag = localStorage.getItem(CASHAPP_TAG_KEY);
-      const savedAccountId = localStorage.getItem(CASHAPP_ACCOUNT_KEY);
-      
-      if (savedSetupStatus === 'true') {
-        console.log('Loading saved Cash App setup status for user:', userId);
-        setCashAppSetupComplete(true);
-      }
-      
       if (savedCashAppTag) {
         console.log('Loading saved Cash App tag for user:', userId);
         setCashAppTag(savedCashAppTag);
       }
-      
-      if (savedAccountId) {
-        console.log('Loading saved Cash App account ID for user:', userId);
-      }
     }
   }, [userId]);
 
-  // Check for onboarding completion from URL parameters or hook state
+  // Check for onboarding completion from URL parameters
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const cashAppSetupStatus = urlParams.get('cashapp_setup');
     const accountId = urlParams.get('account');
     
-    // Check URL parameters for completion
     if (cashAppSetupStatus === 'success' && accountId && userId) {
       console.log('Cash App setup completed successfully via URL:', accountId);
-      setCashAppSetupComplete(true);
       
-      // Persist the completion status
-      localStorage.setItem(CASHAPP_SETUP_KEY, 'true');
-      localStorage.setItem(CASHAPP_ACCOUNT_KEY, accountId);
+      // Trigger status refresh with the new account ID
+      refreshStatus(accountId);
       
-      // Clean up URL parameters after a short delay to ensure state is set
+      // Clean up URL parameters after a short delay
       setTimeout(() => {
         const newUrl = window.location.pathname;
         window.history.replaceState({}, document.title, newUrl);
@@ -89,18 +73,18 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
       
       toast({
         title: "Cash App Setup Complete",
-        description: "You can now withdraw funds to your Cash App account!",
+        description: "Checking your account status...",
       });
     }
-    
-    // Check hook state for connectAccountId
+  }, [userId, refreshStatus, toast]);
+
+  // Check hook state for connectAccountId and trigger status refresh
+  useEffect(() => {
     if (connectAccountId && userId) {
       console.log('Cash App setup completed successfully via hook:', connectAccountId);
-      setCashAppSetupComplete(true);
-      localStorage.setItem(CASHAPP_SETUP_KEY, 'true');
-      localStorage.setItem(CASHAPP_ACCOUNT_KEY, connectAccountId);
+      refreshStatus(connectAccountId);
     }
-  }, [connectAccountId, toast, userId]);
+  }, [connectAccountId, userId, refreshStatus]);
 
   // Persist cashAppTag when it changes
   useEffect(() => {
@@ -129,8 +113,8 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   };
 
   const handleCashAppWithdraw = async () => {
-    if (!cashAppSetupComplete) {
-      console.log('Cash App setup not complete, redirecting to setup');
+    if (!cashAppStatus.onboarded || !cashAppStatus.payoutsEnabled) {
+      console.log('Cash App setup not complete or payouts not enabled, redirecting to setup');
       setShowCashAppSetup(true);
       return;
     }
@@ -145,7 +129,12 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     }
 
     try {
-      console.log('Processing Cash App payout:', { amount: earnings, cashAppTag, setupComplete: cashAppSetupComplete });
+      console.log('Processing Cash App payout:', { 
+        amount: earnings, 
+        cashAppTag, 
+        onboarded: cashAppStatus.onboarded,
+        payoutsEnabled: cashAppStatus.payoutsEnabled 
+      });
       
       await createCashAppPayout({
         amount: earnings,
@@ -166,9 +155,8 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     try {
       console.log('Setting up bank account for user:', userEmail);
       
-      // For bank setup, we can use a small verification amount
       await createPayout({
-        amount: 0.50, // Minimum verification amount
+        amount: 0.50,
         description: 'Bank Account Setup Verification',
         userEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
         userId: userId,
@@ -193,11 +181,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
     try {
       console.log('Starting Cash App setup process:', { cashAppTag, userEmail, userId });
-      
       await setupCashAppAccount(userEmail, userId, cashAppTag);
-      
-      // The setupCashAppAccount function will handle opening the onboarding URL
-      // and showing appropriate toasts
     } catch (error) {
       console.error('Cash App setup initiation failed:', error);
     }
@@ -205,19 +189,25 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
   const handleCashAppSetupComplete = (connectAccountId: string) => {
     console.log('Cash App setup completed:', connectAccountId);
-    setCashAppSetupComplete(true);
     setShowCashAppSetup(false);
     
-    // Persist the completion status
-    if (userId) {
-      localStorage.setItem(CASHAPP_SETUP_KEY, 'true');
-      localStorage.setItem(CASHAPP_ACCOUNT_KEY, connectAccountId);
-    }
+    // Trigger status refresh after setup completion
+    refreshStatus(connectAccountId);
     
     toast({
       title: "Cash App Setup Complete",
-      description: "You can now withdraw funds to your Cash App account!",
+      description: "Checking your account status...",
     });
+  };
+
+  const handleStatusRefresh = () => {
+    console.log('Manual status refresh requested');
+    refreshStatus(cashAppStatus.connectAccountId);
+  };
+
+  const handleStatusUpdate = () => {
+    console.log('Status update triggered from CashAppSetup');
+    refreshStatus(cashAppStatus.connectAccountId);
   };
 
   const formatCashAppTag = (value: string) => {
@@ -240,6 +230,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           userEmail={userEmail}
           userId={userId}
           onSetupComplete={handleCashAppSetupComplete}
+          onStatusUpdate={handleStatusUpdate}
         />
         <Button
           variant="outline"
@@ -251,6 +242,8 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
       </div>
     );
   }
+
+  const cashAppReady = cashAppStatus.onboarded && cashAppStatus.payoutsEnabled;
 
   return (
     <Card>
@@ -282,8 +275,20 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
             >
               <Smartphone className="h-5 w-5" />
               <span className="text-xs">Cash App Pay</span>
-              <span className="text-xs text-muted-foreground">
-                {cashAppSetupComplete ? 'Ready' : 'Setup Required'}
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                {statusLoading ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Checking...
+                  </>
+                ) : cashAppReady ? (
+                  <>
+                    <CheckCircle className="h-3 w-3 text-green-500" />
+                    Ready
+                  </>
+                ) : (
+                  'Setup Required'
+                )}
               </span>
             </Button>
           </div>
@@ -364,16 +369,31 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
         {/* Cash App Pay Section */}
         {withdrawalMethod === 'cashapp' && (
           <div className="space-y-3">
-            <div className={`p-3 rounded-md ${cashAppSetupComplete ? 'bg-green-50' : 'bg-yellow-50'}`}>
-              <p className={`text-sm ${cashAppSetupComplete ? 'text-green-800' : 'text-yellow-800'}`}>
-                <strong>Cash App Status:</strong> {cashAppSetupComplete 
-                  ? 'Setup complete - ready for instant payouts!' 
-                  : 'Setup required for first-time use. Complete onboarding to enable withdrawals.'
-                }
-              </p>
+            <div className={`p-3 rounded-md ${cashAppReady ? 'bg-green-50' : 'bg-yellow-50'}`}>
+              <div className="flex items-center justify-between">
+                <p className={`text-sm ${cashAppReady ? 'text-green-800' : 'text-yellow-800'}`}>
+                  <strong>Cash App Status:</strong> {cashAppReady 
+                    ? 'Ready for instant payouts!' 
+                    : 'Setup required or pending verification.'
+                  }
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleStatusRefresh}
+                  disabled={statusLoading}
+                  className="h-8 w-8 p-0"
+                >
+                  <RefreshCw className={`h-4 w-4 ${statusLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </div>
+              {cashAppStatus.requiresAction && (
+                <p className="text-xs text-yellow-700 mt-1">
+                  Additional verification may be required. Please complete your onboarding.
+                </p>
+              )}
             </div>
             
-            {/* Always show Cash App tag input field */}
             <div className="space-y-3">
               <div>
                 <Label htmlFor="cashAppTagInput" className="text-sm font-medium mb-2 block">
@@ -391,7 +411,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                 </p>
               </div>
               
-              {!cashAppSetupComplete && (
+              {!cashAppReady && (
                 <Button
                   onClick={handleCashAppSetupStart}
                   variant="outline"
@@ -415,7 +435,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 
             <Button 
               onClick={handleCashAppWithdraw} 
-              disabled={cashAppLoading || !cashAppSetupComplete || !cashAppTag.trim()}
+              disabled={cashAppLoading || !cashAppReady || !cashAppTag.trim()}
               className="w-full"
               variant="default"
             >
@@ -424,7 +444,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Processing Payout...
                 </>
-              ) : !cashAppSetupComplete ? (
+              ) : !cashAppReady ? (
                 <>
                   <Settings className="h-4 w-4 mr-2" />
                   Complete Setup First
@@ -458,7 +478,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           <div className="flex justify-between">
             <span>Method: {withdrawalMethod === 'bank' ? 'Bank Transfer' : 'Cash App Pay'}</span>
             <span>Status: {withdrawalMethod === 'cashapp' 
-              ? (cashAppSetupComplete ? 'Ready' : 'Setup Required') 
+              ? (statusLoading ? 'Checking...' : (cashAppReady ? 'Ready' : 'Setup Required'))
               : 'Available'
             }</span>
           </div>
