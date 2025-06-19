@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -308,24 +307,25 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
               </p>
             </div>
             
-            {!cashAppSetupComplete && (
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="cashAppTagInput" className="text-sm font-medium mb-2 block">
-                    Your Cash App Tag
-                  </Label>
-                  <Input
-                    id="cashAppTagInput"
-                    type="text"
-                    placeholder="$username"
-                    value={cashAppTag}
-                    onChange={(e) => setCashAppTag(formatCashAppTag(e.target.value))}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Enter your Cash App $cashtag to enable payouts
-                  </p>
-                </div>
-                
+            {/* Always show Cash App tag input field */}
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="cashAppTagInput" className="text-sm font-medium mb-2 block">
+                  Your Cash App Tag
+                </Label>
+                <Input
+                  id="cashAppTagInput"
+                  type="text"
+                  placeholder="$username"
+                  value={cashAppTag}
+                  onChange={(e) => setCashAppTag(formatCashAppTag(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter your Cash App $cashtag to enable payouts
+                </p>
+              </div>
+              
+              {!cashAppSetupComplete && (
                 <Button
                   onClick={handleCashAppSetupStart}
                   variant="outline"
@@ -344,39 +344,12 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                     </>
                   )}
                 </Button>
-              </div>
-            )}
-
-            {cashAppSetupComplete && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">
-                    Payment Method
-                  </Label>
-                  <Input
-                    type="text"
-                    value={`Cash App (${cashAppTag || 'Verified'})`}
-                    readOnly
-                    className="bg-muted text-muted-foreground"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">
-                    Currency Type
-                  </Label>
-                  <Input
-                    type="text"
-                    value={currencyType}
-                    readOnly
-                    className="bg-muted text-muted-foreground"
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </div>
 
             <Button 
               onClick={handleCashAppWithdraw} 
-              disabled={cashAppLoading || !cashAppSetupComplete}
+              disabled={cashAppLoading || !cashAppSetupComplete || !cashAppTag.trim()}
               className="w-full"
               variant="default"
             >
@@ -389,6 +362,11 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                 <>
                   <Settings className="h-4 w-4 mr-2" />
                   Complete Setup First
+                </>
+              ) : !cashAppTag.trim() ? (
+                <>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Enter Cash App Tag
                 </>
               ) : (
                 <>
