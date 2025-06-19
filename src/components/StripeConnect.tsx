@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard } from 'lucide-react';
@@ -10,6 +9,7 @@ import OnboardingFlow from './stripe-connect/OnboardingFlow';
 import PayoutsSection from './stripe-connect/PayoutsSection';
 import DevelopmentInfo from './stripe-connect/DevelopmentInfo';
 import DocumentationNote from './stripe-connect/DocumentationNote';
+import ExpressDashboardAccess from './stripe-connect/ExpressDashboardAccess';
 
 const StripeConnect: React.FC = () => {
   const [accountCreatePending, setAccountCreatePending] = useState(false);
@@ -101,6 +101,11 @@ const StripeConnect: React.FC = () => {
             <DocumentationNote />
           </CardContent>
         </Card>
+
+        <ExpressDashboardAccess
+          connectedAccountId={connectedAccountId}
+          onboardingCompleted={onboardingExited}
+        />
 
         <PayoutsSection
           stripeConnectInstance={stripeConnectInstance}
