@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,8 @@ import { CreditCard, Send, Settings, Loader2, Smartphone } from 'lucide-react';
 import { useStripeCheckout } from '@/hooks/useStripeCheckout';
 import { stripeService } from '@/services/stripeService';
 import { useToast } from '@/hooks/use-toast';
+import { useCashAppPayout } from '@/hooks/useCashAppPayout';
+import CashAppSetup from './CashAppSetup';
 
 interface WithdrawalSectionProps {
   earnings: number;
@@ -28,8 +29,12 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
 }) => {
   const [withdrawalMethod, setWithdrawalMethod] = useState<WithdrawalMethod>('bank');
   const [currencyType] = useState('USD');
+  const [cashAppTag, setCashAppTag] = useState('');
+  const [cashAppSetupComplete, setCashAppSetupComplete] = useState(false);
+  const [showCashAppSetup, setShowCashAppSetup] = useState(false);
+  
   const { loading, createPayout } = useStripeCheckout();
-  const [cashAppLoading, setCashAppLoading] = useState(false);
+  const { loading: cashAppLoading, createCashAppPayout } = useCashAppPayout();
   const { toast } = useToast();
 
   const handleBankWithdraw = async () => {
@@ -52,36 +57,26 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
   };
 
   const handleCashAppWithdraw = async () => {
-    setCashAppLoading(true);
+    if (!cashAppSetupComplete || !cashAppTag) {
+      setShowCashAppSetup(true);
+      return;
+    }
+
     try {
-      console.log('Creating Cash App Pay checkout session:', { amount: earnings });
+      console.log('Processing Cash App payout:', { amount: earnings, cashAppTag });
       
-      const result = await stripeService.createCheckoutSession({
-        amount: Math.round(earnings * 100), // Convert to cents
-        description: `Withdraw $${earnings.toFixed(2)} via Cash App Pay`,
-        successUrl: `${window.location.origin}/dashboard?withdrawal=success`,
-        cancelUrl: `${window.location.origin}/dashboard?withdrawal=cancelled`,
-        customerEmail: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
-        paymentMethod: 'cashapp',
-        mode: 'payment'
+      await createCashAppPayout({
+        amount: earnings,
+        cashAppTag: cashAppTag,
+        email: userEmail && userEmail.includes('@') ? userEmail : `${userEmail}@example.com`,
+        userId: userId,
+        description: `Withdraw $${earnings.toFixed(2)} to Cash App ${cashAppTag}`
       });
       
-      if (result.success && result.data?.url) {
-        console.log('Redirecting to Cash App Pay checkout:', result.data.url);
-        // Redirect to Cash App Pay checkout
-        window.location.href = result.data.url;
-      } else {
-        throw new Error('Failed to create Cash App Pay checkout session');
-      }
+      console.log('Cash App payout completed successfully');
+      onWithdraw();
     } catch (error) {
-      console.error('Cash App Pay withdrawal failed:', error);
-      toast({
-        title: "Cash App Pay Error",
-        description: "Failed to open Cash App Pay checkout. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setCashAppLoading(false);
+      console.error('Cash App payout failed:', error);
     }
   };
 
@@ -104,9 +99,46 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
     }
   };
 
+  const handleCashAppSetupComplete = (connectAccountId: string) => {
+    console.log('Cash App setup completed:', connectAccountId);
+    setCashAppSetupComplete(true);
+    setShowCashAppSetup(false);
+    toast({
+      title: "Cash App Setup Complete",
+      description: "You can now withdraw funds to your Cash App account!",
+    });
+  };
+
+  const formatCashAppTag = (value: string) => {
+    let formatted = value.replace(/^\$+/, '');
+    if (formatted && !formatted.startsWith('$')) {
+      formatted = '$' + formatted;
+    }
+    return formatted;
+  };
+
   // Show withdrawal section if minimum threshold is met and hasn't withdrawn
   if (earnings < 10 || hasWithdrawn) {
     return null;
+  }
+
+  if (showCashAppSetup) {
+    return (
+      <div className="space-y-4">
+        <CashAppSetup
+          userEmail={userEmail}
+          userId={userId}
+          onSetupComplete={handleCashAppSetupComplete}
+        />
+        <Button
+          variant="outline"
+          onClick={() => setShowCashAppSetup(false)}
+          className="w-full"
+        >
+          Back to Withdrawal Options
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -221,52 +253,86 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           <div className="space-y-3">
             <div className="p-3 bg-green-50 rounded-md">
               <p className="text-sm text-green-800">
-                <strong>Cash App Pay:</strong> Click the button below to open Cash App Pay checkout. 
-                You'll be redirected to complete your withdrawal securely.
+                <strong>Cash App Payouts:</strong> Receive money directly to your Cash App account. 
+                {!cashAppSetupComplete && ' Setup required for first-time use.'}
               </p>
             </div>
             
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm font-medium mb-2 block">
-                  Payment Method
-                </Label>
-                <Input
-                  type="text"
-                  value="Cash App Pay"
-                  readOnly
-                  className="bg-muted text-muted-foreground"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Powered by Stripe
-                </p>
+            {!cashAppSetupComplete && (
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="cashAppTagInput" className="text-sm font-medium mb-2 block">
+                    Your Cash App Tag
+                  </Label>
+                  <Input
+                    id="cashAppTagInput"
+                    type="text"
+                    placeholder="$username"
+                    value={cashAppTag}
+                    onChange={(e) => setCashAppTag(formatCashAppTag(e.target.value))}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Enter your Cash App $cashtag to enable payouts
+                  </p>
+                </div>
+                
+                <Button
+                  onClick={() => setShowCashAppSetup(true)}
+                  variant="outline"
+                  className="w-full"
+                  disabled={!cashAppTag.trim()}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Setup Cash App Payouts
+                </Button>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">Currency Type</label>
-                <Input
-                  type="text"
-                  value={currencyType}
-                  readOnly
-                  className="bg-muted text-muted-foreground"
-                />
+            )}
+
+            {cashAppSetupComplete && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">
+                    Payment Method
+                  </Label>
+                  <Input
+                    type="text"
+                    value={`Cash App (${cashAppTag})`}
+                    readOnly
+                    className="bg-muted text-muted-foreground"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Currency Type</label>
+                  <Input
+                    type="text"
+                    value={currencyType}
+                    readOnly
+                    className="bg-muted text-muted-foreground"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             <Button 
               onClick={handleCashAppWithdraw} 
-              disabled={cashAppLoading}
+              disabled={cashAppLoading || !cashAppSetupComplete}
               className="w-full"
               variant="default"
             >
               {cashAppLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Opening Cash App Pay...
+                  Processing Payout...
+                </>
+              ) : !cashAppSetupComplete ? (
+                <>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Setup Required
                 </>
               ) : (
                 <>
                   <Smartphone className="h-4 w-4 mr-2" />
-                  Open Cash App Pay - Withdraw ${earnings.toFixed(2)}
+                  Send ${earnings.toFixed(2)} to Cash App
                 </>
               )}
             </Button>
