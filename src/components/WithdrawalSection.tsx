@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCashAppPayout } from '@/hooks/useCashAppPayout';
 import { useCashAppStatus } from '@/hooks/useCashAppStatus';
 import CashAppSetup from './CashAppSetup';
+import CashAppPayoutLink from './CashAppPayoutLink';
 
 interface WithdrawalSectionProps {
   earnings: number;
@@ -20,7 +20,7 @@ interface WithdrawalSectionProps {
   userId?: string;
 }
 
-type WithdrawalMethod = 'bank' | 'cashapp';
+type WithdrawalMethod = 'bank' | 'cashapp' | 'payout-link';
 
 const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({ 
   earnings, 
@@ -258,7 +258,7 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
         {/* Withdrawal Method Selection */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Select Withdrawal Method</Label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <Button
               variant={withdrawalMethod === 'bank' ? 'default' : 'outline'}
               onClick={() => setWithdrawalMethod('bank')}
@@ -290,6 +290,15 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
                   'Setup Required'
                 )}
               </span>
+            </Button>
+            <Button
+              variant={withdrawalMethod === 'payout-link' ? 'default' : 'outline'}
+              onClick={() => setWithdrawalMethod('payout-link')}
+              className="h-20 flex flex-col gap-1"
+            >
+              <Send className="h-5 w-5" />
+              <span className="text-xs">Payout Link</span>
+              <span className="text-xs text-muted-foreground">Share & Pay</span>
             </Button>
           </div>
         </div>
@@ -464,6 +473,17 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           </div>
         )}
 
+        {/* Payout Link Section */}
+        {withdrawalMethod === 'payout-link' && (
+          <div className="space-y-3">
+            <CashAppPayoutLink
+              userEmail={userEmail}
+              userId={userId}
+            />
+          </div>
+        )}
+
+        {/* Secure Withdrawals Note */}
         <div className="p-3 bg-gray-50 rounded-md">
           <p className="text-sm text-gray-800">
             <strong>Secure Withdrawals:</strong> All withdrawals are processed through Stripe's secure payment system. 
@@ -471,15 +491,21 @@ const WithdrawalSection: React.FC<WithdrawalSectionProps> = ({
           </p>
         </div>
 
+        {/* Withdrawal Method Status */}
         <div className="text-xs text-muted-foreground space-y-1">
           <p className="text-center">
             Secure withdrawals - Minimum withdrawal: $10.00
           </p>
           <div className="flex justify-between">
-            <span>Method: {withdrawalMethod === 'bank' ? 'Bank Transfer' : 'Cash App Pay'}</span>
-            <span>Status: {withdrawalMethod === 'cashapp' 
-              ? (statusLoading ? 'Checking...' : (cashAppReady ? 'Ready' : 'Setup Required'))
-              : 'Available'
+            <span>Method: {
+              withdrawalMethod === 'bank' ? 'Bank Transfer' : 
+              withdrawalMethod === 'cashapp' ? 'Cash App Pay' : 
+              'Payout Link'
+            }</span>
+            <span>Status: {
+              withdrawalMethod === 'cashapp' 
+                ? (statusLoading ? 'Checking...' : (cashAppReady ? 'Ready' : 'Setup Required'))
+                : 'Available'
             }</span>
           </div>
         </div>
