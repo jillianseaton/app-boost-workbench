@@ -4,7 +4,7 @@ import { Shield, ArrowRight, TrendingUp, ExternalLink, LogIn } from 'lucide-reac
 import { partnerServices } from '@/data/partnerServicesData';
 import { useAffiliateTracking } from '@/hooks/useAffiliateTracking';
 import { formatPrice, getCategoryColor } from '@/utils/partnerServiceUtils';
-import StripePayoutButton from '@/components/StripePayoutButton';
+import StripePaymentButton from '@/components/StripePaymentButton';
 
 const Index = () => {
   const { handlePurchase } = useAffiliateTracking();
@@ -77,17 +77,13 @@ const Index = () => {
           </Link>
         </div>
 
-        {/* Stripe Payout Button Section */}
+        {/* Stripe Payment Button Section */}
         <div className="mb-12 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Quick Payout
-          </h2>
-          <div className="bg-white rounded-xl p-6 shadow-md max-w-md mx-auto">
-            <p className="text-gray-600 mb-4">
-              Process your payout quickly and securely with Stripe
-            </p>
-            <StripePayoutButton className="flex justify-center" />
-          </div>
+          <StripePaymentButton 
+            title="Accept Payments With This Link"
+            description="Start accepting secure payments instantly with Stripe"
+            className="flex justify-center"
+          />
         </div>
 
         {/* Featured Real Affiliate Services - One-time purchases only */}
