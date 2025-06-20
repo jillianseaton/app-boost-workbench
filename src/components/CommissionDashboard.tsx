@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import { useCommissions } from '@/hooks/useCommissions';
 import { formatDistanceToNow } from 'date-fns';
+import PayoutButton from './PayoutButton';
 
 interface CommissionDashboardProps {
   userId: string;
@@ -16,9 +16,8 @@ const CommissionDashboard: React.FC<CommissionDashboardProps> = ({ userId }) => 
   const { 
     commissions, 
     summary, 
-    loading, 
-    payoutLoading, 
-    processPayouts 
+    loading,
+    refreshCommissions
   } = useCommissions(userId);
 
   const formatCurrency = (cents: number) => {
@@ -99,18 +98,11 @@ const CommissionDashboard: React.FC<CommissionDashboardProps> = ({ userId }) => 
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Actions</CardTitle>
+            <CardTitle className="text-sm font-medium">Payout</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <Button 
-              onClick={processPayouts}
-              disabled={payoutLoading || summary.unpaid_count === 0}
-              className="w-full"
-              size="sm"
-            >
-              {payoutLoading ? 'Processing...' : 'Process Payout'}
-            </Button>
+            <PayoutButton />
           </CardContent>
         </Card>
       </div>
