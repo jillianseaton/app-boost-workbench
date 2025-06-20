@@ -28,6 +28,9 @@ port = 54323
 [functions.stripe-webhook]
 verify_jwt = false
 
+[functions.payout-commissions]
+verify_jwt = false
+
 [rest]
 enabled = true
 port = 54321
