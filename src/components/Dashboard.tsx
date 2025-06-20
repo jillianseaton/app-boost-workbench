@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,6 +12,7 @@ import PartnerServices from './PartnerServices';
 import TransactionHistory from './TransactionHistory';
 import StripePaymentButton from './StripePaymentButton';
 import StripePayoutButton from './StripePayoutButton';
+import GoogleAuth from './GoogleAuth';
 import { Transaction } from '@/utils/transactionUtils';
 import { useCommissions } from '@/hooks/useCommissions';
 import CommissionDashboard from './CommissionDashboard';
@@ -117,11 +119,34 @@ const Dashboard: React.FC = () => {
   };
 
   if (!user) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-6">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              💸 Commission Payout Dashboard
+            </h1>
+            <p className="text-gray-600">
+              Sign in to access your earnings and request payouts
+            </p>
+          </div>
+          <GoogleAuth />
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
+      {/* User Info Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Welcome back, {user.email}</p>
+        </div>
+        <GoogleAuth />
+      </div>
+
       <CurrentTime />
 
       <DashboardStats

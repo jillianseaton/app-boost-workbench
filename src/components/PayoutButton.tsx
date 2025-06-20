@@ -1,30 +1,38 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function PayoutButton() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const { session } = useAuth();
 
   const handlePayout = async () => {
     setLoading(true);
     setStatus("Processing payout...");
 
+    if (!session?.access_token) {
+      setStatus("❌ Not authenticated.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await fetch("https://laoltiyaaagiiutahypb.supabase.co/functions/v1/payout-commissions", {
-        method: "POST",
+      const { data, error } = await supabase.functions.invoke('payout-commissions', {
+        body: {},
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({}), // no body needed if Stripe ID is hardcoded
       });
 
-      const result = await res.json();
+      if (error) throw error;
 
-      if (res.ok) {
-        setStatus(`✅ Payout sent! $${result.amount.toFixed(2)} transferred`);
+      if (data?.success) {
+        setStatus(`✅ Payout sent! $${data.amount.toFixed(2)} transferred`);
       } else {
-        setStatus(`❌ Error: ${result.error || result.message}`);
+        setStatus(`❌ Error: ${data?.error || data?.message}`);
       }
     } catch (err) {
       setStatus(`❌ Request failed: ${err.message}`);
