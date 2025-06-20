@@ -12,6 +12,8 @@ import TransactionHistory from './TransactionHistory';
 import StripePaymentButton from './StripePaymentButton';
 import StripePayoutButton from './StripePayoutButton';
 import { Transaction } from '@/utils/transactionUtils';
+import { useCommissions } from '@/hooks/useCommissions';
+import CommissionDashboard from './CommissionDashboard';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -22,6 +24,11 @@ const Dashboard: React.FC = () => {
   const { toast } = useToast();
 
   const maxTasks = 20;
+  const userEmail = user?.email || '';
+  const userId = user?.id || '';
+
+  // Add commission tracking
+  const { addCommission } = useCommissions(userId);
 
   const { resetTasks, resetAccount } = useDashboardActions(
     tasksCompleted,
@@ -53,15 +60,25 @@ const Dashboard: React.FC = () => {
     );
   };
 
-  const handleTaskComplete = (adRevenue: number) => {
+  const handleTaskComplete = async (adRevenue: number) => {
     setEarnings(prev => prev + adRevenue);
     setTasksCompleted(prev => prev + 1);
     
+    // Add transaction record
     addTransaction({
       type: 'earning',
       amount: adRevenue,
       status: 'confirmed',
     });
+
+    // Add commission record
+    if (userId) {
+      await addCommission(
+        Math.round(adRevenue * 100), // Convert to cents
+        `Task completion earnings: $${adRevenue.toFixed(2)}`,
+        'task_completion'
+      );
+    }
   };
 
   const handleWithdraw = () => {
@@ -103,9 +120,6 @@ const Dashboard: React.FC = () => {
     return <div>Loading...</div>;
   }
 
-  const userEmail = user.email || '';
-  const userId = user.id || '';
-
   return (
     <div className="space-y-6">
       <CurrentTime />
@@ -116,6 +130,9 @@ const Dashboard: React.FC = () => {
         maxTasks={maxTasks}
         onResetTasks={resetTasks}
       />
+
+      {/* Commission Dashboard */}
+      <CommissionDashboard userId={userId} />
 
       {/* Stripe Payment and Payout Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -50,6 +50,42 @@ export type Database = {
           },
         ]
       }
+      commissions: {
+        Row: {
+          amount_earned_cents: number
+          created_at: string
+          description: string | null
+          id: string
+          paid_at: string | null
+          paid_out: boolean
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_earned_cents: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          paid_out?: boolean
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_earned_cents?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          paid_at?: string | null
+          paid_out?: boolean
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
