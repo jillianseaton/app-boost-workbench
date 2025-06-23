@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,6 +16,7 @@ import LovablePayoutIntegration from './LovablePayoutIntegration';
 import { Transaction } from '@/utils/transactionUtils';
 import { useCommissions } from '@/hooks/useCommissions';
 import CommissionDashboard from './CommissionDashboard';
+import StripePaymentCollection from './StripePaymentCollection';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -159,6 +159,9 @@ const Dashboard: React.FC = () => {
 
       {/* Commission Dashboard */}
       <CommissionDashboard userId={userId} />
+
+      {/* Stripe Payment Collection - COLLECT payments TO your account */}
+      <StripePaymentCollection />
 
       {/* Lovable to Stripe Payout Integration */}
       <LovablePayoutIntegration />
