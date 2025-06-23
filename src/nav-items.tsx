@@ -1,7 +1,8 @@
 
-import { Home, CreditCard } from "lucide-react";
+import { Home, CreditCard, LayoutDashboard } from "lucide-react";
 import Index from "./pages/Index";
 import PaymentPage from "./pages/PaymentPage";
+import DashboardPage from "./pages/DashboardPage";
 
 export const navItems = [
   {
@@ -15,5 +16,11 @@ export const navItems = [
     to: "/payment",
     icon: <CreditCard className="h-4 w-4" />,
     page: <PaymentPage />,
+  },
+  {
+    title: "Dashboard",
+    to: "/dashboard",
+    icon: <LayoutDashboard className="h-4 w-4" />,
+    page: <DashboardPage />,
   },
 ];
