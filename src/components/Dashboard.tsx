@@ -13,6 +13,7 @@ import TransactionHistory from './TransactionHistory';
 import StripePaymentButton from './StripePaymentButton';
 import StripePayoutButton from './StripePayoutButton';
 import GoogleAuth from './GoogleAuth';
+import LovablePayoutIntegration from './LovablePayoutIntegration';
 import { Transaction } from '@/utils/transactionUtils';
 import { useCommissions } from '@/hooks/useCommissions';
 import CommissionDashboard from './CommissionDashboard';
@@ -158,6 +159,9 @@ const Dashboard: React.FC = () => {
 
       {/* Commission Dashboard */}
       <CommissionDashboard userId={userId} />
+
+      {/* Lovable to Stripe Payout Integration */}
+      <LovablePayoutIntegration />
 
       {/* Stripe Payment and Payout Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
