@@ -13,7 +13,7 @@ export interface PartnerService {
   rating: number;
   billingPeriod: 'monthly' | 'yearly' | 'one-time';
   popularBadge?: boolean;
-  partnerType: 'streaming' | 'software' | 'hosting' | 'education' | 'fitness' | 'design' | 'flowers';
+  partnerType: 'streaming' | 'software' | 'hosting' | 'education' | 'fitness' | 'design' | 'flowers' | 'financial';
   cjAffiliateId?: string;
   epc?: string;
 }
