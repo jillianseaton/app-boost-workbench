@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ArrowRight, TrendingUp, ExternalLink, LogIn } from 'lucide-react';
+import { Shield, ArrowRight, TrendingUp, ExternalLink, LogIn, CreditCard } from 'lucide-react';
 import { partnerServices } from '@/data/partnerServicesData';
 import { useAffiliateTracking } from '@/hooks/useAffiliateTracking';
 import { formatPrice, getCategoryColor } from '@/utils/partnerServiceUtils';
@@ -23,6 +23,12 @@ const Index = () => {
           </Link>
           <nav>
             <ul className="flex space-x-6">
+              <li>
+                <Link to="/payment" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  <CreditCard className="h-4 w-4" />
+                  Make Payment
+                </Link>
+              </li>
               <li>
                 <Link to="/auth" className="flex items-center gap-2 text-blue-500 hover:text-blue-700">
                   <LogIn className="h-4 w-4" />
@@ -68,22 +74,41 @@ const Index = () => {
           <p className="text-xl text-gray-600 mb-6">
             Shop with our verified partners and help us earn real commissions through CJ Affiliate and direct partnerships
           </p>
-          <Link
-            to="/affiliate-revenue"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"
-          >
-            <TrendingUp className="h-5 w-5" />
-            View All Partners
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/payment"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all text-lg"
+            >
+              <CreditCard className="h-5 w-5" />
+              Make a Payment
+            </Link>
+            <Link
+              to="/affiliate-revenue"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all"
+            >
+              <TrendingUp className="h-5 w-5" />
+              View All Partners
+            </Link>
+          </div>
         </div>
 
-        {/* Stripe Payment Button Section */}
-        <div className="mb-12 text-center">
-          <StripePaymentButton 
-            title="Accept Payments With This Link"
-            description="Start accepting secure payments instantly with Stripe"
-            className="flex justify-center"
-          />
+        {/* Payment Call-to-Action */}
+        <div className="mb-12 bg-white rounded-xl p-8 shadow-lg border">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              💳 Secure Payments Made Easy
+            </h2>
+            <p className="text-xl text-gray-600 mb-6">
+              Make payments quickly and securely with our Stripe-powered payment system
+            </p>
+            <Link
+              to="/payment"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-blue-600 text-white px-8 py-4 rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all text-lg"
+            >
+              <CreditCard className="h-6 w-6" />
+              Start Payment Process
+            </Link>
+          </div>
         </div>
 
         {/* Featured Real Affiliate Services - One-time purchases only */}
