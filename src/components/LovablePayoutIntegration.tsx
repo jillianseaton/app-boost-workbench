@@ -42,8 +42,8 @@ const LovablePayoutIntegration: React.FC = () => {
       
       // Auto-select the first verified account
       const verifiedAccount = accounts.find(acc => acc.verification_status === 'verified');
-      if (verifiedAccount) {
-        setSelectedBankAccount(verifiedAccount.bank_account_id);
+      if (verifiedAccount && verifiedAccount.id) {
+        setSelectedBankAccount(verifiedAccount.id);
       }
     } catch (error) {
       console.error('Error fetching bank accounts:', error);
@@ -232,10 +232,23 @@ const LovablePayoutIntegration: React.FC = () => {
         <CardContent className="space-y-4">
           {/* Bank Account Selection */}
           <div>
-            <Label>Select Bank Account</Label>
-            {loadingBankAccounts ? (
-              <div className="text-sm text-muted-foreground">Loading bank accounts...</div>
-            ) : verifiedAccounts.length > 0 ? (
+            <Label>Bank Account / Payment Method</Label>
+            <Input
+              type="text"
+              placeholder="Enter bank account ID (e.g., ba_1Rb4sg4gJLPqd5aPPPb4iIpn)"
+              value={selectedBankAccount}
+              onChange={(e) => setSelectedBankAccount(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Enter your Stripe external account ID starting with 'ba_' (bank) or 'card_' (debit card)
+            </p>
+          </div>
+
+          {loadingBankAccounts ? (
+            <div className="text-sm text-muted-foreground">Loading bank accounts...</div>
+          ) : verifiedAccounts.length > 0 ? (
+            <div>
+              <Label>Or select from verified accounts:</Label>
               <select
                 value={selectedBankAccount}
                 onChange={(e) => setSelectedBankAccount(e.target.value)}
@@ -243,28 +256,28 @@ const LovablePayoutIntegration: React.FC = () => {
               >
                 <option value="">Select a verified bank account</option>
                 {verifiedAccounts.map((account) => (
-                  <option key={account.id} value={account.bank_account_id}>
-                    {account.bank_name} • ****{account.account_number_last4} • {getAccountStatusBadge(account.verification_status)}
+                  <option key={account.id} value={account.id}>
+                    {account.bank_name || 'Bank Account'} • ****{account.account_number_last4} • {getAccountStatusBadge(account.verification_status)}
                   </option>
                 ))}
               </select>
-            ) : (
-              <div className="p-4 border border-dashed rounded-lg text-center">
-                <Banknote className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-3">
-                  No verified bank accounts found. Add one to enable payouts.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowBankAccountForm(true)}
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Bank Account
-                </Button>
-              </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="p-4 border border-dashed rounded-lg text-center">
+              <Banknote className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mb-3">
+                No verified bank accounts found. Add one to enable easy account selection.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => setShowBankAccountForm(true)}
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Bank Account
+              </Button>
+            </div>
+          )}
 
           {verifiedAccounts.length > 0 && (
             <Button
@@ -306,7 +319,7 @@ const LovablePayoutIntegration: React.FC = () => {
 
           <Button 
             onClick={handlePayoutRequest} 
-            disabled={isProcessing || !payoutAmount || !selectedBankAccount || verifiedAccounts.length === 0}
+            disabled={isProcessing || !payoutAmount || !selectedBankAccount}
             className="w-full"
           >
             {isProcessing ? (
@@ -321,9 +334,10 @@ const LovablePayoutIntegration: React.FC = () => {
 
           <div className="p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Note:</strong> Payouts are processed through Stripe to your verified bank account. 
+              <strong>Note:</strong> Payouts are processed through Stripe to your external account. 
               Instant payouts may have additional fees. Bank account IDs must start with 'ba_' for bank accounts 
-              or 'card_' for debit cards.
+              or 'card_' for debit cards. You can enter your bank account ID directly (like ba_1Rb4sg4gJLPqd5aPPPb4iIpn) 
+              or set up accounts through our secure bank dashboard.
             </p>
           </div>
         </CardContent>
