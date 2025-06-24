@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +14,7 @@ import StripePaymentButton from './StripePaymentButton';
 import StripePayoutButton from './StripePayoutButton';
 import GoogleAuth from './GoogleAuth';
 import LovablePayoutIntegration from './LovablePayoutIntegration';
+import PayoutStatusChecker from './PayoutStatusChecker';
 import { Transaction } from '@/utils/transactionUtils';
 import { useCommissions } from '@/hooks/useCommissions';
 import CommissionDashboard from './CommissionDashboard';
@@ -156,6 +158,9 @@ const Dashboard: React.FC = () => {
         maxTasks={maxTasks}
         onResetTasks={resetTasks}
       />
+
+      {/* Payout Status Checker - Add this to help troubleshoot the missing payout */}
+      <PayoutStatusChecker />
 
       {/* Commission Dashboard */}
       <CommissionDashboard userId={userId} />
