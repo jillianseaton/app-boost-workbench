@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, RefreshCw, ExternalLink, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 const PayoutStatusChecker: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [payoutDetails, setPayoutDetails] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -25,6 +26,10 @@ const PayoutStatusChecker: React.FC = () => {
 
       if (error) throw error;
 
+      console.log('Full payout response:', data);
+      
+      setDebugInfo(data?.debug_info || null);
+
       if (data?.payouts && data.payouts.length > 0) {
         // Find the most recent payout
         const recentPayout = data.payouts[0];
@@ -37,9 +42,10 @@ const PayoutStatusChecker: React.FC = () => {
           description: `Latest payout: $${(recentPayout.amount / 100).toFixed(2)} - Status: ${recentPayout.status}`,
         });
       } else {
+        setPayoutDetails(null);
         toast({
-          title: "No Payouts Found",
-          description: "No payout history found for your account",
+          title: "Payout Search Complete",
+          description: `Searched ${data?.debug_info?.total_stripe_payouts || 0} total payouts - none matched your account`,
           variant: "destructive",
         });
       }
@@ -116,6 +122,36 @@ const PayoutStatusChecker: React.FC = () => {
           )}
         </Button>
 
+        {debugInfo && !payoutDetails && (
+          <div className="border rounded-lg p-4 space-y-3 bg-yellow-50">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-yellow-600" />
+              <h3 className="font-semibold text-yellow-800">No Payouts Found</h3>
+            </div>
+            
+            <div className="text-sm text-yellow-700 space-y-2">
+              <p>Searched <strong>{debugInfo.total_stripe_payouts}</strong> total payouts in Stripe</p>
+              <p>User ID searched: <code className="bg-yellow-100 px-1 rounded text-xs">{debugInfo.user_id_searched}</code></p>
+              
+              <div className="mt-3">
+                <p className="font-medium mb-1">Possible reasons your payout isn't showing:</p>
+                <ul className="list-disc list-inside space-y-1 text-xs">
+                  <li>The payout was processed through a different system</li>
+                  <li>The payout metadata doesn't include your user ID</li>
+                  <li>The payout is still being processed by Stripe</li>
+                  <li>The payout was made to a different Stripe account</li>
+                </ul>
+              </div>
+              
+              <div className="mt-3 pt-3 border-t border-yellow-200">
+                <p className="text-xs">
+                  If you're expecting a recent payout, check your Stripe Dashboard or contact support with your User ID above.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {payoutDetails && (
           <div className="border rounded-lg p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -151,6 +187,12 @@ const PayoutStatusChecker: React.FC = () => {
               </div>
             </div>
 
+            {payoutDetails.matching_strategy && (
+              <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                <strong>Found via:</strong> {payoutDetails.matching_strategy.replace(/_/g, ' ')}
+              </div>
+            )}
+
             <div className="text-xs text-muted-foreground">
               <p><strong>Payout ID:</strong> {payoutDetails.id}</p>
               {payoutDetails.description && (
@@ -174,6 +216,16 @@ const PayoutStatusChecker: React.FC = () => {
             </div>
           </div>
         )}
+
+        <div className="p-3 bg-gray-50 rounded-md text-xs text-gray-600">
+          <p className="font-medium mb-1">Troubleshooting Tips:</p>
+          <ul className="space-y-1">
+            <li>• Bank transfers can take 1-3 business days even when marked "Paid"</li>
+            <li>• Check your bank account for pending transactions</li>
+            <li>• Verify the bank account details match your Stripe payout destination</li>
+            <li>• Contact your bank if the transfer doesn't appear after 3 business days</li>
+          </ul>
+        </div>
       </CardContent>
     </Card>
   );
