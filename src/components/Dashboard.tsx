@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,10 +15,13 @@ import GoogleAuth from './GoogleAuth';
 import LovablePayoutIntegration from './LovablePayoutIntegration';
 import PayoutStatusChecker from './PayoutStatusChecker';
 import StripeTransferButton from './StripeTransferButton';
+import PrivacyPolicy from './PrivacyPolicy';
 import { Transaction } from '@/utils/transactionUtils';
 import { useCommissions } from '@/hooks/useCommissions';
 import CommissionDashboard from './CommissionDashboard';
 import StripePaymentCollection from './StripePaymentCollection';
+import { Button } from '@/components/ui/button';
+import { Shield } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -27,6 +29,7 @@ const Dashboard: React.FC = () => {
   const [tasksCompleted, setTasksCompleted] = useState(0);
   const [hasWithdrawn, setHasWithdrawn] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const { toast } = useToast();
 
   const maxTasks = 20;
@@ -140,6 +143,10 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  if (showPrivacyPolicy) {
+    return <PrivacyPolicy onBack={() => setShowPrivacyPolicy(false)} />;
+  }
+
   return (
     <div className="space-y-6">
       {/* User Info Header */}
@@ -148,7 +155,18 @@ const Dashboard: React.FC = () => {
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Welcome back, {user.email}</p>
         </div>
-        <GoogleAuth />
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowPrivacyPolicy(true)}
+            className="flex items-center gap-2"
+          >
+            <Shield className="h-4 w-4" />
+            Privacy Policy
+          </Button>
+          <GoogleAuth />
+        </div>
       </div>
 
       <CurrentTime />
