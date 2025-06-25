@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 const PayoutStatusChecker: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [payoutDetails, setPayoutDetails] = useState<any>(null);
+  const [payoutDetails, setPayoutDetails] = useState<any[]>([]);
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -21,7 +21,7 @@ const PayoutStatusChecker: React.FC = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('get-payout-history', {
-        body: { userId: user.id },
+        body: { userEmail: user.email },
       });
 
       if (error) throw error;
@@ -31,21 +31,19 @@ const PayoutStatusChecker: React.FC = () => {
       setDebugInfo(data?.debug_info || null);
 
       if (data?.payouts && data.payouts.length > 0) {
-        // Find the most recent payout
-        const recentPayout = data.payouts[0];
-        setPayoutDetails(recentPayout);
+        setPayoutDetails(data.payouts);
         
-        console.log('Most recent payout details:', recentPayout);
+        console.log('Recent payouts found:', data.payouts.length);
         
         toast({
-          title: "Payout Status Retrieved",
-          description: `Latest payout: $${(recentPayout.amount / 100).toFixed(2)} - Status: ${recentPayout.status}`,
+          title: "Payout History Retrieved",
+          description: `Found ${data.payouts.length} recent payouts in your Stripe account`,
         });
       } else {
-        setPayoutDetails(null);
+        setPayoutDetails([]);
         toast({
-          title: "Payout Search Complete",
-          description: `Searched ${data?.debug_info?.total_stripe_payouts || 0} total payouts - none matched your account`,
+          title: "No Recent Payouts",
+          description: "No payouts found in your Stripe account",
           variant: "destructive",
         });
       }
@@ -100,7 +98,7 @@ const PayoutStatusChecker: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <AlertCircle className="h-5 w-5" />
-          Payout Status Checker
+          Recent Payout History
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -112,119 +110,107 @@ const PayoutStatusChecker: React.FC = () => {
           {loading ? (
             <>
               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              Checking Status...
+              Checking Recent Payouts...
             </>
           ) : (
             <>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Check Latest Payout Status
+              Check Recent Payout History
             </>
           )}
         </Button>
 
-        {debugInfo && !payoutDetails && (
+        {debugInfo && payoutDetails.length === 0 && (
           <div className="border rounded-lg p-4 space-y-3 bg-yellow-50">
             <div className="flex items-center gap-2">
               <HelpCircle className="h-5 w-5 text-yellow-600" />
-              <h3 className="font-semibold text-yellow-800">No Payouts Found</h3>
+              <h3 className="font-semibold text-yellow-800">No Recent Payouts</h3>
             </div>
             
             <div className="text-sm text-yellow-700 space-y-2">
-              <p>Searched <strong>{debugInfo.total_stripe_payouts}</strong> total payouts in Stripe</p>
-              <p>User ID searched: <code className="bg-yellow-100 px-1 rounded text-xs">{debugInfo.user_id_searched}</code></p>
+              <p>No recent payouts found in your Stripe account</p>
               
               <div className="mt-3">
-                <p className="font-medium mb-1">Possible reasons your payout isn't showing:</p>
+                <p className="font-medium mb-1">This could mean:</p>
                 <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li>The payout was processed through a different system</li>
-                  <li>The payout metadata doesn't include your user ID</li>
-                  <li>The payout is still being processed by Stripe</li>
-                  <li>The payout was made to a different Stripe account</li>
+                  <li>No payouts have been processed recently</li>
+                  <li>Payouts are processed on a different schedule</li>
+                  <li>You're checking a different Stripe account</li>
+                  <li>Payouts are managed through a different system</li>
                 </ul>
               </div>
               
               <div className="mt-3 pt-3 border-t border-yellow-200">
                 <p className="text-xs">
-                  If you're expecting a recent payout, check your Stripe Dashboard or contact support with your User ID above.
+                  Check your Stripe Dashboard directly at <a href="https://dashboard.stripe.com/payouts" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">dashboard.stripe.com/payouts</a>
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {payoutDetails && (
-          <div className="border rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold">Latest Payout Details</h3>
-              {getStatusBadge(payoutDetails.status)}
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Amount:</span>
-                <p className="font-medium">${(payoutDetails.amount / 100).toFixed(2)}</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Status:</span>
-                <p className="flex items-center gap-1 font-medium">
-                  {getStatusIcon(payoutDetails.status)}
-                  {payoutDetails.status}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Created:</span>
-                <p className="font-medium">
-                  {new Date(payoutDetails.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Arrival Date:</span>
-                <p className="font-medium">
-                  {payoutDetails.arrival_date 
-                    ? new Date(payoutDetails.arrival_date).toLocaleDateString()
-                    : 'Not specified'}
-                </p>
-              </div>
-            </div>
+        {payoutDetails.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="font-semibold">Recent Payouts ({payoutDetails.length})</h3>
+            {payoutDetails.slice(0, 5).map((payout, index) => (
+              <div key={payout.id} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Payout #{index + 1}</h4>
+                  {getStatusBadge(payout.status)}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Amount:</span>
+                    <p className="font-medium">${(payout.amount / 100).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Status:</span>
+                    <p className="flex items-center gap-1 font-medium">
+                      {getStatusIcon(payout.status)}
+                      {payout.status}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Created:</span>
+                    <p className="font-medium">
+                      {new Date(payout.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Arrival:</span>
+                    <p className="font-medium">
+                      {payout.arrival_date 
+                        ? new Date(payout.arrival_date).toLocaleDateString()
+                        : 'Not specified'}
+                    </p>
+                  </div>
+                </div>
 
-            {payoutDetails.matching_strategy && (
-              <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                <strong>Found via:</strong> {payoutDetails.matching_strategy.replace(/_/g, ' ')}
+                <div className="text-xs text-muted-foreground">
+                  <p><strong>ID:</strong> {payout.id}</p>
+                  {payout.description && (
+                    <p><strong>Description:</strong> {payout.description}</p>
+                  )}
+                </div>
               </div>
-            )}
-
-            <div className="text-xs text-muted-foreground">
-              <p><strong>Payout ID:</strong> {payoutDetails.id}</p>
-              {payoutDetails.description && (
-                <p><strong>Description:</strong> {payoutDetails.description}</p>
-              )}
-            </div>
-
-            <div className="p-3 bg-blue-50 rounded-md text-sm">
-              <p className="text-blue-800">
-                <strong>Status Explanation:</strong>
-              </p>
-              <ul className="text-blue-700 mt-1 space-y-1">
-                <li>• <strong>Paid:</strong> Successfully sent to your bank account</li>
-                <li>• <strong>Pending:</strong> Being processed by Stripe</li>
-                <li>• <strong>In Transit:</strong> On the way to your bank</li>
-                <li>• <strong>Failed:</strong> Transfer failed, contact support</li>
-              </ul>
-              <p className="text-blue-600 mt-2 text-xs">
-                Bank transfers typically take 1-3 business days to appear in your account, even after showing as "Paid" in Stripe.
-              </p>
-            </div>
+            ))}
           </div>
         )}
 
-        <div className="p-3 bg-gray-50 rounded-md text-xs text-gray-600">
-          <p className="font-medium mb-1">Troubleshooting Tips:</p>
-          <ul className="space-y-1">
-            <li>• Bank transfers can take 1-3 business days even when marked "Paid"</li>
-            <li>• Check your bank account for pending transactions</li>
-            <li>• Verify the bank account details match your Stripe payout destination</li>
-            <li>• Contact your bank if the transfer doesn't appear after 3 business days</li>
+        <div className="p-3 bg-blue-50 rounded-md text-sm">
+          <p className="text-blue-800">
+            <strong>About Payout Status:</strong>
+          </p>
+          <ul className="text-blue-700 mt-1 space-y-1">
+            <li>• <strong>Paid:</strong> Successfully sent to your bank account</li>
+            <li>• <strong>Pending:</strong> Being processed by Stripe</li>
+            <li>• <strong>In Transit:</strong> On the way to your bank</li>
+            <li>• <strong>Failed:</strong> Transfer failed, contact support</li>
           </ul>
+          <p className="text-blue-600 mt-2 text-xs">
+            This shows recent payouts from your connected Stripe account. Bank transfers typically take 1-3 business days to appear in your account.
+          </p>
         </div>
       </CardContent>
     </Card>
