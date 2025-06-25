@@ -159,13 +159,16 @@ const Dashboard: React.FC = () => {
         onResetTasks={resetTasks}
       />
 
-      {/* Payout Status Checker - Add this to help troubleshoot the missing payout */}
+      {/* Payout Status Checker */}
       <PayoutStatusChecker />
+
+      {/* NEW: Stripe Transfer Component */}
+      <StripeTransferButton />
 
       {/* Commission Dashboard */}
       <CommissionDashboard userId={userId} />
 
-      {/* Stripe Payment Collection - COLLECT payments TO your account */}
+      {/* Stripe Payment Collection */}
       <StripePaymentCollection />
 
       {/* Lovable to Stripe Payout Integration */}
