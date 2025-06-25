@@ -1,27 +1,17 @@
+
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import CurrentTime from './CurrentTime';
-import DashboardStats from './DashboardStats';
 import { useDashboardActions } from './DashboardActions';
-import TaskOptimization from './TaskOptimization';
-import WithdrawalSection from './WithdrawalSection';
-import SecureBankDashboard from './SecureBankDashboard';
-import PartnerServices from './PartnerServices';
-import TransactionHistory from './TransactionHistory';
-import StripePaymentButton from './StripePaymentButton';
-import StripePayoutButton from './StripePayoutButton';
-import GoogleAuth from './GoogleAuth';
-import LovablePayoutIntegration from './LovablePayoutIntegration';
-import PayoutStatusChecker from './PayoutStatusChecker';
-import StripeTransferButton from './StripeTransferButton';
-import PrivacyPolicy from './PrivacyPolicy';
 import { Transaction } from '@/utils/transactionUtils';
 import { useCommissions } from '@/hooks/useCommissions';
-import CommissionDashboard from './CommissionDashboard';
-import StripePaymentCollection from './StripePaymentCollection';
-import { Button } from '@/components/ui/button';
-import { Shield } from 'lucide-react';
+import GoogleAuth from './GoogleAuth';
+import PrivacyPolicy from './PrivacyPolicy';
+import DashboardHeader from './dashboard/DashboardHeader';
+import EarningsSection from './dashboard/EarningsSection';
+import PayoutSection from './dashboard/PayoutSection';
+import TasksSection from './dashboard/TasksSection';
+import TransactionSection from './dashboard/TransactionSection';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -149,90 +139,34 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* User Info Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {user.email}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowPrivacyPolicy(true)}
-            className="flex items-center gap-2"
-          >
-            <Shield className="h-4 w-4" />
-            Privacy Policy
-          </Button>
-          <GoogleAuth />
-        </div>
-      </div>
+      <DashboardHeader 
+        userEmail={userEmail}
+        onShowPrivacyPolicy={() => setShowPrivacyPolicy(true)}
+      />
 
-      <CurrentTime />
-
-      <DashboardStats
+      <EarningsSection
         earnings={earnings}
         tasksCompleted={tasksCompleted}
         maxTasks={maxTasks}
         onResetTasks={resetTasks}
       />
 
-      {/* Payout Status Checker */}
-      <PayoutStatusChecker />
+      <PayoutSection userId={userId} />
 
-      {/* NEW: Stripe Transfer Component */}
-      <StripeTransferButton />
-
-      {/* Commission Dashboard */}
-      <CommissionDashboard userId={userId} />
-
-      {/* Stripe Payment Collection */}
-      <StripePaymentCollection />
-
-      {/* Lovable to Stripe Payout Integration */}
-      <LovablePayoutIntegration />
-
-      {/* Stripe Payment and Payout Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <StripePaymentButton 
-          title="Accept Payments With This Link"
-          description="Start accepting secure payments instantly with Stripe"
-        />
-        <StripePayoutButton
-          title="Quick Payout"
-          description="Process your payout quickly and securely with Stripe"
-        />
-      </div>
-
-      <TaskOptimization 
+      <TasksSection
         tasksCompleted={tasksCompleted}
         maxTasks={maxTasks}
         hasWithdrawn={hasWithdrawn}
+        earnings={earnings}
+        userEmail={userEmail}
+        userId={userId}
         onTaskComplete={handleTaskComplete}
         onResetAccount={resetAccount}
-        userEmail={userEmail}
-        userId={userId}
-      />
-
-      <SecureBankDashboard
-        currentBalance={earnings}
-        onDepositSuccess={handleSecureBankDeposit}
-        userEmail={userEmail}
-        userId={userId}
-      />
-
-      <WithdrawalSection 
-        earnings={earnings}
-        hasWithdrawn={hasWithdrawn}
         onWithdraw={handleWithdraw}
-        userEmail={userEmail}
-        userId={userId}
+        onSecureBankDeposit={handleSecureBankDeposit}
       />
 
-      <TransactionHistory transactions={transactions} />
-
-      <PartnerServices />
+      <TransactionSection transactions={transactions} />
     </div>
   );
 };
