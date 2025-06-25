@@ -1,27 +1,17 @@
 
-import { HomeIcon, CreditCard, DollarSign, Users, Settings, LogIn } from "lucide-react";
-import Index from "@/pages/Index";
-import Auth from "@/pages/Auth";
-import DashboardPage from "@/pages/DashboardPage";
-import PaymentPage from "@/pages/PaymentPage";
-import About from "@/pages/About";
-import Contact from "@/pages/Contact";
+import { HomeIcon, Users, CreditCard, Settings, Shield } from "lucide-react";
+import Index from "./pages/Index";
+import DashboardPage from "./pages/DashboardPage";
+import PaymentPage from "./pages/PaymentPage";
+import StripeTestPage from "./pages/StripeTestPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 
-/**
- * Central place for defining the navigation items. Used for navigation components and routing.
- */
 export const navItems = [
   {
     title: "Home",
     to: "/",
     icon: <HomeIcon className="h-4 w-4" />,
     page: <Index />,
-  },
-  {
-    title: "Sign In",
-    to: "/auth",
-    icon: <LogIn className="h-4 w-4" />,
-    page: <Auth />,
   },
   {
     title: "Dashboard",
@@ -36,15 +26,15 @@ export const navItems = [
     page: <PaymentPage />,
   },
   {
-    title: "About",
-    to: "/about",
+    title: "Stripe Test",
+    to: "/stripe-test",
     icon: <Settings className="h-4 w-4" />,
-    page: <About />,
+    page: <StripeTestPage />,
   },
   {
-    title: "Contact",
-    to: "/contact",
-    icon: <DollarSign className="h-4 w-4" />,
-    page: <Contact />,
+    title: "Privacy Policy",
+    to: "/privacy-policy",
+    icon: <Shield className="h-4 w-4" />,
+    page: <PrivacyPolicyPage />,
   },
 ];
