@@ -1,181 +1,139 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  TrendingUp, 
-  DollarSign, 
-  MousePointer, 
-  ShoppingCart,
-  BarChart3,
-  PieChart
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, DollarSign, Users, Calendar, Clock, CheckCircle } from 'lucide-react';
 
-interface PartnerAnalytics {
-  categoryPerformance: Array<{
-    category: string;
-    clicks: number;
-    conversions: number;
-    commission: number;
-  }>;
-  monthlyTrend: Array<{
-    month: string;
-    clicks: number;
-    conversions: number;
-    commission: number;
-  }>;
-  topPerformingServices: Array<{
-    name: string;
-    conversions: number;
-    commission: number;
-    partnerType: string;
-  }>;
-}
-
-const PartnerAnalytics: React.FC = () => {
-  const [analytics, setAnalytics] = useState<PartnerAnalytics | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadAnalytics();
-  }, []);
-
-  const loadAnalytics = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('affiliate-tracking', {
-        body: {
-          affiliateId: 'YOUR_AFFILIATE_ID',
-          action: 'get_stats'
-        }
-      });
-
-      if (error) {
-        console.error('Error loading analytics:', error);
-      } else {
-        setAnalytics({
-          categoryPerformance: data.categoryPerformance || [],
-          monthlyTrend: data.monthlyTrend || [],
-          topPerformingServices: data.topPerformingServices || []
-        });
-      }
-    } catch (error) {
-      console.error('Error loading analytics:', error);
-    } finally {
-      setLoading(false);
+const PartnerAnalytics = () => {
+  const analytics = [
+    {
+      title: "Total Revenue",
+      value: "$24,567.89",
+      change: "+12.5%",
+      icon: DollarSign,
+      color: "text-green-600"
+    },
+    {
+      title: "Active Partners",
+      value: "48",
+      change: "+8.3%",
+      icon: Users,
+      color: "text-blue-600"
+    },
+    {
+      title: "Monthly Growth",
+      value: "15.2%",
+      change: "+2.1%",
+      icon: TrendingUp,
+      color: "text-purple-600"
+    },
+    {
+      title: "Daily Payouts",
+      value: "24/7",
+      change: "Processing",
+      icon: Clock,
+      color: "text-orange-600"
     }
-  };
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </CardContent>
-      </Card>
-    );
-  }
+  ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BarChart3 className="h-6 w-6 text-blue-500" />
-          Partner Performance Analytics
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="categories" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="categories">By Category</TabsTrigger>
-            <TabsTrigger value="trends">Monthly Trends</TabsTrigger>
-            <TabsTrigger value="partners">Top Partners</TabsTrigger>
-          </TabsList>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {analytics.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <Card key={index}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">{item.title}</p>
+                    <p className="text-2xl font-bold">{item.value}</p>
+                    <p className={`text-xs ${item.color}`}>{item.change}</p>
+                  </div>
+                  <Icon className={`h-8 w-8 ${item.color}`} />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-          <TabsContent value="categories" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {analytics?.categoryPerformance.map((category, index) => (
-                <Card key={index}>
-                  <CardContent className="p-4">
-                    <h4 className="font-semibold mb-2">{category.category}</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>Clicks:</span>
-                        <span className="font-medium">{category.clicks}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Conversions:</span>
-                        <span className="font-medium">{category.conversions}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Commission:</span>
-                        <span className="font-medium text-green-600">${category.commission}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Rate:</span>
-                        <span className="font-medium">
-                          {((category.conversions / category.clicks) * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Our Payout Model
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="font-medium text-green-800">Daily Payout Processing</p>
+                <p className="text-sm text-green-700">Automated daily transfers to your account</p>
+              </div>
             </div>
-          </TabsContent>
-
-          <TabsContent value="trends" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {analytics?.monthlyTrend.map((month, index) => (
-                <Card key={index}>
-                  <CardContent className="p-4">
-                    <h4 className="font-semibold mb-3">{month.month} Performance</h4>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <MousePointer className="h-5 w-5 mx-auto mb-1 text-blue-500" />
-                        <p className="text-sm text-gray-600">Clicks</p>
-                        <p className="font-bold">{month.clicks}</p>
-                      </div>
-                      <div className="text-center">
-                        <ShoppingCart className="h-5 w-5 mx-auto mb-1 text-green-500" />
-                        <p className="text-sm text-gray-600">Conversions</p>
-                        <p className="font-bold">{month.conversions}</p>
-                      </div>
-                      <div className="text-center">
-                        <DollarSign className="h-5 w-5 mx-auto mb-1 text-yellow-500" />
-                        <p className="text-sm text-gray-600">Commission</p>
-                        <p className="font-bold">${month.commission}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="partners" className="space-y-4">
+            
             <div className="space-y-3">
-              {analytics?.topPerformingServices.map((partner, index) => (
-                <Card key={index}>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-semibold">{partner.name}</h4>
-                        <p className="text-sm text-gray-600 capitalize">{partner.partnerType}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-green-600">${partner.commission}</p>
-                        <p className="text-sm text-gray-600">{partner.conversions} conversions</p>
-                      </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Processing Schedule:</span>
+                <Badge className="bg-blue-100 text-blue-800">Every 24 Hours</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Minimum Payout:</span>
+                <span className="text-sm font-semibold">$10.00</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Payment Method:</span>
+                <span className="text-sm">Stripe Transfer</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Processing Time:</span>
+                <span className="text-sm">1-3 Business Days</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <strong>Daily Processing:</strong> Earnings are automatically processed and transferred to your 
+                connected Stripe account every day at 6 PM EST, provided you've reached the minimum payout threshold.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Recent Payout Activity
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[
+                { date: "Today", amount: "$245.67", status: "Processing", color: "bg-yellow-100 text-yellow-800" },
+                { date: "Yesterday", amount: "$189.34", status: "Completed", color: "bg-green-100 text-green-800" },
+                { date: "Jan 23", amount: "$298.12", status: "Completed", color: "bg-green-100 text-green-800" },
+                { date: "Jan 22", amount: "$156.89", status: "Completed", color: "bg-green-100 text-green-800" },
+              ].map((payout, index) => (
+                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">{payout.amount}</p>
+                      <p className="text-sm text-muted-foreground">{payout.date}</p>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <Badge className={payout.color}>{payout.status}</Badge>
+                </div>
               ))}
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 
