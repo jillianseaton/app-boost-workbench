@@ -149,6 +149,8 @@ const Dashboard: React.FC = () => {
         tasksCompleted={tasksCompleted}
         maxTasks={maxTasks}
         onResetTasks={resetTasks}
+        userEmail={userEmail}
+        userId={userId}
       />
 
       <PayoutSection userId={userId} />
