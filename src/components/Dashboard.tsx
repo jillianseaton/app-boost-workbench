@@ -15,6 +15,7 @@ import StripePayoutButton from './StripePayoutButton';
 import GoogleAuth from './GoogleAuth';
 import LovablePayoutIntegration from './LovablePayoutIntegration';
 import PayoutStatusChecker from './PayoutStatusChecker';
+import StripeTransferButton from './StripeTransferButton';
 import { Transaction } from '@/utils/transactionUtils';
 import { useCommissions } from '@/hooks/useCommissions';
 import CommissionDashboard from './CommissionDashboard';
