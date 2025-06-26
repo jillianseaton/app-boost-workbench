@@ -5,6 +5,7 @@ import StripeTransferButton from '@/components/StripeTransferButton';
 import CommissionDashboard from '@/components/CommissionDashboard';
 import StripePaymentCollection from '@/components/StripePaymentCollection';
 import LovablePayoutIntegration from '@/components/LovablePayoutIntegration';
+import TestCommissionAdder from '@/components/TestCommissionAdder';
 
 interface PayoutSectionProps {
   userId: string;
@@ -13,14 +14,17 @@ interface PayoutSectionProps {
 const PayoutSection: React.FC<PayoutSectionProps> = ({ userId }) => {
   return (
     <div className="space-y-6">
+      {/* Test Commission Adder - for testing the payout system */}
+      <TestCommissionAdder />
+
+      {/* Commission Dashboard */}
+      <CommissionDashboard userId={userId} />
+
       {/* Payout Status Checker */}
       <PayoutStatusChecker />
 
       {/* Stripe Transfer Component */}
       <StripeTransferButton />
-
-      {/* Commission Dashboard */}
-      <CommissionDashboard userId={userId} />
 
       {/* Stripe Payment Collection */}
       <StripePaymentCollection />
