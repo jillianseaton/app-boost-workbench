@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,8 +42,7 @@ const PayoutStatusChecker: React.FC = () => {
         setPayoutDetails([]);
         toast({
           title: "No Recent Payouts",
-          description: "No payouts found in your Stripe account",
-          variant: "destructive",
+          description: "No payouts found in your Stripe account. This is normal if you haven't processed any payouts yet.",
         });
       }
     } catch (error) {
@@ -121,13 +119,13 @@ const PayoutStatusChecker: React.FC = () => {
         </Button>
 
         {debugInfo && payoutDetails.length === 0 && (
-          <div className="border rounded-lg p-4 space-y-3 bg-yellow-50">
+          <div className="border rounded-lg p-4 space-y-3 bg-blue-50">
             <div className="flex items-center gap-2">
-              <HelpCircle className="h-5 w-5 text-yellow-600" />
-              <h3 className="font-semibold text-yellow-800">No Recent Payouts</h3>
+              <HelpCircle className="h-5 w-5 text-blue-600" />
+              <h3 className="font-semibold text-blue-800">No Recent Payouts</h3>
             </div>
             
-            <div className="text-sm text-yellow-700 space-y-2">
+            <div className="text-sm text-blue-700 space-y-2">
               <p>No recent payouts found in your Stripe account</p>
               
               <div className="mt-3">
@@ -140,7 +138,7 @@ const PayoutStatusChecker: React.FC = () => {
                 </ul>
               </div>
               
-              <div className="mt-3 pt-3 border-t border-yellow-200">
+              <div className="mt-3 pt-3 border-t border-blue-200">
                 <p className="text-xs">
                   Check your Stripe Dashboard directly at <a href="https://dashboard.stripe.com/payouts" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">dashboard.stripe.com/payouts</a>
                 </p>
