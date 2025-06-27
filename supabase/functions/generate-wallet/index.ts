@@ -13,8 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    // Generate random private key (32 bytes)
-    const privateKeyBytes = crypto.getRandomValues(new Uint8Array(32));
+    // Generate random private key (32 bytes) using global crypto
+    const privateKeyBytes = new Uint8Array(32);
+    crypto.getRandomValues(privateKeyBytes);
     
     // Import bitcoinjs-lib for mainnet address generation
     const bitcoin = await import('https://cdn.skypack.dev/bitcoinjs-lib@6.1.5');
