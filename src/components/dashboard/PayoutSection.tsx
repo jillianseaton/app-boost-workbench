@@ -6,6 +6,7 @@ import CommissionDashboard from '@/components/CommissionDashboard';
 import StripePaymentCollection from '@/components/StripePaymentCollection';
 import LovablePayoutIntegration from '@/components/LovablePayoutIntegration';
 import TestCommissionAdder from '@/components/TestCommissionAdder';
+import BitcoinWalletSection from './BitcoinWalletSection';
 
 interface PayoutSectionProps {
   userId: string;
@@ -19,6 +20,9 @@ const PayoutSection: React.FC<PayoutSectionProps> = ({ userId }) => {
 
       {/* Commission Dashboard */}
       <CommissionDashboard userId={userId} />
+
+      {/* Bitcoin Wallet Integration */}
+      <BitcoinWalletSection />
 
       {/* Payout Status Checker */}
       <PayoutStatusChecker />
