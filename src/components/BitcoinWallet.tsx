@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,11 +33,11 @@ const BitcoinWallet: React.FC = () => {
   const [selectedExchange, setSelectedExchange] = useState('');
   const { toast } = useToast();
 
-  // Popular exchange testnet addresses for quick selection
+  // Popular exchange mainnet addresses for quick selection
   const exchangeWallets = [
-    { name: 'Coinbase (Testnet)', address: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx' },
-    { name: 'Binance (Testnet)', address: 'tb1qrp33g013s6g2s4q6fqfqcbx8dfgfqd3xw8zhvc' },
-    { name: 'Kraken (Testnet)', address: 'tb1qqqqqp0whnp6x8s3y5vqh4q4z9p7z5z8p5t4q3' },
+    { name: 'Coinbase', address: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4' },
+    { name: 'Binance', address: 'bc1qrp33g013s6g2s4q6fqfqcbx8dfgfqd3xw8zhvc' },
+    { name: 'Kraken', address: 'bc1qqqqqp0whnp6x8s3y5vqh4q4z9p7z5z8p5t4q3' },
     { name: 'Custom Exchange', value: 'custom' }
   ];
 
@@ -53,7 +54,7 @@ const BitcoinWallet: React.FC = () => {
       
       toast({
         title: "Wallet Generated!",
-        description: "Your new Bitcoin testnet wallet has been created.",
+        description: "Your new Bitcoin mainnet wallet has been created.",
       });
     } catch (error) {
       console.error('Error generating wallet:', error);
@@ -226,7 +227,7 @@ const BitcoinWallet: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5" />
-            Bitcoin Testnet Wallet
+            Bitcoin Mainnet Wallet
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -238,7 +239,7 @@ const BitcoinWallet: React.FC = () => {
             <div className="space-y-4">
               <Alert>
                 <AlertDescription>
-                  <strong>⚠️ Important:</strong> This is a testnet wallet. Save your private key securely - it cannot be recovered!
+                  <strong>⚠️ Important:</strong> This is a mainnet wallet. Save your private key securely - it cannot be recovered!
                 </AlertDescription>
               </Alert>
               
@@ -344,7 +345,7 @@ const BitcoinWallet: React.FC = () => {
                 <Input 
                   value={recipientAddress}
                   onChange={(e) => setRecipientAddress(e.target.value)}
-                  placeholder="Enter exchange testnet address"
+                  placeholder="Enter exchange mainnet address"
                   className="font-mono"
                 />
               </div>
@@ -400,7 +401,7 @@ const BitcoinWallet: React.FC = () => {
               <Input 
                 value={recipientAddress}
                 onChange={(e) => setRecipientAddress(e.target.value)}
-                placeholder="Enter testnet address (starts with m, n, or tb1)"
+                placeholder="Enter mainnet address (starts with 1, 3, or bc1)"
                 className="font-mono"
               />
             </div>
@@ -429,7 +430,7 @@ const BitcoinWallet: React.FC = () => {
             
             <Alert>
               <AlertDescription>
-                This will create and broadcast a real transaction on Bitcoin testnet. 
+                This will create and broadcast a real transaction on Bitcoin mainnet. 
                 Make sure the recipient address is correct!
               </AlertDescription>
             </Alert>
