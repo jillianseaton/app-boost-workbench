@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Wallet, RefreshCw, Send, Copy, ArrowUpRight } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -35,9 +34,9 @@ const BitcoinWallet: React.FC = () => {
 
   // Popular exchange mainnet addresses for quick selection
   const exchangeWallets = [
-    { name: 'Coinbase', address: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4' },
-    { name: 'Binance', address: 'bc1qrp33g013s6g2s4q6fqfqcbx8dfgfqd3xw8zhvc' },
-    { name: 'Kraken', address: 'bc1qqqqqp0whnp6x8s3y5vqh4q4z9p7z5z8p5t4q3' },
+    { name: 'Coinbase', address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' },
+    { name: 'Binance', address: '1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s' },
+    { name: 'Kraken', address: '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2' },
     { name: 'Custom Exchange', value: 'custom' }
   ];
 
@@ -50,7 +49,7 @@ const BitcoinWallet: React.FC = () => {
       
       console.log('Generated wallet:', data);
       setWallet(data);
-      setBalance(null); // Reset balance when generating new wallet
+      setBalance(null);
       
       toast({
         title: "Wallet Generated!",
@@ -127,7 +126,6 @@ const BitcoinWallet: React.FC = () => {
         description: `TXID: ${data.txid}`,
       });
       
-      // Clear form and refresh balance
       setRecipientAddress('');
       setAmountSats('');
       setSelectedExchange('');
@@ -167,8 +165,7 @@ const BitcoinWallet: React.FC = () => {
       return;
     }
 
-    // Calculate amount to send (leave some for fees)
-    const feeReserve = 1000; // Reserve 1000 sats for fees
+    const feeReserve = 1000;
     const sendAmount = Math.max(0, balance.balanceSats - feeReserve);
 
     if (sendAmount <= 0) {
@@ -197,7 +194,6 @@ const BitcoinWallet: React.FC = () => {
         description: `Sent ${sendAmount} sats to exchange. TXID: ${data.txid}`,
       });
       
-      // Refresh balance
       await getBalance();
       
     } catch (error) {
@@ -237,12 +233,6 @@ const BitcoinWallet: React.FC = () => {
             </Button>
           ) : (
             <div className="space-y-4">
-              <Alert>
-                <AlertDescription>
-                  <strong>⚠️ Important:</strong> This is a mainnet wallet. Save your private key securely - it cannot be recovered!
-                </AlertDescription>
-              </Alert>
-              
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Public Address</label>
@@ -375,13 +365,6 @@ const BitcoinWallet: React.FC = () => {
             >
               {sendLoading ? "Processing Withdrawal..." : "Withdraw All to Exchange"}
             </Button>
-
-            <Alert>
-              <AlertDescription>
-                This will send your entire balance (minus fees) to the selected exchange address. 
-                Make sure the address is correct!
-              </AlertDescription>
-            </Alert>
           </CardContent>
         </Card>
       )}
@@ -427,13 +410,6 @@ const BitcoinWallet: React.FC = () => {
             >
               {sendLoading ? "Sending..." : "Send Bitcoin"}
             </Button>
-            
-            <Alert>
-              <AlertDescription>
-                This will create and broadcast a real transaction on Bitcoin mainnet. 
-                Make sure the recipient address is correct!
-              </AlertDescription>
-            </Alert>
           </CardContent>
         </Card>
       )}

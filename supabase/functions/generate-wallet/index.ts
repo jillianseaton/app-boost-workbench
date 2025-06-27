@@ -13,47 +13,23 @@ serve(async (req) => {
   }
 
   try {
-    // Import crypto functions directly from Deno std library
-    const crypto = globalThis.crypto;
-    
-    // Import secp256k1 for key generation
-    const secp256k1 = await import('https://deno.land/x/secp256k1@1.7.1/mod.ts');
-    
     // Generate random private key (32 bytes)
     const privateKeyBytes = crypto.getRandomValues(new Uint8Array(32));
     
-    // Generate public key from private key using secp256k1
-    const publicKeyBytes = secp256k1.getPublicKey(privateKeyBytes, true); // compressed
+    // Import bitcoinjs-lib for mainnet address generation
+    const bitcoin = await import('https://cdn.skypack.dev/bitcoinjs-lib@6.1.5');
     
-    // Create Bitcoin mainnet address (P2PKH)
-    // Hash160 = RIPEMD160(SHA256(publicKey))
-    const sha256Hash = await crypto.subtle.digest('SHA-256', publicKeyBytes);
+    // Create keypair from private key (mainnet)
+    const keyPair = bitcoin.ECPair.fromPrivateKey(privateKeyBytes, { network: bitcoin.networks.bitcoin });
     
-    // For RIPEMD160, we'll use a simple implementation since it's not available in Web Crypto API
-    // This is a simplified approach - in production, you'd want a proper RIPEMD160 implementation
-    const ripemd160Hash = await crypto.subtle.digest('SHA-256', sha256Hash);
-    const hash160 = new Uint8Array(ripemd160Hash.slice(0, 20)); // Take first 20 bytes
-    
-    // Add mainnet version byte (0x00 for mainnet P2PKH)
-    const versionedHash = new Uint8Array([0x00, ...hash160]);
-    
-    // Calculate checksum (first 4 bytes of double SHA256)
-    const checksum1 = await crypto.subtle.digest('SHA-256', versionedHash);
-    const checksum2 = await crypto.subtle.digest('SHA-256', checksum1);
-    const checksum = new Uint8Array(checksum2.slice(0, 4));
-    
-    // Combine versioned hash and checksum
-    const addressBytes = new Uint8Array([...versionedHash, ...checksum]);
-    
-    // Base58 encode (simplified implementation)
-    const address = base58Encode(addressBytes);
+    // Generate mainnet address (P2PKH - starts with '1')
+    const { address } = bitcoin.payments.p2pkh({ 
+      pubkey: keyPair.publicKey, 
+      network: bitcoin.networks.bitcoin 
+    });
     
     // Convert private key to WIF format for mainnet
-    const wifBytes = new Uint8Array([0x80, ...privateKeyBytes, 0x01]); // 0x80 = mainnet WIF prefix, 0x01 = compressed
-    const wifChecksum1 = await crypto.subtle.digest('SHA-256', wifBytes);
-    const wifChecksum2 = await crypto.subtle.digest('SHA-256', wifChecksum1);
-    const wifFinal = new Uint8Array([...wifBytes, ...new Uint8Array(wifChecksum2.slice(0, 4))]);
-    const privateKeyWIF = base58Encode(wifFinal);
+    const privateKeyWIF = keyPair.toWIF();
     
     console.log('Generated mainnet wallet:', { address, privateKeyWIF });
     
@@ -72,24 +48,3 @@ serve(async (req) => {
     });
   }
 });
-
-// Simple Base58 encoding implementation
-function base58Encode(bytes: Uint8Array): string {
-  const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-  let num = BigInt('0x' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(''));
-  
-  if (num === 0n) return alphabet[0];
-  
-  let result = '';
-  while (num > 0n) {
-    result = alphabet[Number(num % 58n)] + result;
-    num = num / 58n;
-  }
-  
-  // Add leading zeros
-  for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
-    result = alphabet[0] + result;
-  }
-  
-  return result;
-}

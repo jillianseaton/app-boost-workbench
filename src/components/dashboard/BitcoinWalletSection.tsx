@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Bitcoin, Wallet, RefreshCw, Send, Copy, ArrowUpRight } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -34,9 +33,9 @@ const BitcoinWalletSection: React.FC = () => {
   const { toast } = useToast();
 
   const exchangeWallets = [
-    { name: 'Coinbase', address: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4' },
-    { name: 'Binance', address: 'bc1qrp33g013s6g2s4q6fqfqcbx8dfgfqd3xw8zhvc' },
-    { name: 'Kraken', address: 'bc1qqqqqp0whnp6x8s3y5vqh4q4z9p7z5z8p5t4q3' },
+    { name: 'Coinbase', address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' },
+    { name: 'Binance', address: '1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s' },
+    { name: 'Kraken', address: '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2' },
     { name: 'Custom Exchange', value: 'custom' }
   ];
 
@@ -170,7 +169,7 @@ const BitcoinWalletSection: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bitcoin className="h-5 w-5 text-orange-500" />
-            Bitcoin Wallet Integration
+            Bitcoin Mainnet Wallet
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -185,12 +184,6 @@ const BitcoinWalletSection: React.FC = () => {
             </Button>
           ) : (
             <div className="space-y-4">
-              <Alert>
-                <AlertDescription>
-                  <strong>⚠️ Important:</strong> Save your private key securely - it cannot be recovered!
-                </AlertDescription>
-              </Alert>
-              
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Bitcoin Address</label>
