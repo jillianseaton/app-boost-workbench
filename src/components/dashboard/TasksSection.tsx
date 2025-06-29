@@ -2,7 +2,6 @@
 import React from 'react';
 import TaskOptimization from '@/components/TaskOptimization';
 import SecureBankDashboard from '@/components/SecureBankDashboard';
-import WithdrawalSection from '@/components/WithdrawalSection';
 import PartnerServices from '@/components/PartnerServices';
 
 interface TasksSectionProps {
@@ -27,7 +26,6 @@ const TasksSection: React.FC<TasksSectionProps> = ({
   userId,
   onTaskComplete,
   onResetAccount,
-  onWithdraw,
   onSecureBankDeposit
 }) => {
   return (
@@ -45,14 +43,6 @@ const TasksSection: React.FC<TasksSectionProps> = ({
       <SecureBankDashboard
         currentBalance={earnings}
         onDepositSuccess={onSecureBankDeposit}
-        userEmail={userEmail}
-        userId={userId}
-      />
-
-      <WithdrawalSection 
-        earnings={earnings}
-        hasWithdrawn={hasWithdrawn}
-        onWithdraw={onWithdraw}
         userEmail={userEmail}
         userId={userId}
       />

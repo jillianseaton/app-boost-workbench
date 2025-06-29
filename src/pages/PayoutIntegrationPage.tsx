@@ -1,21 +1,30 @@
 
 import React from 'react';
-import LovablePayoutIntegration from '@/components/LovablePayoutIntegration';
+import CommissionDashboard from '@/components/CommissionDashboard';
+import { useAuth } from '@/hooks/useAuth';
 
 const PayoutIntegrationPage: React.FC = () => {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Lovable to Stripe Payout Integration
+            Commission Payout Dashboard
           </h1>
           <p className="text-gray-600">
-            Transfer your earnings directly to your Stripe-connected bank account
+            View your earnings and request payouts from your commission balance
           </p>
         </div>
         
-        <LovablePayoutIntegration />
+        {user ? (
+          <CommissionDashboard userId={user.id} />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-600">Please sign in to view your payout dashboard.</p>
+          </div>
+        )}
       </div>
     </div>
   );
