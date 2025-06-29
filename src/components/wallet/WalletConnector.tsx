@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet, Circle } from 'lucide-react';
+import { useWeb3 } from '@/hooks/useWeb3';
+import { Wallet, Circle, Wifi } from 'lucide-react';
 import { WalletInfo } from '../DecentralizedWallet';
 
 interface WalletConnectorProps {
@@ -15,8 +16,7 @@ const walletProviders = [
   { id: 'metamask', name: 'MetaMask', icon: '🦊' },
   { id: 'walletconnect', name: 'WalletConnect', icon: '🔗' },
   { id: 'coinbase', name: 'Coinbase Wallet', icon: '🔵' },
-  { id: 'trust', name: 'Trust Wallet', icon: '🛡️' },
-  { id: 'phantom', name: 'Phantom', icon: '👻' },
+  { id: 'web3', name: 'Web3 Direct', icon: '🌐' },
   { id: 'custom', name: 'Custom Address', icon: '⚙️' },
 ];
 
@@ -26,7 +26,9 @@ const WalletConnector: React.FC<WalletConnectorProps> = ({
 }) => {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [customAddress, setCustomAddress] = useState('');
+  const [rpcUrl, setRpcUrl] = useState('');
   const { toast } = useToast();
+  const { connectWallet, accounts, getBalance, isConnected, isLoading } = useWeb3();
 
   const handleConnect = async (providerId: string) => {
     if (providerId === 'custom') {
@@ -51,9 +53,36 @@ const WalletConnector: React.FC<WalletConnectorProps> = ({
       return;
     }
 
+    if (providerId === 'web3') {
+      setConnecting(providerId);
+      try {
+        await connectWallet(rpcUrl || undefined);
+        
+        if (accounts.length > 0) {
+          const balance = await getBalance(accounts[0]);
+          const walletInfo: WalletInfo = {
+            address: accounts[0],
+            balance: balance,
+            network: selectedNetwork,
+            connected: true,
+          };
+          onWalletConnect(walletInfo);
+          toast({
+            title: "Web3 Connected",
+            description: `Connected to ${accounts[0].slice(0, 10)}...`,
+          });
+        }
+      } catch (error) {
+        console.error('Web3 connection failed:', error);
+      } finally {
+        setConnecting(null);
+      }
+      return;
+    }
+
     setConnecting(providerId);
     
-    // Simulate wallet connection
+    // Simulate other wallet connections
     setTimeout(() => {
       const mockAddress = `0x${Math.random().toString(16).substr(2, 40)}`;
       const mockBalance = (Math.random() * 10).toFixed(4);
@@ -79,14 +108,38 @@ const WalletConnector: React.FC<WalletConnectorProps> = ({
             variant="outline"
             className="h-16 flex flex-col gap-2 hover:bg-gray-50"
             onClick={() => handleConnect(provider.id)}
-            disabled={connecting === provider.id}
+            disabled={connecting === provider.id || (provider.id === 'web3' && isLoading)}
           >
             <span className="text-2xl">{provider.icon}</span>
             <span className="text-sm">
-              {connecting === provider.id ? 'Connecting...' : provider.name}
+              {connecting === provider.id || (provider.id === 'web3' && isLoading) 
+                ? 'Connecting...' 
+                : provider.name}
             </span>
+            {provider.id === 'web3' && isConnected && (
+              <Wifi className="h-3 w-3 text-green-500" />
+            )}
           </Button>
         ))}
+      </div>
+
+      {/* Web3 RPC Configuration */}
+      <div className="border-t pt-6">
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Wifi className="h-4 w-4" />
+          Web3 RPC Configuration
+        </h3>
+        <div className="flex gap-2 mb-4">
+          <Input
+            placeholder="RPC URL (optional - defaults to localhost:8545)"
+            value={rpcUrl}
+            onChange={(e) => setRpcUrl(e.target.value)}
+            className="flex-1"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          Leave empty to use wallet provider or default to localhost:8545
+        </p>
       </div>
 
       <div className="border-t pt-6">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Wallet, Shield, Circle, Settings } from 'lucide-react';
 import WalletConnector from './wallet/WalletConnector';
 import WalletDashboard from './wallet/WalletDashboard';
 import NetworkSelector from './wallet/NetworkSelector';
+import ContractInteraction from './wallet/ContractInteraction';
 
 export interface WalletInfo {
   address: string;
@@ -110,6 +110,9 @@ const DecentralizedWallet: React.FC = () => {
           />
         </CardContent>
       </Card>
+
+      {/* Smart Contract Interaction */}
+      <ContractInteraction />
 
       {/* Connected Wallets Dashboard */}
       {connectedWallets.length > 0 && (
