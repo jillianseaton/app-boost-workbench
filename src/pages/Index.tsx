@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { Link } from 'react-router-dom';
 import IndexHeader from '@/components/index/IndexHeader';
 import IndexHero from '@/components/index/IndexHero';
 import IndexPaymentCTA from '@/components/index/IndexPaymentCTA';
@@ -6,6 +8,8 @@ import IndexFeaturedServices from '@/components/index/IndexFeaturedServices';
 import IndexDashboardLinks from '@/components/index/IndexDashboardLinks';
 import AdSenseUnit from '@/components/ads/AdSenseUnit';
 import { useAdTracking } from '@/hooks/useAdTracking';
+import { Button } from '@/components/ui/button';
+import { CreditCard } from 'lucide-react';
 
 const Index = () => {
   const { trackImpression, trackClick } = useAdTracking();
@@ -96,6 +100,16 @@ const Index = () => {
       
       <main className="container mx-auto px-4 py-8">
         <IndexHero />
+        
+        {/* Payment Intent Demo Link */}
+        <div className="my-8 flex justify-center">
+          <Link to="/payment-intent">
+            <Button className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Try Stripe Payment Intent Demo
+            </Button>
+          </Link>
+        </div>
         
         {/* First AdSense Ad Unit */}
         <div className="my-8 flex justify-center">
