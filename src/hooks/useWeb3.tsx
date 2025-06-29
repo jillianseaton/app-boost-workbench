@@ -103,10 +103,18 @@ export const useWeb3 = () => {
     options: { from?: string; value?: string; gas?: number } = {}
   ) => {
     try {
-      if (!options.from && accounts.length > 0) {
-        options.from = accounts[0];
+      // Ensure 'from' is provided
+      const transactionOptions = {
+        from: options.from || (accounts.length > 0 ? accounts[0] : ''),
+        value: options.value,
+        gas: options.gas
+      };
+
+      if (!transactionOptions.from) {
+        throw new Error('No account available for transaction');
       }
-      return await web3Service.sendContractTransaction(contractAddress, methodName, params, options);
+
+      return await web3Service.sendContractTransaction(contractAddress, methodName, params, transactionOptions);
     } catch (error) {
       console.error('Transaction error:', error);
       toast({

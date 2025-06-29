@@ -1,10 +1,11 @@
 
 import Web3 from 'web3';
 import { Contract } from 'web3-eth-contract';
+import { AbiItem } from 'web3-utils';
 
 export interface ContractConfig {
   address: string;
-  abi: any[];
+  abi: AbiItem[];
   network?: string;
 }
 
@@ -96,7 +97,8 @@ class Web3Service {
     if (!this.web3) {
       throw new Error('Web3 not initialized');
     }
-    return await this.web3.eth.net.getId();
+    const networkId = await this.web3.eth.net.getId();
+    return Number(networkId);
   }
 
   // Get balance
