@@ -59,6 +59,22 @@ const Index = () => {
     });
   };
 
+  const handleInArticleAdImpression = () => {
+    trackImpression({
+      adSlot: '9487572195',
+      placementId: 'homepage_in_article',
+      adType: 'in-article'
+    });
+  };
+
+  const handleInArticleAdClick = () => {
+    trackClick({
+      adSlot: '9487572195',
+      placementId: 'homepage_in_article',
+      adType: 'in-article'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <IndexHeader />
@@ -77,6 +93,19 @@ const Index = () => {
         </div>
         
         <IndexPaymentCTA />
+        
+        {/* In-Article Ad Unit */}
+        <div className="my-8 flex justify-center">
+          <AdSenseUnit
+            adSlot="9487572195"
+            adFormat="fluid"
+            adLayout="in-article"
+            style={{ display: 'block', textAlign: 'center' }}
+            className="max-w-4xl mx-auto"
+            onImpression={handleInArticleAdImpression}
+            onAdClick={handleInArticleAdClick}
+          />
+        </div>
         
         {/* Native Ad Unit - Fluid Layout */}
         <div className="my-8 flex justify-center">

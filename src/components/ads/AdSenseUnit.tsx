@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from 'react';
 interface AdSenseUnitProps {
   adSlot: string;
   adFormat?: string;
+  adLayout?: string;
   style?: React.CSSProperties;
   className?: string;
   onImpression?: () => void;
@@ -19,6 +20,7 @@ declare global {
 const AdSenseUnit: React.FC<AdSenseUnitProps> = ({
   adSlot,
   adFormat = "auto",
+  adLayout,
   style = { display: 'block' },
   className = "",
   onImpression,
@@ -54,9 +56,9 @@ const AdSenseUnit: React.FC<AdSenseUnitProps> = ({
     }
   };
 
-  // Special handling for fluid/native ads
+  // Special handling for different ad types
   const isFluidAd = adFormat === "fluid";
-  const adLayoutKey = isFluidAd ? "-fb-x-2-bu+wu" : undefined;
+  const adLayoutKey = isFluidAd && !adLayout ? "-fb-x-2-bu+wu" : undefined;
 
   return (
     <div 
@@ -71,6 +73,7 @@ const AdSenseUnit: React.FC<AdSenseUnitProps> = ({
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
         data-full-width-responsive="true"
+        {...(adLayout && { 'data-ad-layout': adLayout })}
         {...(adLayoutKey && { 'data-ad-layout-key': adLayoutKey })}
       />
     </div>
