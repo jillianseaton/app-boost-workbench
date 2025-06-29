@@ -11,7 +11,7 @@ import { useAdTracking } from '@/hooks/useAdTracking';
 const Index = () => {
   const { trackImpression, trackClick } = useAdTracking();
 
-  const handleAdImpression = () => {
+  const handleAdImpression1 = () => {
     trackImpression({
       adSlot: '4133257448',
       placementId: 'homepage_hero',
@@ -19,10 +19,26 @@ const Index = () => {
     });
   };
 
-  const handleAdClick = () => {
+  const handleAdClick1 = () => {
     trackClick({
       adSlot: '4133257448',
       placementId: 'homepage_hero',
+      adType: 'display'
+    });
+  };
+
+  const handleAdImpression2 = () => {
+    trackImpression({
+      adSlot: '1879193848',
+      placementId: 'homepage_middle',
+      adType: 'display'
+    });
+  };
+
+  const handleAdClick2 = () => {
+    trackClick({
+      adSlot: '1879193848',
+      placementId: 'homepage_middle',
       adType: 'display'
     });
   };
@@ -34,17 +50,28 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         <IndexHero />
         
-        {/* AdSense Ad Unit */}
+        {/* First AdSense Ad Unit */}
         <div className="my-8 flex justify-center">
           <AdSenseUnit
             adSlot="4133257448"
             className="max-w-4xl mx-auto"
-            onImpression={handleAdImpression}
-            onAdClick={handleAdClick}
+            onImpression={handleAdImpression1}
+            onAdClick={handleAdClick1}
           />
         </div>
         
         <IndexPaymentCTA />
+        
+        {/* Second AdSense Ad Unit */}
+        <div className="my-8 flex justify-center">
+          <AdSenseUnit
+            adSlot="1879193848"
+            className="max-w-4xl mx-auto"
+            onImpression={handleAdImpression2}
+            onAdClick={handleAdClick2}
+          />
+        </div>
+        
         <IndexFeaturedServices />
         <IndexDashboardLinks />
       </main>
