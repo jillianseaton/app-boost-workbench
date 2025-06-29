@@ -43,6 +43,22 @@ const Index = () => {
     });
   };
 
+  const handleNativeAdImpression = () => {
+    trackImpression({
+      adSlot: '6567849095',
+      placementId: 'homepage_native',
+      adType: 'native'
+    });
+  };
+
+  const handleNativeAdClick = () => {
+    trackClick({
+      adSlot: '6567849095',
+      placementId: 'homepage_native',
+      adType: 'native'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <IndexHeader />
@@ -61,6 +77,18 @@ const Index = () => {
         </div>
         
         <IndexPaymentCTA />
+        
+        {/* Native Ad Unit - Fluid Layout */}
+        <div className="my-8 flex justify-center">
+          <AdSenseUnit
+            adSlot="6567849095"
+            adFormat="fluid"
+            style={{ display: 'block' }}
+            className="max-w-4xl mx-auto"
+            onImpression={handleNativeAdImpression}
+            onAdClick={handleNativeAdClick}
+          />
+        </div>
         
         {/* Second AdSense Ad Unit */}
         <div className="my-8 flex justify-center">

@@ -54,6 +54,10 @@ const AdSenseUnit: React.FC<AdSenseUnitProps> = ({
     }
   };
 
+  // Special handling for fluid/native ads
+  const isFluidAd = adFormat === "fluid";
+  const adLayoutKey = isFluidAd ? "-fb-x-2-bu+wu" : undefined;
+
   return (
     <div 
       ref={adRef}
@@ -67,6 +71,7 @@ const AdSenseUnit: React.FC<AdSenseUnitProps> = ({
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
         data-full-width-responsive="true"
+        {...(adLayoutKey && { 'data-ad-layout-key': adLayoutKey })}
       />
     </div>
   );
