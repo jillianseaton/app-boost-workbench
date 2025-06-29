@@ -18,7 +18,7 @@ export interface Web3Config {
 
 class Web3Service {
   private web3: Web3 | null = null;
-  private contracts: Map<string, Contract> = new Map();
+  private contracts: Map<string, Contract<any>> = new Map();
   private currentNetwork: string = 'mainnet';
 
   // Initialize Web3 instance
@@ -62,7 +62,7 @@ class Web3Service {
   }
 
   // Create contract instance
-  createContract(contractConfig: ContractConfig): Contract {
+  createContract(contractConfig: ContractConfig): Contract<any> {
     if (!this.web3) {
       throw new Error('Web3 not initialized');
     }
@@ -79,7 +79,7 @@ class Web3Service {
   }
 
   // Get existing contract instance
-  getContract(address: string): Contract | null {
+  getContract(address: string): Contract<any> | null {
     const contractKey = `${address}_${this.currentNetwork}`;
     return this.contracts.get(contractKey) || null;
   }
