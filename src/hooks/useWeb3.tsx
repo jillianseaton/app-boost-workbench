@@ -100,7 +100,7 @@ export const useWeb3 = () => {
     contractAddress: string,
     methodName: string,
     params: any[] = [],
-    options: { from?: string; value?: string; gas?: number } = {}
+    options: { from?: string; value?: string; gas?: string } = {}
   ) => {
     try {
       // Ensure 'from' is provided

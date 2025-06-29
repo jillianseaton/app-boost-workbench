@@ -159,9 +159,11 @@ class Web3Service {
       throw new Error('Contract not found. Create contract instance first.');
     }
 
-    return contract.events[eventName](options)
-      .on('data', callback)
-      .on('error', console.error);
+    const eventEmitter = contract.events[eventName](options);
+    eventEmitter.on('data', callback);
+    eventEmitter.on('error', console.error);
+    
+    return eventEmitter;
   }
 
   // Switch network
