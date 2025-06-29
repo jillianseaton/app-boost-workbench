@@ -1,6 +1,7 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encode as base58encode } from "https://deno.land/x/btc_base58@v1.0.0/mod.ts";
 import { ripemd160 } from "https://deno.land/x/ripemd160@v1.0.2/mod.ts";
 import { getPublicKey } from "https://deno.land/x/secp256k1@1.0.0/mod.ts";
 
@@ -8,35 +9,6 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Base58 alphabet
-const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-
-// Native Base58 encode implementation
-function base58encode(buffer: Uint8Array): string {
-  if (buffer.length === 0) return '';
-  
-  // Convert to BigInt for arithmetic
-  let num = 0n;
-  for (let i = 0; i < buffer.length; i++) {
-    num = num * 256n + BigInt(buffer[i]);
-  }
-  
-  // Convert to base58
-  let result = '';
-  while (num > 0n) {
-    const remainder = num % 58n;
-    result = BASE58_ALPHABET[Number(remainder)] + result;
-    num = num / 58n;
-  }
-  
-  // Add leading zeros
-  for (let i = 0; i < buffer.length && buffer[i] === 0; i++) {
-    result = '1' + result;
-  }
-  
-  return result;
-}
 
 // Generate random 32-byte private key
 function generatePrivateKey(): Uint8Array {
