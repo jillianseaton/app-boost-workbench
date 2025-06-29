@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useWeb3 } from '@/hooks/useWeb3';
-import { useToast } = '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Code, Send, Eye } from 'lucide-react';
 
 const ContractInteraction: React.FC = () => {
