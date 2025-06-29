@@ -1,4 +1,3 @@
-
 import React from 'react';
 import IndexHeader from '@/components/index/IndexHeader';
 import IndexHero from '@/components/index/IndexHero';
@@ -75,6 +74,22 @@ const Index = () => {
     });
   };
 
+  const handleMultiplexAdImpression = () => {
+    trackImpression({
+      adSlot: '3941685758',
+      placementId: 'homepage_multiplex',
+      adType: 'multiplex'
+    });
+  };
+
+  const handleMultiplexAdClick = () => {
+    trackClick({
+      adSlot: '3941685758',
+      placementId: 'homepage_multiplex',
+      adType: 'multiplex'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <IndexHeader />
@@ -116,6 +131,18 @@ const Index = () => {
             className="max-w-4xl mx-auto"
             onImpression={handleNativeAdImpression}
             onAdClick={handleNativeAdClick}
+          />
+        </div>
+        
+        {/* Multiplex Ad Unit - Autorelaxed */}
+        <div className="my-8 flex justify-center">
+          <AdSenseUnit
+            adSlot="3941685758"
+            adFormat="autorelaxed"
+            style={{ display: 'block' }}
+            className="max-w-4xl mx-auto"
+            onImpression={handleMultiplexAdImpression}
+            onAdClick={handleMultiplexAdClick}
           />
         </div>
         
