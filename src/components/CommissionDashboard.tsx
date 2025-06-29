@@ -107,59 +107,61 @@ const CommissionDashboard: React.FC<CommissionDashboardProps> = ({ userId }) => 
         </Card>
       </div>
 
-      {/* Commission History */}
+      {/* Commission History - Smaller Section */}
       <Card>
-        <CardHeader>
-          <CardTitle>Commission History</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Commission History</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           {commissions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-4 text-muted-foreground text-sm">
               No commissions recorded yet
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {commissions.map((commission) => (
-                  <TableRow key={commission.id}>
-                    <TableCell className="font-medium">
-                      {formatCurrency(commission.amount_earned_cents)}
-                    </TableCell>
-                    <TableCell>
-                      {commission.description || 'No description'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getSourceBadge(commission.source)}>
-                        {commission.source.replace('_', ' ')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {commission.paid_out ? (
-                        <Badge className="bg-green-100 text-green-800">
-                          Paid
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-yellow-100 text-yellow-800">
-                          Pending
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {formatDistanceToNow(new Date(commission.created_at), { addSuffix: true })}
-                    </TableCell>
+            <div className="max-h-64 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="h-8 text-xs">Amount</TableHead>
+                    <TableHead className="h-8 text-xs">Description</TableHead>
+                    <TableHead className="h-8 text-xs">Source</TableHead>
+                    <TableHead className="h-8 text-xs">Status</TableHead>
+                    <TableHead className="h-8 text-xs">Date</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {commissions.map((commission) => (
+                    <TableRow key={commission.id} className="h-10">
+                      <TableCell className="font-medium text-sm py-1">
+                        {formatCurrency(commission.amount_earned_cents)}
+                      </TableCell>
+                      <TableCell className="text-sm py-1 max-w-32 truncate">
+                        {commission.description || 'No description'}
+                      </TableCell>
+                      <TableCell className="py-1">
+                        <Badge className={`${getSourceBadge(commission.source)} text-xs px-1 py-0`}>
+                          {commission.source.replace('_', ' ')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-1">
+                        {commission.paid_out ? (
+                          <Badge className="bg-green-100 text-green-800 text-xs px-1 py-0">
+                            Paid
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-yellow-100 text-yellow-800 text-xs px-1 py-0">
+                            Pending
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs py-1">
+                        {formatDistanceToNow(new Date(commission.created_at), { addSuffix: true })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
