@@ -129,7 +129,7 @@ class Web3Service {
     contractAddress: string,
     methodName: string,
     params: any[] = [],
-    options: { from: string; value?: string; gas?: number } = { from: '' }
+    options: { from: string; value?: string; gas?: string } = { from: '' }
   ): Promise<any> {
     const contract = this.getContract(contractAddress);
     if (!contract) {
@@ -159,7 +159,9 @@ class Web3Service {
       throw new Error('Contract not found. Create contract instance first.');
     }
 
-    return contract.events[eventName](options, callback);
+    return contract.events[eventName](options)
+      .on('data', callback)
+      .on('error', console.error);
   }
 
   // Switch network
