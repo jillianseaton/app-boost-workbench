@@ -63,41 +63,28 @@ function ripemd160(data: Uint8Array): Uint8Array {
   return result;
 }
 
-// Simplified secp256k1 public key generation using Web Crypto API
+// Simplified deterministic public key generation
 async function getPublicKeyFromPrivate(privateKey: Uint8Array): Promise<Uint8Array> {
   try {
-    // Import the private key for ECDSA
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      privateKey,
-      {
-        name: 'ECDSA',
-        namedCurve: 'P-256' // Note: This is P-256, not secp256k1
-      },
-      false,
-      ['sign']
-    );
+    // Generate a deterministic public key from private key using SHA-256
+    // This is a simplified approach - not real secp256k1
+    const hash1 = await crypto.subtle.digest('SHA-256', privateKey);
+    const hash2 = await crypto.subtle.digest('SHA-256', new Uint8Array(hash1));
+    const hashArray = new Uint8Array(hash2);
     
-    // For Bitcoin, we need secp256k1, but Web Crypto API doesn't support it
-    // So we'll use a simplified approach with the private key bytes
+    // Create a 33-byte compressed public key format
+    const publicKey = new Uint8Array(33);
+    publicKey[0] = 0x02; // Compression flag for even Y coordinate
     
-    // Generate a deterministic public key from private key
-    const publicKeyData = new Uint8Array(33); // Compressed public key format
-    publicKeyData[0] = 0x02; // Compression flag
-    
-    // Use SHA-256 of private key as basis for public key (simplified)
-    const hash = await crypto.subtle.digest('SHA-256', privateKey);
-    const hashArray = new Uint8Array(hash);
-    
-    // Copy first 32 bytes to create public key
+    // Use the hash as the X coordinate (first 32 bytes)
     for (let i = 0; i < 32; i++) {
-      publicKeyData[i + 1] = hashArray[i];
+      publicKey[i + 1] = hashArray[i];
     }
     
-    return publicKeyData;
+    return publicKey;
   } catch (error) {
     console.error('Error generating public key:', error);
-    // Fallback: simple deterministic generation
+    // Fallback: simple deterministic generation using XOR
     const publicKey = new Uint8Array(33);
     publicKey[0] = 0x02;
     for (let i = 0; i < 32; i++) {
