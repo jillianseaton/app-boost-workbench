@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDashboardActions } from './DashboardActions';
 import { Transaction } from '@/utils/transactionUtils';
 import { useCommissions } from '@/hooks/useCommissions';
+import { supabase } from '@/integrations/supabase/client';
 import GoogleAuth from './GoogleAuth';
 import PrivacyPolicy from './PrivacyPolicy';
 import DashboardHeader from './dashboard/DashboardHeader';
@@ -60,23 +61,60 @@ const Dashboard: React.FC = () => {
   };
 
   const handleTaskComplete = async (adRevenue: number) => {
-    setEarnings(prev => prev + adRevenue);
-    setTasksCompleted(prev => prev + 1);
-    
-    // Add transaction record
-    addTransaction({
-      type: 'earning',
-      amount: adRevenue,
-      status: 'confirmed',
-    });
+    try {
+      // Get BTC price and convert to BTC directly
+      const { data: priceData, error: priceError } = await supabase.functions.invoke('get-btc-price');
+      
+      if (priceError) {
+        console.error('Error getting BTC price:', priceError);
+        toast({
+          title: "Error",
+          description: "Failed to convert earnings to BTC. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const btcPrice = priceData.price;
+      const btcEarnings = adRevenue / btcPrice;
+      
+      setTasksCompleted(prev => prev + 1);
+      
+      // Add transaction record showing BTC earnings
+      addTransaction({
+        type: 'earning',
+        amount: btcEarnings,
+        status: 'confirmed',
+      });
 
-    // Add commission record
-    if (userId) {
-      await addCommission(
-        Math.round(adRevenue * 100), // Convert to cents
-        `Task completion earnings: $${adRevenue.toFixed(2)}`,
-        'task_completion'
-      );
+      // Add commission record and mark as immediately paid out in BTC
+      if (userId) {
+        await addCommission(
+          Math.round(adRevenue * 100), // Convert to cents for record keeping
+          `Task completion earnings converted to BTC: ${btcEarnings.toFixed(8)} BTC (from $${adRevenue.toFixed(2)})`,
+          'task_completion'
+        );
+        
+        // Mark commission as immediately paid out since it went to BTC
+        await supabase
+          .from('commissions')
+          .update({ paid_out: true, paid_at: new Date().toISOString() })
+          .eq('user_id', userId)
+          .eq('paid_out', false);
+      }
+
+      toast({
+        title: "Earned Bitcoin!",
+        description: `Converted $${adRevenue.toFixed(2)} directly to ${btcEarnings.toFixed(8)} BTC`,
+      });
+      
+    } catch (error) {
+      console.error('Error processing task completion:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process earnings. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
