@@ -1,7 +1,6 @@
 
 import React from 'react';
 import TaskOptimization from '@/components/TaskOptimization';
-import SecureBankDashboard from '@/components/SecureBankDashboard';
 import PartnerServices from '@/components/PartnerServices';
 
 interface TasksSectionProps {
@@ -25,8 +24,7 @@ const TasksSection: React.FC<TasksSectionProps> = ({
   userEmail,
   userId,
   onTaskComplete,
-  onResetAccount,
-  onSecureBankDeposit
+  onResetAccount
 }) => {
   return (
     <div className="space-y-6">
@@ -36,13 +34,6 @@ const TasksSection: React.FC<TasksSectionProps> = ({
         hasWithdrawn={hasWithdrawn}
         onTaskComplete={onTaskComplete}
         onResetAccount={onResetAccount}
-        userEmail={userEmail}
-        userId={userId}
-      />
-
-      <SecureBankDashboard
-        currentBalance={earnings}
-        onDepositSuccess={onSecureBankDeposit}
         userEmail={userEmail}
         userId={userId}
       />

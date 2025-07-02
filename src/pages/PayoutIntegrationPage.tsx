@@ -1,6 +1,5 @@
 
 import React from 'react';
-import CommissionDashboard from '@/components/CommissionDashboard';
 import AdSenseUnit from '@/components/ads/AdSenseUnit';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdTracking } from '@/hooks/useAdTracking';
@@ -30,17 +29,15 @@ const PayoutIntegrationPage: React.FC = () => {
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Commission Payout Dashboard
+            Payout Dashboard
           </h1>
           <p className="text-gray-600">
-            View your earnings and request payouts from your commission balance
+            Commission payout functionality has been removed
           </p>
         </div>
         
         {user ? (
           <>
-            <CommissionDashboard userId={user.id} />
-            
             {/* Multiplex Ad Unit */}
             <div className="my-8 flex justify-center">
               <AdSenseUnit

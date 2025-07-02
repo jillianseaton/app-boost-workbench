@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Banknote, History, AlertTriangle, CheckCircle, Plus, Edit } from 'lucide-react';
 import { secureBankService, BankAccount } from '@/services/secureBankService';
 import { useToast } from '@/hooks/use-toast';
-import BankAccountForm from './BankAccountForm';
+
 import BankAccountVerification from './BankAccountVerification';
 import SecureDepositForm from './SecureDepositForm';
 import BankAccountUpdateForm from './BankAccountUpdateForm';
@@ -162,7 +162,15 @@ const SecureBankDashboard: React.FC<SecureBankDashboardProps> = ({
               </div>
 
               {bankAccounts.length === 0 ? (
-                <BankAccountForm onAccountCreated={handleAccountCreated} />
+                <Card>
+                  <CardContent className="text-center p-8">
+                    <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground mb-2">No bank accounts found</p>
+                    <p className="text-sm text-muted-foreground">
+                      Bank account functionality has been removed
+                    </p>
+                  </CardContent>
+                </Card>
               ) : (
                 <div className="space-y-4">
                   {bankAccounts.length > 0 && (
@@ -207,9 +215,6 @@ const SecureBankDashboard: React.FC<SecureBankDashboardProps> = ({
                           </CardContent>
                         </Card>
                       ))}
-                      {bankAccounts.length < 3 && (
-                        <BankAccountForm onAccountCreated={handleAccountCreated} />
-                      )}
                     </div>
                   )}
                 </div>

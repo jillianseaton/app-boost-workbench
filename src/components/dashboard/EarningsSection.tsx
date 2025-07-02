@@ -2,7 +2,6 @@
 import React from 'react';
 import CurrentTime from '@/components/CurrentTime';
 import DashboardStats from '@/components/DashboardStats';
-import AutomaticPayoutSettings from '@/components/AutomaticPayoutSettings';
 
 interface EarningsSectionProps {
   earnings: number;
@@ -17,9 +16,7 @@ const EarningsSection: React.FC<EarningsSectionProps> = ({
   earnings,
   tasksCompleted,
   maxTasks,
-  onResetTasks,
-  userEmail = '',
-  userId = ''
+  onResetTasks
 }) => {
   return (
     <div className="space-y-6">
@@ -29,13 +26,6 @@ const EarningsSection: React.FC<EarningsSectionProps> = ({
         tasksCompleted={tasksCompleted}
         maxTasks={maxTasks}
         onResetTasks={onResetTasks}
-      />
-      
-      {/* Automatic Payout Settings */}
-      <AutomaticPayoutSettings
-        userId={userId}
-        userEmail={userEmail}
-        todaysEarnings={earnings}
       />
     </div>
   );
