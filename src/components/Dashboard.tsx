@@ -121,13 +121,12 @@ const Dashboard: React.FC = () => {
         <div className="max-w-md w-full space-y-6">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              💸 Commission Payout Dashboard
+              💸 Dashboard
             </h1>
             <p className="text-gray-600">
-              Sign in to access your earnings and request payouts
+              Please sign in to access your dashboard
             </p>
           </div>
-          <GoogleAuth />
         </div>
       </div>
     );
