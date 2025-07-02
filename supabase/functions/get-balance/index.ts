@@ -19,28 +19,59 @@ serve(async (req) => {
       throw new Error('Address is required');
     }
     
-    console.log('Getting balance for address:', address);
+    const blockcypherToken = Deno.env.get('BLOCKCYPHER_API_KEY');
+    console.log('Fetching balance for address:', address);
     
-    // Fetch balance from mempool.space mainnet API
-    const response = await fetch(`https://mempool.space/api/address/${address}`);
+    // Try BlockCypher first, fall back to mempool.space
+    let balanceSats, balanceBTC, transactions, source;
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch balance: ${response.statusText}`);
+    try {
+      // BlockCypher API endpoint for address balance
+      const url = blockcypherToken 
+        ? `https://api.blockcypher.com/v1/btc/main/addrs/${address}/balance?token=${blockcypherToken}`
+        : `https://api.blockcypher.com/v1/btc/main/addrs/${address}/balance`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        balanceSats = data.balance || 0;
+        balanceBTC = balanceSats / 100000000;
+        transactions = data.n_tx || 0;
+        source = 'BlockCypher';
+        console.log('✅ Balance fetched from BlockCypher:', { balanceSats, balanceBTC, transactions });
+      } else {
+        throw new Error('BlockCypher failed, trying mempool.space');
+      }
+    } catch (error) {
+      console.log('BlockCypher failed, falling back to mempool.space:', error.message);
+      
+      // Fallback to mempool.space
+      const response = await fetch(`https://mempool.space/api/address/${address}`);
+      
+      if (!response.ok) {
+        throw new Error(`Both APIs failed. Mempool.space error: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      balanceSats = data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
+      balanceBTC = balanceSats / 100000000;
+      transactions = data.chain_stats.tx_count;
+      source = 'Mempool.space';
+      console.log('✅ Balance fetched from mempool.space:', { balanceSats, balanceBTC, transactions });
     }
     
-    const data = await response.json();
-    
-    // Calculate balance in satoshis
-    const balanceSats = data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
-    const balanceBTC = balanceSats / 100000000; // Convert to BTC
-    
-    console.log('Balance data:', { balanceSats, balanceBTC, data });
-    
     return new Response(JSON.stringify({
+      address,
       balanceSats,
       balanceBTC,
-      address,
-      transactions: data.chain_stats.tx_count,
+      transactions,
+      source,
+      timestamp: new Date().toISOString(),
       network: 'mainnet'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
