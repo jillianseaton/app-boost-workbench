@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Bitcoin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface EarningsData {
@@ -24,6 +26,7 @@ interface EarningsConverterProps {
 const EarningsConverter: React.FC<EarningsConverterProps> = ({ wallet }) => {
   const [earnings, setEarnings] = useState<EarningsData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [recipientAddress, setRecipientAddress] = useState('');
   const { toast } = useToast();
 
   const getEarningsInBTC = async () => {
@@ -101,15 +104,66 @@ const EarningsConverter: React.FC<EarningsConverterProps> = ({ wallet }) => {
       return;
     }
 
+    if (!wallet) {
+      toast({
+        title: "No Wallet",
+        description: "Please generate a Bitcoin wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!recipientAddress) {
+      toast({
+        title: "No Recipient Address",
+        description: "Please enter a Bitcoin address to receive the funds",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      // Mark commissions as paid out
+      // Convert BTC amount to satoshis
+      const amountSats = Math.floor(earnings.btcEquivalent * 100000000);
+
+      if (amountSats < 1000) {
+        throw new Error("Amount too small - minimum 1000 satoshis required");
+      }
+
+      console.log('Processing real Bitcoin transaction:', {
+        recipientAddress,
+        amountSats,
+        btcAmount: earnings.btcEquivalent
+      });
+
+      // Send actual Bitcoin transaction
+      const { data: txData, error: txError } = await supabase.functions.invoke('send-btc', {
+        body: {
+          privateKeyWIF: wallet.privateKey,
+          recipientAddress,
+          amountSats
+        }
+      });
+
+      if (txError) throw txError;
+
+      console.log('Bitcoin transaction successful:', txData);
+
+      // Only mark earnings as paid AFTER successful Bitcoin transaction
       const { error: commissionsError } = await supabase
         .from('commissions')
-        .update({ paid_out: true, paid_at: new Date().toISOString() })
+        .update({ 
+          paid_out: true, 
+          paid_at: new Date().toISOString(),
+          description: `Paid out as Bitcoin - TXID: ${txData.txid}`
+        })
         .eq('paid_out', false);
       
-      if (commissionsError) throw commissionsError;
+      if (commissionsError) {
+        console.error('Error updating commissions after successful Bitcoin tx:', commissionsError);
+        // Don't throw here since Bitcoin was sent successfully
+      }
 
       // Process affiliate earnings payout
       try {
@@ -119,7 +173,8 @@ const EarningsConverter: React.FC<EarningsConverterProps> = ({ wallet }) => {
             data: {
               affiliateId: 'YOUR_AFFILIATE_ID',
               amount: earnings.totalEarnings,
-              paymentMethod: 'bitcoin'
+              paymentMethod: 'bitcoin',
+              txid: txData.txid
             }
           }
         });
@@ -128,18 +183,19 @@ const EarningsConverter: React.FC<EarningsConverterProps> = ({ wallet }) => {
       }
       
       toast({
-        title: "Converted to BTC!",
-        description: `Converted $${earnings.totalEarnings.toFixed(2)} to ${earnings.btcEquivalent.toFixed(8)} BTC`,
+        title: "Bitcoin Sent Successfully!",
+        description: `Sent ${earnings.btcEquivalent.toFixed(8)} BTC to ${recipientAddress}. TXID: ${txData.txid}`,
       });
       
-      // Reset earnings
+      // Reset form
       setEarnings(null);
+      setRecipientAddress('');
       
     } catch (error) {
-      console.error('Error converting earnings:', error);
+      console.error('Error processing Bitcoin payout:', error);
       toast({
-        title: "Error",
-        description: `Failed to convert earnings: ${error.message}`,
+        title: "Bitcoin Transaction Failed",
+        description: `Failed to send Bitcoin: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -147,13 +203,32 @@ const EarningsConverter: React.FC<EarningsConverterProps> = ({ wallet }) => {
     }
   };
 
-  if (!wallet) return null;
+  if (!wallet) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bitcoin className="h-5 w-5" />
+            Convert USD Earnings to BTC
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Please generate a Bitcoin wallet first to convert your earnings to Bitcoin.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Convert USD Earnings to BTC</span>
+          <span className="flex items-center gap-2">
+            <Bitcoin className="h-5 w-5" />
+            Convert USD Earnings to BTC
+          </span>
           <Button 
             variant="outline" 
             size="sm" 
@@ -164,7 +239,7 @@ const EarningsConverter: React.FC<EarningsConverterProps> = ({ wallet }) => {
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {earnings ? (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -174,14 +249,37 @@ const EarningsConverter: React.FC<EarningsConverterProps> = ({ wallet }) => {
                 BTC Price: ${earnings.btcPrice.toLocaleString()}
               </p>
             </div>
+            
             {earnings.totalEarnings > 0 && (
-              <Button 
-                onClick={convertEarningsToBTC} 
-                disabled={loading}
-                className="w-full"
-              >
-                Convert ${earnings.totalEarnings.toFixed(2)} to BTC
-              </Button>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Bitcoin Address (Recipient)</label>
+                  <Input 
+                    value={recipientAddress}
+                    onChange={(e) => setRecipientAddress(e.target.value)}
+                    placeholder="Enter Bitcoin address to receive funds"
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This should be your personal Bitcoin address or exchange deposit address
+                  </p>
+                </div>
+                
+                <div className="p-3 bg-orange-50 rounded-md border border-orange-200">
+                  <p className="text-sm text-orange-800">
+                    <strong>Warning:</strong> This will send real Bitcoin to the address above. 
+                    Make sure the address is correct and belongs to you.
+                  </p>
+                </div>
+                
+                <Button 
+                  onClick={convertEarningsToBTC} 
+                  disabled={loading || !recipientAddress}
+                  className="w-full"
+                >
+                  {loading ? "Sending Bitcoin..." : `Send ${earnings.btcEquivalent.toFixed(8)} BTC`}
+                </Button>
+              </div>
             )}
           </div>
         ) : (
