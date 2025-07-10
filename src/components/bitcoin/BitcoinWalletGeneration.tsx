@@ -80,21 +80,45 @@ const BitcoinWalletGeneration: React.FC<BitcoinWalletGenerationProps> = ({
         ) : (
           <div className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Bitcoin Address</label>
-                <div className="flex gap-2">
-                  <Input 
-                    value={wallet.address} 
-                    readOnly 
-                    className="font-mono text-xs"
-                  />
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => copyToClipboard(wallet.address)}
-                  >
-                    <Copy className="h-4 w-4" />
-                  </Button>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Bitcoin Address</label>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={wallet.address} 
+                      readOnly 
+                      className="font-mono text-xs"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => copyToClipboard(wallet.address)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Private Key (WIF)</label>
+                  <div className="flex gap-2">
+                    <Input 
+                      value={wallet.privateKey} 
+                      readOnly 
+                      className="font-mono text-xs"
+                      type="password"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => copyToClipboard(wallet.privateKey)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-amber-600">
+                    ⚠️ Keep this private key secure and never share it with anyone!
+                  </p>
                 </div>
               </div>
               
