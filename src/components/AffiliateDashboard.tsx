@@ -85,31 +85,31 @@ const AffiliateDashboard: React.FC = () => {
 
   const handlePayoutRequest = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('income-affiliate', {
-        body: {
-          action: 'process_payout',
-          data: {
-            affiliateId: 'YOUR_AFFILIATE_ID',
-            amount: earnings?.earnings?.total || 0,
-            paymentMethod: 'bitcoin'
-          }
-        }
+      const { data, error } = await supabase.functions.invoke('stripe-affiliate-payout', {
+        body: {}
       });
 
       if (error) {
         throw error;
       }
 
-      toast({
-        title: "Payout Requested",
-        description: `Payout of $${earnings?.earnings?.total || 0} has been requested and is being processed.`,
-      });
+      if (data.success) {
+        toast({
+          title: "Payout Requested Successfully!",
+          description: `$${data.amount} payout initiated. ${data.estimated_arrival}`,
+        });
+        
+        // Refresh the data after successful payout
+        await loadAffiliateData();
+      } else {
+        throw new Error(data.error || 'Payout failed');
+      }
 
     } catch (error) {
       console.error('Error requesting payout:', error);
       toast({
         title: "Payout Error",
-        description: "Failed to process payout request",
+        description: error instanceof Error ? error.message : "Failed to process payout request",
         variant: "destructive",
       });
     }
@@ -268,11 +268,11 @@ const AffiliateDashboard: React.FC = () => {
                     className="w-full"
                     disabled={!earnings?.earnings?.total || earnings.earnings.total < 50}
                   >
-                    Request Payout via Bitcoin
+                    Request Stripe Bank Payout
                   </Button>
 
                   <p className="text-xs text-muted-foreground text-center">
-                    Payouts are processed within 24 hours via Bitcoin to your registered wallet address.
+                    Payouts are processed within 2-3 business days via Stripe to your bank account.
                   </p>
                 </CardContent>
               </Card>
