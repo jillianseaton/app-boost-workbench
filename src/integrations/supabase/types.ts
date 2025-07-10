@@ -55,6 +55,54 @@ export type Database = {
           },
         ]
       }
+      bitcoin_transactions: {
+        Row: {
+          address: string
+          amount_btc: number
+          amount_satoshis: number
+          block_height: number | null
+          confirmations: number | null
+          created_at: string | null
+          fee_satoshis: number | null
+          id: string
+          order_id: string | null
+          status: string | null
+          transaction_id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address: string
+          amount_btc: number
+          amount_satoshis: number
+          block_height?: number | null
+          confirmations?: number | null
+          created_at?: string | null
+          fee_satoshis?: number | null
+          id?: string
+          order_id?: string | null
+          status?: string | null
+          transaction_id: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address?: string
+          amount_btc?: number
+          amount_satoshis?: number
+          block_height?: number | null
+          confirmations?: number | null
+          created_at?: string | null
+          fee_satoshis?: number | null
+          id?: string
+          order_id?: string | null
+          status?: string | null
+          transaction_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       commissions: {
         Row: {
           amount_earned_cents: number
@@ -214,6 +262,36 @@ export type Database = {
           verification_method?: string
           verification_status?: string
           verified_at?: string | null
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          payload: Json
+          processed_at: string | null
+          status: string | null
+          webhook_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          payload: Json
+          processed_at?: string | null
+          status?: string | null
+          webhook_type: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          status?: string | null
+          webhook_type?: string
         }
         Relationships: []
       }
