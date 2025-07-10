@@ -37,9 +37,29 @@ const EarningsConverter: React.FC<EarningsConverterProps> = ({ wallet }) => {
       
       if (commissionsError) throw commissionsError;
       
-      // Calculate total USD earnings
+      // Calculate total USD earnings from commissions
       const totalCents = commissions?.reduce((sum, commission) => sum + commission.amount_earned_cents, 0) || 0;
-      const totalUSD = totalCents / 100;
+      let totalUSD = totalCents / 100;
+
+      // Get affiliate earnings
+      try {
+        const { data: earningsData } = await supabase.functions.invoke('income-affiliate', {
+          body: {
+            action: 'calculate_earnings',
+            data: {
+              affiliateId: 'YOUR_AFFILIATE_ID',
+              timeframe: 'monthly'
+            }
+          }
+        });
+        
+        // Add affiliate earnings to total
+        if (earningsData?.earnings?.total) {
+          totalUSD += parseFloat(earningsData.earnings.total);
+        }
+      } catch (affiliateError) {
+        console.log('No affiliate earnings found:', affiliateError);
+      }
       
       // Get BTC price
       const { data: priceData, error: priceError } = await supabase.functions.invoke('get-btc-price');
@@ -84,12 +104,28 @@ const EarningsConverter: React.FC<EarningsConverterProps> = ({ wallet }) => {
     setLoading(true);
     try {
       // Mark commissions as paid out
-      const { error } = await supabase
+      const { error: commissionsError } = await supabase
         .from('commissions')
         .update({ paid_out: true, paid_at: new Date().toISOString() })
         .eq('paid_out', false);
       
-      if (error) throw error;
+      if (commissionsError) throw commissionsError;
+
+      // Process affiliate earnings payout
+      try {
+        await supabase.functions.invoke('income-affiliate', {
+          body: {
+            action: 'process_payout',
+            data: {
+              affiliateId: 'YOUR_AFFILIATE_ID',
+              amount: earnings.totalEarnings,
+              paymentMethod: 'bitcoin'
+            }
+          }
+        });
+      } catch (affiliateError) {
+        console.log('No affiliate earnings to process:', affiliateError);
+      }
       
       toast({
         title: "Converted to BTC!",
