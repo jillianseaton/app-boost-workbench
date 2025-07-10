@@ -10,6 +10,7 @@ import AdSenseUnit from '@/components/ads/AdSenseUnit';
 import { useAdTracking } from '@/hooks/useAdTracking';
 import { Button } from '@/components/ui/button';
 import { CreditCard } from 'lucide-react';
+import StripePayoutSection from '@/components/StripePayoutSection';
 
 const Index = () => {
   const { trackImpression, trackClick } = useAdTracking();
@@ -109,6 +110,11 @@ const Index = () => {
               Try Stripe Payment Intent Demo
             </Button>
           </Link>
+        </div>
+        
+        {/* Stripe Payout Section */}
+        <div className="my-8">
+          <StripePayoutSection />
         </div>
         
         {/* First AdSense Ad Unit */}
