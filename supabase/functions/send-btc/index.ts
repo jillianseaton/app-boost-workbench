@@ -15,7 +15,11 @@ serve(async (req) => {
   }
 
   try {
-    const { privateKeyWIF, recipientAddress, amountSats } = await req.json();
+    const requestBody = await req.json();
+    console.log('Received request body:', requestBody);
+    
+    const { privateKeyWIF, recipientAddress, amountSats } = requestBody;
+    console.log('Extracted values:', { privateKeyWIF: privateKeyWIF ? 'present' : 'missing', recipientAddress, amountSats });
     
     if (!privateKeyWIF || !recipientAddress || !amountSats) {
       throw new Error('Private key, recipient address, and amount are required');
