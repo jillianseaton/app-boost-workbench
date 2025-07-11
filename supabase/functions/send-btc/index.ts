@@ -19,6 +19,12 @@ serve(async (req) => {
       throw new Error('Private key, recipient address, and amount are required');
     }
     
+    // Validate Bitcoin address format for mainnet
+    const addressRegex = /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/;
+    if (!addressRegex.test(recipientAddress)) {
+      throw new Error(`Invalid Bitcoin address format: ${recipientAddress}. Please use a valid Bitcoin address starting with 1, 3, or bc1.`);
+    }
+    
     console.log('Sending BTC:', { recipientAddress, amountSats });
     
     // Import bitcoinjs-lib
