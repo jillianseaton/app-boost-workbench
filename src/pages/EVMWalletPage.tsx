@@ -1,5 +1,5 @@
 import React from 'react';
-import EVMIntegration from '@/components/EVMIntegration';
+import MultiEVMIntegration from '@/components/MultiEVMIntegration';
 
 const EVMWalletPage: React.FC = () => {
   return (
@@ -14,7 +14,7 @@ const EVMWalletPage: React.FC = () => {
           </p>
         </div>
         
-        <EVMIntegration />
+        <MultiEVMIntegration />
       </div>
     </div>
   );

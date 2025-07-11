@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Wallet, Shield, Circle, Settings } from 'lucide-react';
-import WalletConnector from './wallet/WalletConnector';
-import WalletDashboard from './wallet/WalletDashboard';
+import { Wallet, Shield, Circle, Settings, Plus } from 'lucide-react';
+import MultiWalletConnector from './wallet/MultiWalletConnector';
+import MultiWalletDashboard from './wallet/MultiWalletDashboard';
 import NetworkSelector from './wallet/NetworkSelector';
 import ContractInteraction from './wallet/ContractInteraction';
+import { useMultiWallet } from '@/hooks/useMultiWallet';
 
 export interface WalletInfo {
   address: string;
@@ -16,23 +17,16 @@ export interface WalletInfo {
 }
 
 const DecentralizedWallet: React.FC = () => {
-  const [connectedWallets, setConnectedWallets] = useState<WalletInfo[]>([]);
   const [selectedNetwork, setSelectedNetwork] = useState('ethereum');
+  const [showConnector, setShowConnector] = useState(false);
+  const { connectedWallets } = useMultiWallet();
   const { toast } = useToast();
 
-  const handleWalletConnect = (walletInfo: WalletInfo) => {
-    setConnectedWallets(prev => [...prev, walletInfo]);
+  const handleWalletConnect = () => {
+    setShowConnector(false);
     toast({
       title: "Wallet Connected",
-      description: `Successfully connected to ${walletInfo.network}`,
-    });
-  };
-
-  const handleWalletDisconnect = (address: string) => {
-    setConnectedWallets(prev => prev.filter(wallet => wallet.address !== address));
-    toast({
-      title: "Wallet Disconnected",
-      description: "Wallet has been disconnected",
+      description: `Successfully connected to ${selectedNetwork}`,
     });
   };
 
@@ -95,32 +89,45 @@ const DecentralizedWallet: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Wallet Connection */}
+      {/* Add Wallet Button */}
       <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wallet className="h-5 w-5" />
-            Connect Wallet
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <WalletConnector
-            selectedNetwork={selectedNetwork}
-            onWalletConnect={handleWalletConnect}
-          />
+        <CardContent className="p-6">
+          <div className="text-center">
+            <Button
+              onClick={() => setShowConnector(!showConnector)}
+              className="flex items-center gap-2"
+              size="lg"
+            >
+              <Plus className="h-5 w-5" />
+              {showConnector ? 'Hide Wallet Connector' : 'Connect New Wallet'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Wallet Connector (Collapsible) */}
+      {showConnector && (
+        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Wallet className="h-5 w-5" />
+              Connect New Wallet
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MultiWalletConnector
+              selectedNetwork={selectedNetwork}
+              onWalletConnect={handleWalletConnect}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Smart Contract Interaction */}
       <ContractInteraction />
 
       {/* Connected Wallets Dashboard */}
-      {connectedWallets.length > 0 && (
-        <WalletDashboard
-          wallets={connectedWallets}
-          onDisconnect={handleWalletDisconnect}
-        />
-      )}
+      <MultiWalletDashboard />
     </div>
   );
 };
