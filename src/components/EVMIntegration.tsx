@@ -11,10 +11,13 @@ import {
   Network, 
   Wallet, 
   ArrowUpDown, 
+  ArrowDownLeft,
   RefreshCw, 
   ExternalLink,
   CheckCircle,
-  AlertCircle 
+  AlertCircle,
+  Copy,
+  QrCode
 } from 'lucide-react';
 
 const EVMIntegration: React.FC = () => {
@@ -114,6 +117,14 @@ const EVMIntegration: React.FC = () => {
   const handleNetworkSwitch = async (networkName: string) => {
     setSelectedNetwork(networkName);
     await switchNetwork(networkName);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: "Address copied to clipboard",
+    });
   };
 
   const handleSendTransaction = async () => {
@@ -260,6 +271,64 @@ const EVMIntegration: React.FC = () => {
                 className="text-sm text-blue-600 hover:underline flex items-center gap-1 mt-2"
               >
                 View on {currentNetwork.name} Explorer
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Receive Section */}
+      {isConnected && accounts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ArrowDownLeft className="h-5 w-5" />
+              Receive {currentNetwork?.symbol || 'ETH'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Your Wallet Address</label>
+              <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+                <ENSDisplay 
+                  address={accounts[0]} 
+                  showAvatar={true}
+                  showFullAddress={false}
+                  className="flex-1"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(accounts[0])}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
+              <div className="flex items-start gap-2">
+                <QrCode className="h-4 w-4 mt-0.5 text-blue-600" />
+                <div>
+                  <p className="font-medium text-blue-800 dark:text-blue-200">How to receive {currentNetwork?.symbol || 'ETH'}:</p>
+                  <ul className="mt-1 space-y-1 text-blue-700 dark:text-blue-300">
+                    <li>• Share your address above with the sender</li>
+                    <li>• Make sure they send to the correct network ({currentNetwork?.name || 'Ethereum'})</li>
+                    <li>• Transactions may take a few minutes to confirm</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {currentNetwork && (
+              <a
+                href={`${currentNetwork.explorer}/address/${accounts[0]}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+              >
+                View transactions on {currentNetwork.name} Explorer
                 <ExternalLink className="h-3 w-3" />
               </a>
             )}
