@@ -78,6 +78,7 @@ const Dashboard: React.FC = () => {
       const btcPrice = priceData.price;
       const btcEarnings = adRevenue / btcPrice;
       
+      setEarnings(prev => prev + btcEarnings); // Track BTC earnings instead of USD
       setTasksCompleted(prev => prev + 1);
       
       // Add transaction record showing BTC earnings
