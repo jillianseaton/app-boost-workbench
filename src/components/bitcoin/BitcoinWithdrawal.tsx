@@ -38,6 +38,7 @@ const BitcoinWithdrawal: React.FC<BitcoinWithdrawalProps> = ({
   const { toast } = useToast();
 
   const exchangeWallets = [
+    { name: 'Electrum Wallet', address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' },
     { name: 'Coinbase', address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' },
     { name: 'Binance', address: '1NDyJtNTjmwk5xPNhjgAMu4HDHigtobu1s' },
     { name: 'Kraken', address: '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2' },
