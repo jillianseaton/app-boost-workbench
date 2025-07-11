@@ -127,12 +127,17 @@ export const useWeb3 = () => {
   }, [accounts, toast]);
 
   // Switch network
-  const switchNetwork = useCallback(async (networkId: string) => {
+  const switchNetwork = useCallback(async (networkName: string) => {
     try {
-      await web3Service.switchNetwork(networkId);
+      await web3Service.switchNetwork(networkName);
+      
+      // Refresh network info after switch
+      const netId = await web3Service.getNetworkId();
+      setNetworkId(netId);
+      
       toast({
         title: "Network Switched",
-        description: `Switched to network ${networkId}`,
+        description: `Switched to ${networkName}`,
       });
     } catch (error) {
       console.error('Network switch error:', error);

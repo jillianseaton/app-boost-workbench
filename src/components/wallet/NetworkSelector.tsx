@@ -9,12 +9,60 @@ interface NetworkSelectorProps {
 }
 
 const networks = [
-  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', color: 'bg-blue-500' },
-  { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', color: 'bg-orange-500' },
-  { id: 'polygon', name: 'Polygon', symbol: 'MATIC', color: 'bg-purple-500' },
-  { id: 'binance', name: 'Binance Smart Chain', symbol: 'BNB', color: 'bg-yellow-500' },
-  { id: 'avalanche', name: 'Avalanche', symbol: 'AVAX', color: 'bg-red-500' },
-  { id: 'solana', name: 'Solana', symbol: 'SOL', color: 'bg-green-500' },
+  { 
+    id: 'ethereum', 
+    name: 'Ethereum', 
+    symbol: 'ETH', 
+    color: 'bg-blue-500',
+    chainId: '0x1',
+    rpcUrl: 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
+    blockExplorer: 'https://etherscan.io'
+  },
+  { 
+    id: 'polygon', 
+    name: 'Polygon', 
+    symbol: 'MATIC', 
+    color: 'bg-purple-500',
+    chainId: '0x89',
+    rpcUrl: 'https://polygon-rpc.com',
+    blockExplorer: 'https://polygonscan.com'
+  },
+  { 
+    id: 'binance', 
+    name: 'Binance Smart Chain', 
+    symbol: 'BNB', 
+    color: 'bg-yellow-500',
+    chainId: '0x38',
+    rpcUrl: 'https://bsc-dataseed1.binance.org',
+    blockExplorer: 'https://bscscan.com'
+  },
+  { 
+    id: 'avalanche', 
+    name: 'Avalanche', 
+    symbol: 'AVAX', 
+    color: 'bg-red-500',
+    chainId: '0xa86a',
+    rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
+    blockExplorer: 'https://snowtrace.io'
+  },
+  { 
+    id: 'arbitrum', 
+    name: 'Arbitrum One', 
+    symbol: 'ETH', 
+    color: 'bg-blue-400',
+    chainId: '0xa4b1',
+    rpcUrl: 'https://arb1.arbitrum.io/rpc',
+    blockExplorer: 'https://arbiscan.io'
+  },
+  { 
+    id: 'optimism', 
+    name: 'Optimism', 
+    symbol: 'ETH', 
+    color: 'bg-red-400',
+    chainId: '0xa',
+    rpcUrl: 'https://mainnet.optimism.io',
+    blockExplorer: 'https://optimistic.etherscan.io'
+  },
 ];
 
 const NetworkSelector: React.FC<NetworkSelectorProps> = ({

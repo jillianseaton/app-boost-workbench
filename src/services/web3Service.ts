@@ -20,6 +20,16 @@ class Web3Service {
   private web3: Web3 | null = null;
   private contracts: Map<string, Contract<any>> = new Map();
   private currentNetwork: string = 'mainnet';
+  
+  // Network configurations
+  private networkConfigs = {
+    ethereum: { chainId: '0x1', rpcUrl: 'https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161' },
+    polygon: { chainId: '0x89', rpcUrl: 'https://polygon-rpc.com' },
+    binance: { chainId: '0x38', rpcUrl: 'https://bsc-dataseed1.binance.org' },
+    avalanche: { chainId: '0xa86a', rpcUrl: 'https://api.avax.network/ext/bc/C/rpc' },
+    arbitrum: { chainId: '0xa4b1', rpcUrl: 'https://arb1.arbitrum.io/rpc' },
+    optimism: { chainId: '0xa', rpcUrl: 'https://mainnet.optimism.io' },
+  };
 
   // Initialize Web3 instance
   async initializeWeb3(config?: Web3Config): Promise<Web3> {
@@ -167,19 +177,95 @@ class Web3Service {
   }
 
   // Switch network
-  async switchNetwork(networkId: string): Promise<void> {
+  async switchNetwork(networkName: string): Promise<void> {
+    const networkConfig = this.networkConfigs[networkName as keyof typeof this.networkConfigs];
+    if (!networkConfig) {
+      throw new Error(`Unsupported network: ${networkName}`);
+    }
+
     if (typeof window !== 'undefined' && (window as any).ethereum) {
       try {
         await (window as any).ethereum.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: this.web3?.utils.toHex(networkId) }],
+          params: [{ chainId: networkConfig.chainId }],
         });
-        this.currentNetwork = networkId;
-      } catch (error) {
-        console.error('Failed to switch network:', error);
-        throw error;
+        this.currentNetwork = networkName;
+      } catch (switchError: any) {
+        // This error code indicates that the chain has not been added to MetaMask.
+        if (switchError.code === 4902) {
+          try {
+            await this.addNetwork(networkName);
+          } catch (addError) {
+            console.error('Failed to add network:', addError);
+            throw addError;
+          }
+        } else {
+          console.error('Failed to switch network:', switchError);
+          throw switchError;
+        }
       }
     }
+  }
+
+  // Add network to wallet
+  async addNetwork(networkName: string): Promise<void> {
+    const networkConfig = this.networkConfigs[networkName as keyof typeof this.networkConfigs];
+    if (!networkConfig) {
+      throw new Error(`Unsupported network: ${networkName}`);
+    }
+
+    const networkParams = {
+      chainId: networkConfig.chainId,
+      chainName: this.getNetworkDisplayName(networkName),
+      rpcUrls: [networkConfig.rpcUrl],
+      nativeCurrency: this.getNativeCurrency(networkName),
+      blockExplorerUrls: [this.getBlockExplorer(networkName)],
+    };
+
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      await (window as any).ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [networkParams],
+      });
+      this.currentNetwork = networkName;
+    }
+  }
+
+  // Helper methods for network configuration
+  private getNetworkDisplayName(networkName: string): string {
+    const names = {
+      ethereum: 'Ethereum Mainnet',
+      polygon: 'Polygon Mainnet',
+      binance: 'Binance Smart Chain',
+      avalanche: 'Avalanche Network',
+      arbitrum: 'Arbitrum One',
+      optimism: 'Optimism',
+    };
+    return names[networkName as keyof typeof names] || networkName;
+  }
+
+  private getNativeCurrency(networkName: string) {
+    const currencies = {
+      ethereum: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+      polygon: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+      binance: { name: 'Binance Coin', symbol: 'BNB', decimals: 18 },
+      avalanche: { name: 'Avalanche', symbol: 'AVAX', decimals: 18 },
+      arbitrum: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+      optimism: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+    };
+    return currencies[networkName as keyof typeof currencies] || { name: 'ETH', symbol: 'ETH', decimals: 18 };
+  }
+
+  private getBlockExplorer(networkName: string): string {
+    const explorers = {
+      ethereum: 'https://etherscan.io',
+      polygon: 'https://polygonscan.com',
+      binance: 'https://bscscan.com',
+      avalanche: 'https://snowtrace.io',
+      arbitrum: 'https://arbiscan.io',
+      optimism: 'https://optimistic.etherscan.io',
+    };
+    return explorers[networkName as keyof typeof explorers] || 'https://etherscan.io';
   }
 
   // Check if wallet is connected

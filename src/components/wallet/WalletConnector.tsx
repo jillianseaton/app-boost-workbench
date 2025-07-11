@@ -53,7 +53,7 @@ const WalletConnector: React.FC<WalletConnectorProps> = ({
       return;
     }
 
-    if (providerId === 'web3') {
+    if (providerId === 'web3' || providerId === 'metamask') {
       setConnecting(providerId);
       try {
         await connectWallet(rpcUrl || undefined);
@@ -68,12 +68,17 @@ const WalletConnector: React.FC<WalletConnectorProps> = ({
           };
           onWalletConnect(walletInfo);
           toast({
-            title: "Web3 Connected",
-            description: `Connected to ${accounts[0].slice(0, 10)}...`,
+            title: "Wallet Connected",
+            description: `Connected to ${accounts[0].slice(0, 10)}... on ${selectedNetwork}`,
           });
         }
       } catch (error) {
-        console.error('Web3 connection failed:', error);
+        console.error('Wallet connection failed:', error);
+        toast({
+          title: "Connection Failed",
+          description: error instanceof Error ? error.message : "Failed to connect wallet",
+          variant: "destructive",
+        });
       } finally {
         setConnecting(null);
       }
