@@ -68,12 +68,16 @@ const BitcoinWithdrawal: React.FC<BitcoinWithdrawalProps> = ({
 
     setSendLoading(true);
     try {
+      const requestData = {
+        privateKeyWIF: wallet.privateKey,
+        recipientAddress,
+        amountSats: parseInt(amountSats)
+      };
+      
+      console.log('Sending request to send-btc:', requestData);
+      
       const { data, error } = await supabase.functions.invoke('send-btc', {
-        body: {
-          privateKeyWIF: wallet.privateKey,
-          recipientAddress,
-          amountSats: parseInt(amountSats)
-        }
+        body: requestData
       });
       
       if (error) throw error;
