@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useWeb3 } from '@/hooks/useWeb3';
+import { useENS } from '@/hooks/useENS';
+import ENSDisplay from '@/components/ENSDisplay';
 import { Wallet, Circle, Wifi } from 'lucide-react';
 import { WalletInfo } from '../DecentralizedWallet';
 
@@ -29,20 +31,37 @@ const WalletConnector: React.FC<WalletConnectorProps> = ({
   const [rpcUrl, setRpcUrl] = useState('');
   const { toast } = useToast();
   const { connectWallet, accounts, getBalance, isConnected, isLoading } = useWeb3();
+  const { resolveAddress } = useENS();
 
   const handleConnect = async (providerId: string) => {
     if (providerId === 'custom') {
       if (!customAddress.trim()) {
         toast({
           title: "Error",
-          description: "Please enter a valid address",
+          description: "Please enter a valid address or ENS name",
           variant: "destructive",
         });
         return;
       }
 
+      let finalAddress = customAddress;
+      
+      // Resolve ENS if needed
+      if (customAddress.endsWith('.eth')) {
+        const resolved = await resolveAddress(customAddress);
+        if (!resolved) {
+          toast({
+            title: "Error",
+            description: "Could not resolve ENS name",
+            variant: "destructive",
+          });
+          return;
+        }
+        finalAddress = resolved;
+      }
+
       const walletInfo: WalletInfo = {
-        address: customAddress,
+        address: finalAddress,
         balance: '0.0000',
         network: selectedNetwork,
         connected: true,
@@ -152,20 +171,29 @@ const WalletConnector: React.FC<WalletConnectorProps> = ({
           <Circle className="h-4 w-4" />
           Connect Custom Address
         </h3>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Enter wallet address (0x...)"
-            value={customAddress}
-            onChange={(e) => setCustomAddress(e.target.value)}
-            className="flex-1"
-          />
-          <Button
-            onClick={() => handleConnect('custom')}
-            disabled={!customAddress.trim()}
-          >
-            <Wallet className="h-4 w-4 mr-2" />
-            Connect
-          </Button>
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Enter wallet address (0x...) or ENS name (alice.eth)"
+              value={customAddress}
+              onChange={(e) => setCustomAddress(e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              onClick={() => handleConnect('custom')}
+              disabled={!customAddress.trim()}
+            >
+              <Wallet className="h-4 w-4 mr-2" />
+              Connect
+            </Button>
+          </div>
+          {customAddress && (
+            <ENSDisplay 
+              address={customAddress} 
+              showAvatar={true}
+              className="text-xs text-muted-foreground"
+            />
+          )}
         </div>
       </div>
     </div>

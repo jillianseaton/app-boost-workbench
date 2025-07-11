@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useWeb3 } from '@/hooks/useWeb3';
+import { useENS } from '@/hooks/useENS';
+import ENSDisplay from '@/components/ENSDisplay';
 import { 
   Network, 
   Wallet, 
@@ -32,6 +34,8 @@ const EVMIntegration: React.FC = () => {
     getBalance,
     switchNetwork,
   } = useWeb3();
+
+  const { resolveAddress } = useENS();
 
   const networks = [
     { 
@@ -122,9 +126,24 @@ const EVMIntegration: React.FC = () => {
       return;
     }
 
+    // Resolve ENS if needed
+    let finalAddress = recipientAddress;
+    if (recipientAddress.endsWith('.eth')) {
+      const resolved = await resolveAddress(recipientAddress);
+      if (!resolved) {
+        toast({
+          title: "Error",
+          description: "Could not resolve ENS name",
+          variant: "destructive",
+        });
+        return;
+      }
+      finalAddress = resolved;
+    }
+
     toast({
       title: "Transaction Initiated",
-      description: `Sending ${sendAmount} ${currentNetwork?.symbol || 'ETH'} to ${recipientAddress.slice(0, 10)}...`,
+      description: `Sending ${sendAmount} ${currentNetwork?.symbol || 'ETH'} to ${recipientAddress.endsWith('.eth') ? recipientAddress : `${finalAddress.slice(0, 10)}...`}`,
     });
   };
 
@@ -161,9 +180,11 @@ const EVMIntegration: React.FC = () => {
             )}
             
             {accounts.length > 0 && (
-              <div className="text-sm text-muted-foreground">
-                {accounts[0].slice(0, 10)}...{accounts[0].slice(-8)}
-              </div>
+              <ENSDisplay 
+                address={accounts[0]} 
+                showAvatar={true}
+                className="text-sm text-muted-foreground"
+              />
             )}
           </div>
         </CardContent>
@@ -257,13 +278,22 @@ const EVMIntegration: React.FC = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Recipient Address</label>
+              <label className="text-sm font-medium">Recipient Address or ENS</label>
               <Input
-                placeholder="0x..."
+                placeholder="0x... or alice.eth"
                 value={recipientAddress}
                 onChange={(e) => setRecipientAddress(e.target.value)}
                 className="font-mono"
               />
+              {recipientAddress && (
+                <div className="mt-2">
+                  <ENSDisplay 
+                    address={recipientAddress} 
+                    showAvatar={true}
+                    className="text-xs"
+                  />
+                </div>
+              )}
             </div>
             
             <div>
