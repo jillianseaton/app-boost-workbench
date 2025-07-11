@@ -6,6 +6,7 @@ import AdRevenuePage from "./pages/AdRevenuePage";
 import AffiliateRevenuePage from "./pages/AffiliateRevenuePage";
 import BitcoinWalletPage from "./pages/BitcoinWalletPage";
 import DecentralizedWalletPage from "./pages/DecentralizedWalletPage";
+import EVMWalletPage from "./pages/EVMWalletPage";
 import SecureBankTransferPage from "./pages/SecureBankTransferPage";
 import Auth from "./pages/Auth";
 import PaymentPage from "./pages/PaymentPage";
@@ -60,6 +61,12 @@ export const navItems = [
     to: "/bitcoin-wallet",
     icon: <Bitcoin className="h-4 w-4" />,
     page: <BitcoinWalletPage />,
+  },
+  {
+    title: "EVM Networks",
+    to: "/evm-wallet",
+    icon: <Wallet className="h-4 w-4" />,
+    page: <EVMWalletPage />,
   },
   {
     title: "Decentralized Wallet",
