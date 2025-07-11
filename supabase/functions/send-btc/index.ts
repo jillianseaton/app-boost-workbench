@@ -33,8 +33,8 @@ serve(async (req) => {
     
     console.log('Sending BTC:', { recipientAddress, amountSats });
     
-    // Import bitcoinjs-lib
-    const bitcoin = await import('https://cdn.skypack.dev/bitcoinjs-lib@6.1.5');
+    // Import bitcoinjs-lib from a more reliable CDN
+    const bitcoin = await import('https://esm.sh/bitcoinjs-lib@6.1.5');
     
     // Create keypair from private key (mainnet)
     const keyPair = bitcoin.ECPair.fromWIF(privateKeyWIF, bitcoin.networks.bitcoin);
