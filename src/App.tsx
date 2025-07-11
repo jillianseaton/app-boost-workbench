@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { navItems } from "./nav-items";
 import Index from "./pages/Index";
 import PaymentIntentPage from "./pages/PaymentIntentPage";
+import { SupabaseRealtimeListener } from "@/components/SupabaseRealtimeListener";
 
 const queryClient = new QueryClient();
 
@@ -15,6 +16,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <SupabaseRealtimeListener />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
