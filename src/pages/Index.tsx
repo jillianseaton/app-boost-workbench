@@ -11,6 +11,7 @@ import { useAdTracking } from '@/hooks/useAdTracking';
 import { Button } from '@/components/ui/button';
 import { CreditCard } from 'lucide-react';
 import StripePayoutSection from '@/components/StripePayoutSection';
+import UserProfile from '@/components/UserProfile';
 
 const Index = () => {
   const { trackImpression, trackClick } = useAdTracking();
@@ -101,6 +102,11 @@ const Index = () => {
       
       <main className="container mx-auto px-4 py-8">
         <IndexHero />
+        
+        {/* User Profile Section */}
+        <div className="my-8 flex justify-center">
+          <UserProfile />
+        </div>
         
         {/* Payment Intent Demo Link */}
         <div className="my-8 flex justify-center">
