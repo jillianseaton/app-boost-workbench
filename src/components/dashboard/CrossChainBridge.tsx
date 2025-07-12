@@ -78,13 +78,25 @@ const CrossChainBridge: React.FC = () => {
         description: `Converting ${btcAmountNum} BTC to ${ethEquivalent.toFixed(6)} ETH...`,
       });
 
+      // First, get the private key for the BTC address
+      const { data: keyData, error: keyError } = await supabase.functions.invoke('get-wallet-private-key', {
+        body: {
+          address: btcSourceAddress,
+          userId: user.id,
+        },
+      });
+
+      if (keyError || !keyData.privateKey) {
+        throw new Error('Could not retrieve private key for BTC address');
+      }
+
       // Step 1: Send BTC from source address
+      const amountSats = Math.round(btcAmountNum * 100000000); // Convert BTC to satoshis
       const { data: btcData, error: btcError } = await supabase.functions.invoke('send-btc', {
         body: {
-          fromAddress: btcSourceAddress,
-          toAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', // Bridge wallet address
-          amountBtc: btcAmountNum.toString(),
-          userId: user.id,
+          privateKeyWIF: keyData.privateKey,
+          recipientAddress: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', // Bridge wallet address
+          amountSats: amountSats,
         },
       });
 
