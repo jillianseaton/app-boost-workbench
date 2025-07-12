@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDashboardActions } from './DashboardActions';
 import { Transaction } from '@/utils/transactionUtils';
 import { useCommissions } from '@/hooks/useCommissions';
+import { useTodaysEarnings } from '@/hooks/useTodaysEarnings';
 import { supabase } from '@/integrations/supabase/client';
 import GoogleAuth from './GoogleAuth';
 import PrivacyPolicy from './PrivacyPolicy';
@@ -29,6 +30,9 @@ const Dashboard: React.FC = () => {
 
   // Add commission tracking
   const { addCommission } = useCommissions(userId);
+  
+  // Get today's earnings from database
+  const { todaysEarnings, refreshTodaysEarnings } = useTodaysEarnings(userId);
 
   const { resetTasks, resetAccount } = useDashboardActions(
     tasksCompleted,
@@ -102,6 +106,9 @@ const Dashboard: React.FC = () => {
           .update({ paid_out: true, paid_at: new Date().toISOString() })
           .eq('user_id', userId)
           .eq('paid_out', false);
+          
+        // Refresh today's earnings
+        refreshTodaysEarnings();
       }
 
       toast({
@@ -189,6 +196,7 @@ const Dashboard: React.FC = () => {
         onResetTasks={resetTasks}
         userEmail={userEmail}
         userId={userId}
+        todaysEarnings={todaysEarnings}
       />
 
       <PayoutSection 

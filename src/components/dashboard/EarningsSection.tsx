@@ -10,6 +10,7 @@ interface EarningsSectionProps {
   onResetTasks: () => void;
   userEmail?: string;
   userId?: string;
+  todaysEarnings?: number;
 }
 
 const EarningsSection: React.FC<EarningsSectionProps> = ({
