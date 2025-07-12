@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogOut, Shield, Bitcoin } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'react-router-dom';
+import MetaMaskConnector from './MetaMaskConnector';
 
 interface DashboardHeaderProps {
   userEmail: string;
@@ -25,6 +26,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <span>💸 Commission Payout Dashboard</span>
           </div>
           <div className="flex items-center gap-2">
+            <MetaMaskConnector />
             <Link to="/bitcoin-wallet">
               <Button variant="outline" size="sm">
                 <Bitcoin className="h-4 w-4 mr-2" />
