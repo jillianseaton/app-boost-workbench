@@ -3,6 +3,7 @@ import React from 'react';
 import BitcoinWalletSection from './BitcoinWalletSection';
 import EVMIntegration from '@/components/EVMIntegration';
 import MetaMaskWithdrawal from './MetaMaskWithdrawal';
+import CrossChainBridge from './CrossChainBridge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface PayoutSectionProps {
@@ -15,11 +16,16 @@ const PayoutSection: React.FC<PayoutSectionProps> = ({ userId, earnings, onWithd
   return (
     <div className="space-y-6">
       <Tabs defaultValue="metamask" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="bridge">Bridge</TabsTrigger>
           <TabsTrigger value="metamask">MetaMask</TabsTrigger>
           <TabsTrigger value="bitcoin">Bitcoin</TabsTrigger>
           <TabsTrigger value="evm">EVM Networks</TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="bridge" className="space-y-6">
+          <CrossChainBridge />
+        </TabsContent>
         
         <TabsContent value="metamask" className="space-y-6">
           <MetaMaskWithdrawal earnings={earnings} onWithdraw={onWithdraw} />
