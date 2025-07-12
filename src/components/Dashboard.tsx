@@ -14,6 +14,7 @@ import EarningsSection from './dashboard/EarningsSection';
 import PayoutSection from './dashboard/PayoutSection';
 import TasksSection from './dashboard/TasksSection';
 import TransactionSection from './dashboard/TransactionSection';
+import UserUUID from './UserUUID';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -225,6 +226,8 @@ const Dashboard: React.FC = () => {
         onWithdraw={handleWithdraw}
         onSecureBankDeposit={handleSecureBankDeposit}
       />
+
+      <UserUUID />
 
       <TransactionSection transactions={transactions} />
     </div>
