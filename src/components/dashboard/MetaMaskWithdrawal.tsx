@@ -3,9 +3,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Wallet, Send, Loader2 } from 'lucide-react';
+import { Wallet, Send, Loader2, AlertCircle } from 'lucide-react';
 import { useWeb3 } from '@/hooks/useWeb3';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface MetaMaskWithdrawalProps {
   earnings: number;
@@ -16,7 +18,8 @@ const MetaMaskWithdrawal: React.FC<MetaMaskWithdrawalProps> = ({
   earnings, 
   onWithdraw 
 }) => {
-  const { isConnected, accounts, sendContractTransaction, web3 } = useWeb3();
+  const { isConnected, accounts } = useWeb3();
+  const { user } = useAuth();
   const [amount, setAmount] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -26,6 +29,15 @@ const MetaMaskWithdrawal: React.FC<MetaMaskWithdrawalProps> = ({
       toast({
         title: "Wallet Not Connected",
         description: "Please connect your MetaMask wallet first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to continue.",
         variant: "destructive",
       });
       return;
@@ -52,37 +64,43 @@ const MetaMaskWithdrawal: React.FC<MetaMaskWithdrawalProps> = ({
 
     setIsLoading(true);
     try {
-      // Convert amount to wei (assuming earnings are in ETH)
-      const amountInWei = web3?.utils.toWei(withdrawAmount.toString(), 'ether');
-      
-      if (!amountInWei) {
-        throw new Error('Failed to convert amount to wei');
-      }
-
-      // For now, we'll simulate the transfer since this needs backend integration
-      // In a real implementation, you'd call your backend to initiate the transfer
       toast({
-        title: "Transfer Initiated",
-        description: `Sending ${withdrawAmount} ETH to ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
+        title: "Processing Transfer",
+        description: `Initiating transfer of ${withdrawAmount} ETH to your wallet...`,
       });
 
-      // Simulate transfer delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Call the backend edge function to perform the actual transfer
+      const { data, error } = await supabase.functions.invoke('send-eth-to-wallet', {
+        body: {
+          toAddress: accounts[0],
+          amountEth: withdrawAmount.toString(),
+          userId: user.id,
+        },
+      });
+
+      if (error) {
+        console.error('Transfer error:', error);
+        throw new Error(error.message || 'Transfer failed');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Transfer failed');
+      }
       
       // Update local state
       onWithdraw(withdrawAmount);
       setAmount('');
       
       toast({
-        title: "Transfer Successful",
-        description: `${withdrawAmount} ETH has been sent to your MetaMask wallet.`,
+        title: "Transfer Successful! 🎉",
+        description: `${withdrawAmount} ETH sent to your wallet. Transaction: ${data.transactionHash.slice(0, 10)}...`,
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Transfer error:', error);
       toast({
         title: "Transfer Failed",
-        description: "Failed to send earnings to your wallet. Please try again.",
+        description: error.message || "Failed to send earnings to your wallet. Please try again.",
         variant: "destructive",
       });
     } finally {
