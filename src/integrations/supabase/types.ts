@@ -139,6 +139,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_earnings: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          total_earnings_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          total_earnings_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          total_earnings_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -300,7 +327,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_all_users_todays_earnings: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          total_earnings_cents: number
+        }[]
+      }
+      get_todays_earnings: {
+        Args: { user_uuid?: string }
+        Returns: number
+      }
+      update_daily_earnings: {
+        Args: { target_user_id: string; target_date: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
