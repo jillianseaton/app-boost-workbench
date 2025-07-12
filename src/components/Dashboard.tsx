@@ -191,7 +191,19 @@ const Dashboard: React.FC = () => {
         userId={userId}
       />
 
-      <PayoutSection userId={userId} />
+      <PayoutSection 
+        userId={userId} 
+        earnings={earnings} 
+        onWithdraw={(amount) => {
+          setEarnings(prev => prev - amount);
+          addTransaction({
+            type: 'withdrawal',
+            amount: amount,
+            status: 'confirmed',
+            address: 'MetaMask Wallet',
+          });
+        }} 
+      />
 
       <TasksSection
         tasksCompleted={tasksCompleted}
