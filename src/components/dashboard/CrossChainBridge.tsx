@@ -111,6 +111,9 @@ const CrossChainBridge: React.FC = () => {
           amountEth: ethEquivalent.toString(),
           userId: user.id,
         },
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
       });
 
       if (ethError || !ethData.success) {
