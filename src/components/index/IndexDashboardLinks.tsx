@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ArrowRight, TrendingUp } from 'lucide-react';
+import { Shield, ArrowRight, TrendingUp, Bitcoin } from 'lucide-react';
 
 const IndexDashboardLinks = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 max-w-7xl mx-auto">
       <Link
         to="/dashboard"
         className="group block p-8 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-green-200"
@@ -107,6 +107,25 @@ const IndexDashboardLinks = () => {
         </p>
         <div className="mt-4 text-sm text-orange-600 font-medium">
           → Start Earning
+        </div>
+      </Link>
+      
+      <Link
+        to="/bitcoin-wallet"
+        className="group block p-8 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-green-200"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <Bitcoin className="h-12 w-12 text-orange-500 group-hover:scale-110 transition-transform duration-300" />
+          <ArrowRight className="h-6 w-6 text-gray-400 group-hover:text-orange-500 group-hover:translate-x-1 transition-all duration-300" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-orange-700 transition-colors">
+          Bitcoin Wallet
+        </h3>
+        <p className="text-gray-600 group-hover:text-gray-700 transition-colors">
+          Generate Bitcoin wallets, check balances, and send Bitcoin on mainnet
+        </p>
+        <div className="mt-4 text-sm text-orange-500 font-medium">
+          → Access Wallet
         </div>
       </Link>
     </div>
