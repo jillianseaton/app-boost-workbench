@@ -32,6 +32,10 @@ const BitcoinWallet: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // Debug logging
+  console.log('BitcoinWallet - wallet state:', wallet);
+  console.log('BitcoinWallet - wallet address:', wallet?.address);
+
   const generateWallet = async () => {
     setLoading(true);
     try {

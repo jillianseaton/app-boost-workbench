@@ -27,6 +27,9 @@ const BitcoinDebugger: React.FC<BitcoinDebuggerProps> = ({ wallet }) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // Debug logging
+  console.log('BitcoinDebugger - wallet prop:', wallet);
+
   const runDiagnostics = async () => {
     setLoading(true);
     const debugResults: DebugResults = {
