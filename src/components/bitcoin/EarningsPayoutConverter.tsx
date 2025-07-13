@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { RefreshCw, Bitcoin, DollarSign, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,6 +33,7 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
   const [earnings, setEarnings] = useState<EarningsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [customWalletAddress, setCustomWalletAddress] = useState('bc1qynefm4c3rwcwwclep6095dnjgatr9faz4rj0tn');
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -159,8 +162,8 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
         userWallet: wallet.address
       });
 
-      // Use the specific Bitcoin address provided by user
-      const destinationAddress = '1N4oefv37jNGD5RMn1F8s1ZmNzgjnW5PJD';
+      // Use the custom wallet address provided by user
+      const destinationAddress = customWalletAddress || wallet.address;
       
       console.log('About to call convert-earnings-to-btc with:', {
         userWalletAddress: destinationAddress,
@@ -351,11 +354,24 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
 
             {earnings.totalUSD > 0 ? (
               <div className="space-y-4">
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <DollarSign className="h-4 w-4" />
-                  <ArrowRight className="h-4 w-4" />
-                  <Bitcoin className="h-4 w-4" />
-                  <span>Converts to: 1N4oefv37jNGD5RMn1F8s1ZmNzgjnW5PJD</span>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="wallet-address">Bitcoin Wallet Address</Label>
+                    <Input
+                      id="wallet-address"
+                      value={customWalletAddress}
+                      onChange={(e) => setCustomWalletAddress(e.target.value)}
+                      placeholder="Enter Bitcoin wallet address"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <DollarSign className="h-4 w-4" />
+                    <ArrowRight className="h-4 w-4" />
+                    <Bitcoin className="h-4 w-4" />
+                    <span>Converts to: {customWalletAddress}</span>
+                  </div>
                 </div>
 
                 <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
@@ -368,7 +384,7 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
 
                 <Button 
                   onClick={convertToBitcoin}
-                  disabled={converting}
+                  disabled={converting || !customWalletAddress}
                   className="w-full bg-gradient-to-r from-green-600 to-orange-600 hover:from-green-700 hover:to-orange-700"
                   size="lg"
                 >
