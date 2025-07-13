@@ -164,14 +164,15 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
         userId: user.id
       });
 
-      // Use the correct Bitcoin address where the user actually has funds
-      const actualBitcoinAddress = '1N4oefv37jNGD5RMn1F8s1ZmNzgjnW5PJD';
+      const requestPayload = {
+        userWalletAddress: wallet.address,
+        userId: user.id
+      };
+      
+      console.log('EXACT REQUEST PAYLOAD BEING SENT:', JSON.stringify(requestPayload, null, 2));
       
       const { data, error } = await supabase.functions.invoke('convert-earnings-to-btc', {
-        body: {
-          userWalletAddress: actualBitcoinAddress,
-          userId: user.id
-        }
+        body: requestPayload
       });
 
       console.log('Function response received:', { data, error });
