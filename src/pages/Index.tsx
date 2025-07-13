@@ -124,10 +124,10 @@ const Index = () => {
         </div>
         
         {/* First AdSense Ad Unit */}
-        <div className="my-8 flex justify-center">
+        <div className="my-8 w-full flex justify-center px-4">
           <AdSenseUnit
             adSlot="4133257448"
-            className="max-w-4xl mx-auto"
+            className="w-full"
             onImpression={handleAdImpression1}
             onAdClick={handleAdClick1}
           />
@@ -136,47 +136,47 @@ const Index = () => {
         <IndexPaymentCTA />
         
         {/* In-Article Ad Unit */}
-        <div className="my-8 flex justify-center">
+        <div className="my-8 w-full flex justify-center px-4">
           <AdSenseUnit
             adSlot="9487572195"
             adFormat="fluid"
             adLayout="in-article"
+            className="w-full"
             style={{ display: 'block', textAlign: 'center' }}
-            className="max-w-4xl mx-auto"
             onImpression={handleInArticleAdImpression}
             onAdClick={handleInArticleAdClick}
           />
         </div>
         
         {/* Native Ad Unit - Fluid Layout */}
-        <div className="my-8 flex justify-center">
+        <div className="my-8 w-full flex justify-center px-4">
           <AdSenseUnit
             adSlot="6567849095"
             adFormat="fluid"
+            className="w-full"
             style={{ display: 'block' }}
-            className="max-w-4xl mx-auto"
             onImpression={handleNativeAdImpression}
             onAdClick={handleNativeAdClick}
           />
         </div>
         
         {/* Multiplex Ad Unit - Autorelaxed */}
-        <div className="my-8 flex justify-center">
+        <div className="my-8 w-full flex justify-center px-4">
           <AdSenseUnit
             adSlot="3941685758"
             adFormat="autorelaxed"
+            className="w-full"
             style={{ display: 'block' }}
-            className="max-w-4xl mx-auto"
             onImpression={handleMultiplexAdImpression}
             onAdClick={handleMultiplexAdClick}
           />
         </div>
         
         {/* Second AdSense Ad Unit */}
-        <div className="my-8 flex justify-center">
+        <div className="my-8 w-full flex justify-center px-4">
           <AdSenseUnit
             adSlot="1879193848"
-            className="max-w-4xl mx-auto"
+            className="w-full"
             onImpression={handleAdImpression2}
             onAdClick={handleAdClick2}
           />

@@ -63,12 +63,18 @@ const AdSenseUnit: React.FC<AdSenseUnitProps> = ({
   return (
     <div 
       ref={adRef}
-      className={className}
+      className={`min-w-[300px] w-full max-w-4xl mx-auto ${className}`}
       onClick={handleAdClick}
+      style={{ minHeight: '50px' }}
     >
       <ins
         className="adsbygoogle"
-        style={style}
+        style={{
+          display: 'block',
+          width: '100%',
+          minHeight: '50px',
+          ...style
+        }}
         data-ad-client="ca-pub-9370068622982104"
         data-ad-slot={adSlot}
         data-ad-format={adFormat}

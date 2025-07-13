@@ -29,12 +29,12 @@ const DashboardPage: React.FC = () => {
         <Dashboard />
         
         {/* Multiplex Ad Unit */}
-        <div className="my-8 flex justify-center">
+        <div className="my-8 w-full flex justify-center px-4">
           <AdSenseUnit
             adSlot="3941685758"
             adFormat="autorelaxed"
+            className="w-full"
             style={{ display: 'block' }}
-            className="max-w-4xl mx-auto"
             onImpression={handleMultiplexAdImpression}
             onAdClick={handleMultiplexAdClick}
           />
