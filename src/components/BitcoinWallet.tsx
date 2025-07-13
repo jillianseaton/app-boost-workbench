@@ -47,6 +47,7 @@ const BitcoinWallet: React.FC = () => {
   // Debug logging
   console.log('BitcoinWallet - wallet state:', wallet);
   console.log('BitcoinWallet - wallet address:', wallet?.address);
+  console.log('BitcoinWallet - localStorage check:', localStorage.getItem('bitcoin-wallet'));
 
   const generateWallet = async () => {
     setLoading(true);
