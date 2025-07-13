@@ -174,12 +174,32 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
         }
       });
 
-      if (error) throw error;
+      console.log('Function response received:', { data, error });
 
-      if (!data.success) {
+      if (error) {
+        console.error('Supabase function error details:', error);
         toast({
           title: "Conversion Failed",
-          description: data.message,
+          description: `Function error: ${error.message || 'Unknown function error'}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data) {
+        toast({
+          title: "Conversion Failed",
+          description: "No response data received from function",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data.success) {
+        console.error('Function returned failure:', data);
+        toast({
+          title: "Conversion Failed",
+          description: data.error || data.message || "Unknown error from function",
           variant: "destructive",
         });
         return;
@@ -199,10 +219,10 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
       }
 
     } catch (error) {
-      console.error('Error converting earnings:', error);
+      console.error('Unexpected error during conversion:', error);
       toast({
         title: "Conversion Failed",
-        description: `Failed to convert earnings: ${error.message}`,
+        description: `Unexpected error: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
