@@ -20,9 +20,13 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { userWalletAddress, userId } = await req.json();
+    const requestBody = await req.json();
+    console.log('Request body received:', JSON.stringify(requestBody, null, 2));
+    
+    const { userWalletAddress, userId } = requestBody;
     
     if (!userWalletAddress || !userId) {
+      console.error('Missing required parameters:', { userWalletAddress: !!userWalletAddress, userId: !!userId });
       throw new Error('User wallet address and user ID are required');
     }
 
@@ -35,7 +39,10 @@ serve(async (req) => {
       .eq('user_id', userId)
       .eq('paid_out', false);
 
-    if (commissionsError) throw commissionsError;
+    if (commissionsError) {
+      console.error('Error fetching commissions:', commissionsError);
+      throw commissionsError;
+    }
 
     if (!commissions || commissions.length === 0) {
       return new Response(JSON.stringify({
@@ -54,19 +61,12 @@ serve(async (req) => {
 
     console.log(`Total unpaid earnings: $${totalUSD}`);
 
-    // Get current BTC price
-    const btcPriceResponse = await fetch(`${supabaseUrl}/functions/v1/get-btc-price`, {
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!btcPriceResponse.ok) {
-      throw new Error('Failed to get BTC price');
+    // Get current BTC price using Supabase client
+    const { data: priceData, error: priceError } = await supabase.functions.invoke('get-btc-price');
+    
+    if (priceError) {
+      throw new Error(`Failed to get BTC price: ${priceError.message}`);
     }
-
-    const priceData = await btcPriceResponse.json();
     const btcPrice = priceData.price;
     console.log('Current BTC price:', btcPrice);
 
@@ -92,31 +92,24 @@ serve(async (req) => {
     // Get pool wallet private key from secrets
     const poolPrivateKey = Deno.env.get('BTC_private_key');
     if (!poolPrivateKey) {
-      throw new Error('Pool wallet private key not configured');
+      console.error('Pool wallet private key not found in environment variables');
+      throw new Error('Pool wallet private key not configured - contact administrator');
     }
 
     console.log('Sending BTC from pool wallet to user wallet...');
 
-    // Send Bitcoin from pool wallet to user wallet
-    const sendBtcResponse = await fetch(`${supabaseUrl}/functions/v1/send-btc`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Send Bitcoin from pool wallet to user wallet using Supabase client
+    const { data: txData, error: sendError } = await supabase.functions.invoke('send-btc', {
+      body: {
         privateKeyWIF: poolPrivateKey,
         recipientAddress: userWalletAddress,
         amountSats: satoshis
-      }),
+      }
     });
 
-    if (!sendBtcResponse.ok) {
-      const errorData = await sendBtcResponse.json();
-      throw new Error(`Bitcoin transfer failed: ${errorData.error}`);
+    if (sendError) {
+      throw new Error(`Bitcoin transfer failed: ${sendError.message}`);
     }
-
-    const txData = await sendBtcResponse.json();
     console.log('Bitcoin transaction successful:', txData.txid);
 
     // Mark commissions as paid out
