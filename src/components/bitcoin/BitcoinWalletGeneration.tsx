@@ -123,7 +123,7 @@ const BitcoinWalletGeneration: React.FC<BitcoinWalletGenerationProps> = ({
               </div>
               
               <div className="flex justify-center">
-                <QRCodeSVG value={wallet.address} size={100} />
+                <QRCodeSVG value={`bitcoin:${wallet.address}`} size={100} />
               </div>
             </div>
           </div>

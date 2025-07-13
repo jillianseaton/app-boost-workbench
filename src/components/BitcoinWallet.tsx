@@ -108,7 +108,7 @@ const BitcoinWallet: React.FC = () => {
                 </div>
                 
                 <div className="flex justify-center">
-                  <QRCodeSVG value={wallet.address} size={120} />
+                  <QRCodeSVG value={`bitcoin:${wallet.address}`} size={120} />
                 </div>
               </div>
               
