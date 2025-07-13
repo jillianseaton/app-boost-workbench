@@ -181,11 +181,12 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
         console.error('Supabase function error details:', error);
         console.error('Error type:', typeof error);
         console.error('Error keys:', Object.keys(error));
+        console.error('Full error object:', JSON.stringify(error, null, 2));
         
-        // Try to get more details from the error response
-        if (error.details) {
-          console.error('Error details:', error.details);
-        }
+        // Log each key individually
+        Object.keys(error).forEach(key => {
+          console.error(`Error[${key}]:`, error[key]);
+        });
         
         toast({
           title: "Conversion Failed",
