@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import BitcoinWithdrawal from '@/components/bitcoin/BitcoinWithdrawal';
 import BitcoinBalance from '@/components/bitcoin/BitcoinBalance';
 import EarningsConverter from '@/components/bitcoin/EarningsConverter';
+import BitcoinDebugger from '@/components/bitcoin/BitcoinDebugger';
 
 interface WalletData {
   address: string;
@@ -135,11 +136,32 @@ const BitcoinWallet: React.FC = () => {
       {/* Earnings Converter - NEW: Real Bitcoin transactions */}
       <EarningsConverter wallet={wallet} />
 
+      {/* Bitcoin Debugger */}
+      <BitcoinDebugger wallet={wallet} />
+
       {/* Bitcoin Withdrawal Component */}
       <BitcoinWithdrawal 
         wallet={wallet}
         balance={balance}
-        onBalanceUpdate={() => handleBalanceUpdate}
+        onBalanceUpdate={() => {
+          // Refresh balance after withdrawal
+          if (wallet) {
+            // Trigger balance refresh
+            const refreshBalance = async () => {
+              try {
+                const { data, error } = await supabase.functions.invoke('get-balance', {
+                  body: { address: wallet.address }
+                });
+                if (!error && data) {
+                  setBalance(data);
+                }
+              } catch (error) {
+                console.error('Error refreshing balance:', error);
+              }
+            };
+            refreshBalance();
+          }
+        }}
       />
     </div>
   );
