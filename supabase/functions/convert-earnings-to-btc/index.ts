@@ -20,14 +20,37 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const requestBody = await req.json();
-    console.log('Request body received:', JSON.stringify(requestBody, null, 2));
+    let requestBody;
+    try {
+      requestBody = await req.json();
+      console.log('Request body received:', JSON.stringify(requestBody, null, 2));
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid JSON in request body'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     const { userWalletAddress, userId } = requestBody;
     
     if (!userWalletAddress || !userId) {
-      console.error('Missing required parameters:', { userWalletAddress: !!userWalletAddress, userId: !!userId });
-      throw new Error('User wallet address and user ID are required');
+      console.error('Missing required parameters:', { 
+        userWalletAddress: !!userWalletAddress, 
+        userId: !!userId,
+        receivedKeys: Object.keys(requestBody || {})
+      });
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'User wallet address and user ID are required',
+        debug: { userWalletAddress: !!userWalletAddress, userId: !!userId }
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log('Processing payout for user:', userId);
@@ -41,16 +64,24 @@ serve(async (req) => {
 
     if (commissionsError) {
       console.error('Error fetching commissions:', commissionsError);
-      throw commissionsError;
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Database error: ${commissionsError.message}`
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     if (!commissions || commissions.length === 0) {
+      console.log('No unpaid commissions found for user:', userId);
       return new Response(JSON.stringify({
         success: false,
         message: 'No unpaid commissions found',
         totalUSD: 0,
         btcAmount: 0
       }), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -59,14 +90,22 @@ serve(async (req) => {
     const totalCents = commissions.reduce((sum, commission) => sum + commission.amount_earned_cents, 0);
     const totalUSD = totalCents / 100;
 
-    console.log(`Total unpaid earnings: $${totalUSD}`);
+    console.log(`Total unpaid earnings: $${totalUSD} from ${commissions.length} commissions`);
 
     // Get current BTC price using Supabase client
     const { data: priceData, error: priceError } = await supabase.functions.invoke('get-btc-price');
     
     if (priceError) {
-      throw new Error(`Failed to get BTC price: ${priceError.message}`);
+      console.error('Error getting BTC price:', priceError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Failed to get BTC price: ${priceError.message}`
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+
     const btcPrice = priceData.price;
     console.log('Current BTC price:', btcPrice);
 
@@ -78,13 +117,16 @@ serve(async (req) => {
 
     // Minimum payout check (0.0001 BTC = 10,000 sats)
     if (satoshis < 10000) {
+      const minimumUSD = (0.0001 * btcPrice);
+      console.log(`Amount too small: ${satoshis} sats < 10000 sats minimum`);
       return new Response(JSON.stringify({
         success: false,
-        message: `Minimum payout is 0.0001 BTC ($${(0.0001 * btcPrice).toFixed(2)}). Current balance: $${totalUSD}`,
+        message: `Minimum payout is 0.0001 BTC ($${minimumUSD.toFixed(2)}). Current balance: $${totalUSD}`,
         totalUSD,
         btcAmount: 0,
-        minimumUSD: 0.0001 * btcPrice
+        minimumUSD
       }), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -93,7 +135,13 @@ serve(async (req) => {
     const poolPrivateKey = Deno.env.get('BTC_private_key');
     if (!poolPrivateKey) {
       console.error('Pool wallet private key not found in environment variables');
-      throw new Error('Pool wallet private key not configured - contact administrator');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Pool wallet not configured - contact administrator'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log('Sending BTC from pool wallet to user wallet...');
@@ -108,8 +156,16 @@ serve(async (req) => {
     });
 
     if (sendError) {
-      throw new Error(`Bitcoin transfer failed: ${sendError.message}`);
+      console.error('Bitcoin transfer failed:', sendError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: `Bitcoin transfer failed: ${sendError.message}`
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+
     console.log('Bitcoin transaction successful:', txData.txid);
 
     // Mark commissions as paid out
@@ -125,7 +181,7 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('Error updating commissions:', updateError);
-      // Don't throw here since the Bitcoin was already sent
+      // Don't fail here since the Bitcoin was already sent
     }
 
     // Log the Bitcoin transaction
@@ -162,7 +218,8 @@ serve(async (req) => {
     console.error('Error in convert-earnings-to-btc:', error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message 
+      error: error.message,
+      stack: error.stack
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

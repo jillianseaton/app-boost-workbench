@@ -33,11 +33,16 @@ serve(async (req) => {
     
     console.log('Sending BTC:', { recipientAddress, amountSats });
     
-    // Import bitcoinjs-lib from a more reliable CDN
+    // Import bitcoinjs-lib with proper ES modules
     const bitcoin = await import('https://esm.sh/bitcoinjs-lib@6.1.5');
+    const ECPair = await import('https://esm.sh/ecpair@2.1.0');
+    const ecc = await import('https://esm.sh/tiny-secp256k1@2.2.3');
+    
+    // Initialize ECPair with ecc
+    const ECPairFactory = ECPair.ECPairFactory(ecc.default);
     
     // Create keypair from private key (mainnet)
-    const keyPair = bitcoin.ECPair.fromWIF(privateKeyWIF, bitcoin.networks.bitcoin);
+    const keyPair = ECPairFactory.fromWIF(privateKeyWIF, bitcoin.networks.bitcoin);
     const { address: senderAddress } = bitcoin.payments.p2pkh({ 
       pubkey: keyPair.publicKey, 
       network: bitcoin.networks.bitcoin 
