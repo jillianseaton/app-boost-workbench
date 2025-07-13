@@ -25,22 +25,48 @@ const PoolWalletInfo: React.FC = () => {
   const getPoolWalletInfo = async () => {
     setLoading(true);
     try {
+      console.log('Calling get-pool-wallet-address function...');
+      
       const { data, error } = await supabase.functions.invoke('get-pool-wallet-address');
 
+      console.log('Function response:', { data, error });
+
       if (error) {
-        console.error('Error getting pool wallet info:', error);
+        console.error('Supabase function error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        
+        let errorMessage = error.message || 'Unknown error occurred';
+        
+        // Check if it's a FunctionsHttpError and try to get more details
+        if (error.name === 'FunctionsHttpError') {
+          errorMessage = 'Edge Function returned an error. Check the function logs for details.';
+        }
+        
         toast({
-          title: "Error",
-          description: `Failed to get pool wallet info: ${error.message}`,
+          title: "Function Error",
+          description: errorMessage,
           variant: "destructive",
         });
         return;
       }
 
-      if (!data || !data.success) {
+      if (!data) {
+        console.error('No data returned from function');
         toast({
-          title: "Error",
-          description: data?.error || "Failed to get pool wallet information",
+          title: "No Response",
+          description: "No data returned from the pool wallet function",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Function data:', data);
+
+      if (!data.success) {
+        console.error('Function returned failure:', data);
+        toast({
+          title: "Pool Wallet Error",
+          description: data.error || data.debug || "Failed to get pool wallet information",
           variant: "destructive",
         });
         return;
@@ -54,9 +80,12 @@ const PoolWalletInfo: React.FC = () => {
 
     } catch (error) {
       console.error('Unexpected error:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error keys:', Object.keys(error || {}));
+      
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: `Unexpected error: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {

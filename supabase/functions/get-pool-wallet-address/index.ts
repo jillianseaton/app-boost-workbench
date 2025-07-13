@@ -74,22 +74,32 @@ function publicKeyToAddress(publicKey: Uint8Array): string {
 }
 
 serve(async (req) => {
-  console.log('get-pool-wallet-address function called');
+  console.log('=== get-pool-wallet-address function called ===');
+  console.log('Request method:', req.method);
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    console.log('Starting pool wallet address retrieval...');
+    
     // Get the configured BTC private key
     const poolPrivateKey = Deno.env.get('BTC_private_key');
     
+    console.log('Environment variables check:');
+    const envKeys = Object.keys(Deno.env.toObject());
+    console.log('Available env vars:', envKeys.filter(key => key.includes('BTC')));
+    console.log('Total env vars count:', envKeys.length);
+    
     if (!poolPrivateKey) {
-      console.error('BTC_private_key not found in environment variables');
+      console.error('❌ BTC_private_key not found in environment variables');
       return new Response(JSON.stringify({
         success: false,
         error: 'BTC_private_key environment variable not configured',
-        availableKeys: Object.keys(Deno.env.toObject()).filter(key => key.includes('BTC'))
+        availableKeys: envKeys.filter(key => key.includes('BTC')),
+        debug: 'The BTC_private_key secret is missing from Supabase Edge Function secrets'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
