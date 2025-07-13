@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import BitcoinWalletGeneration from '@/components/bitcoin/BitcoinWalletGeneration';
 import BitcoinBalance from '@/components/bitcoin/BitcoinBalance';
-import EarningsConverter from '@/components/bitcoin/EarningsConverter';
+import EarningsPayoutConverter from '@/components/bitcoin/EarningsPayoutConverter';
 import BitcoinWithdrawal from '@/components/bitcoin/BitcoinWithdrawal';
 
 interface WalletData {
@@ -43,7 +43,10 @@ const BitcoinWalletSection: React.FC = () => {
         onWalletGenerated={handleWalletGenerated} 
       />
       
-      <EarningsConverter wallet={wallet} />
+      <EarningsPayoutConverter 
+        wallet={wallet} 
+        onBalanceUpdate={handleBalanceUpdate} 
+      />
       
       <BitcoinBalance 
         wallet={wallet} 

@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import BitcoinWithdrawal from '@/components/bitcoin/BitcoinWithdrawal';
 import BitcoinBalance from '@/components/bitcoin/BitcoinBalance';
-import EarningsConverter from '@/components/bitcoin/EarningsConverter';
+import EarningsPayoutConverter from '@/components/bitcoin/EarningsPayoutConverter';
 import BitcoinDebugger from '@/components/bitcoin/BitcoinDebugger';
 
 interface WalletData {
@@ -134,8 +134,27 @@ const BitcoinWallet: React.FC = () => {
         onBalanceUpdated={handleBalanceUpdate}
       />
 
-      {/* Earnings Converter - NEW: Real Bitcoin transactions */}
-      <EarningsConverter wallet={wallet} />
+      {/* Earnings to Bitcoin Converter */}
+      <EarningsPayoutConverter 
+        wallet={wallet} 
+        onBalanceUpdate={() => {
+          if (wallet) {
+            const refreshBalance = async () => {
+              try {
+                const { data, error } = await supabase.functions.invoke('get-balance', {
+                  body: { address: wallet.address }
+                });
+                if (!error && data) {
+                  setBalance(data);
+                }
+              } catch (error) {
+                console.error('Error refreshing balance:', error);
+              }
+            };
+            refreshBalance();
+          }
+        }}
+      />
 
       {/* Bitcoin Debugger */}
       <BitcoinDebugger wallet={wallet} />
