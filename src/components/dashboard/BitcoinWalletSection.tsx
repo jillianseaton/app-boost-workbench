@@ -4,6 +4,7 @@ import BitcoinWalletGeneration from '@/components/bitcoin/BitcoinWalletGeneratio
 import BitcoinBalance from '@/components/bitcoin/BitcoinBalance';
 import EarningsPayoutConverter from '@/components/bitcoin/EarningsPayoutConverter';
 import BitcoinWithdrawal from '@/components/bitcoin/BitcoinWithdrawal';
+import BitcoinDebugger from '@/components/bitcoin/BitcoinDebugger';
 
 interface WalletData {
   address: string;
@@ -53,6 +54,8 @@ const BitcoinWalletSection: React.FC = () => {
         balance={balance} 
         onBalanceUpdated={handleBalanceUpdated} 
       />
+
+      <BitcoinDebugger wallet={wallet} />
 
       <BitcoinWithdrawal 
         wallet={wallet} 
