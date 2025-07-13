@@ -132,6 +132,11 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
         userWallet: wallet.address
       });
 
+      console.log('About to call convert-earnings-to-btc with:', {
+        userWalletAddress: wallet.address,
+        userId: user.id
+      });
+
       const { data, error } = await supabase.functions.invoke('convert-earnings-to-btc', {
         body: {
           userWalletAddress: wallet.address,

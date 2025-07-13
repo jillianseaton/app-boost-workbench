@@ -8,7 +8,9 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log('convert-earnings-to-btc function called - v2.0');
+  console.log('convert-earnings-to-btc function called - v2.1');
+  console.log('Request method:', req.method);
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -21,14 +23,27 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     let requestBody;
+    let requestText;
     try {
-      requestBody = await req.json();
-      console.log('Request body received:', JSON.stringify(requestBody, null, 2));
+      // First get the raw text to see what we're receiving
+      requestText = await req.text();
+      console.log('Raw request text:', requestText);
+      
+      // Try to parse it as JSON
+      if (requestText) {
+        requestBody = JSON.parse(requestText);
+        console.log('Parsed request body:', JSON.stringify(requestBody, null, 2));
+      } else {
+        console.log('Request body is empty');
+        requestBody = {};
+      }
     } catch (parseError) {
       console.error('Failed to parse request body:', parseError);
+      console.error('Raw request text was:', requestText);
       return new Response(JSON.stringify({
         success: false,
-        error: 'Invalid JSON in request body'
+        error: 'Invalid JSON in request body',
+        rawText: requestText?.substring(0, 100) // First 100 chars for debugging
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
