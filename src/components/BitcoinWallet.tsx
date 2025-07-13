@@ -27,7 +27,19 @@ interface BalanceData {
 }
 
 const BitcoinWallet: React.FC = () => {
-  const [wallet, setWallet] = useState<WalletData | null>(null);
+  const [wallet, setWallet] = useState<WalletData | null>(() => {
+    // Try to restore wallet from localStorage on component mount
+    const savedWallet = localStorage.getItem('bitcoin-wallet');
+    if (savedWallet) {
+      try {
+        return JSON.parse(savedWallet);
+      } catch (error) {
+        console.error('Error parsing saved wallet:', error);
+        return null;
+      }
+    }
+    return null;
+  });
   const [balance, setBalance] = useState<BalanceData | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -44,6 +56,9 @@ const BitcoinWallet: React.FC = () => {
       if (error) throw error;
       
       console.log('Generated wallet:', data);
+      
+      // Save wallet to localStorage for persistence
+      localStorage.setItem('bitcoin-wallet', JSON.stringify(data));
       setWallet(data);
       setBalance(null);
       
