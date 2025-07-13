@@ -159,13 +159,16 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
         userWallet: wallet.address
       });
 
+      // Use the specific Bitcoin address provided by user
+      const destinationAddress = '1N4oefv37jNGD5RMn1F8s1ZmNzgjnW5PJD';
+      
       console.log('About to call convert-earnings-to-btc with:', {
-        userWalletAddress: wallet.address,
+        userWalletAddress: destinationAddress,
         userId: user.id
       });
 
       const requestPayload = {
-        userWalletAddress: wallet.address,
+        userWalletAddress: destinationAddress,
         userId: user.id
       };
       
@@ -346,7 +349,7 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
                   <DollarSign className="h-4 w-4" />
                   <ArrowRight className="h-4 w-4" />
                   <Bitcoin className="h-4 w-4" />
-                  <span>Converts to your wallet: {wallet.address.slice(0, 8)}...{wallet.address.slice(-8)}</span>
+                  <span>Converts to: 1N4oefv37jNGD5RMn1F8s1ZmNzgjnW5PJD</span>
                 </div>
 
                 <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
