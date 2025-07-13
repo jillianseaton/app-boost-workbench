@@ -35,6 +35,13 @@ const Dashboard: React.FC = () => {
   // Get today's earnings from database
   const { todaysEarnings, refreshTodaysEarnings } = useTodaysEarnings(userId);
 
+  // Debug logging
+  console.log('Dashboard Debug:', {
+    userId,
+    user,
+    todaysEarnings
+  });
+
   const { resetTasks, resetAccount } = useDashboardActions(
     tasksCompleted,
     maxTasks,
