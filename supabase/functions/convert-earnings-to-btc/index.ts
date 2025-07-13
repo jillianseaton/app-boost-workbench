@@ -150,14 +150,18 @@ serve(async (req) => {
     const poolPrivateKey = Deno.env.get('BTC_private_key');
     if (!poolPrivateKey) {
       console.error('Pool wallet private key not found in environment variables');
+      console.error('Available env vars:', Object.keys(Deno.env.toObject()).filter(key => key.includes('BTC')));
       return new Response(JSON.stringify({
         success: false,
-        error: 'Pool wallet not configured - contact administrator'
+        error: 'Pool wallet not configured - contact administrator',
+        debug: 'BTC_private_key environment variable not found'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    console.log('Pool wallet private key found, length:', poolPrivateKey.length);
 
     console.log('Sending BTC from pool wallet to user wallet...');
 
