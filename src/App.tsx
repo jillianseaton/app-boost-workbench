@@ -8,6 +8,7 @@ import { navItems } from "./nav-items";
 import Index from "./pages/Index";
 import PaymentIntentPage from "./pages/PaymentIntentPage";
 import { SupabaseRealtimeListener } from "@/components/SupabaseRealtimeListener";
+import AutoLogUUID from "@/components/AutoLogUUID";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <SupabaseRealtimeListener />
+      <AutoLogUUID />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
