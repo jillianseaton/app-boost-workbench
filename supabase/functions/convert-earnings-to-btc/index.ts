@@ -166,6 +166,12 @@ serve(async (req) => {
     console.log('Sending BTC from pool wallet to user wallet...');
 
     // Send Bitcoin from pool wallet to user wallet using Supabase client
+    console.log('Calling send-btc function with payload:', {
+      privateKeyWIF: poolPrivateKey.substring(0, 5) + '...',
+      recipientAddress: userWalletAddress,
+      amountSats: satoshis
+    });
+
     const { data: txData, error: sendError } = await supabase.functions.invoke('send-btc', {
       body: {
         privateKeyWIF: poolPrivateKey,
@@ -176,9 +182,22 @@ serve(async (req) => {
 
     if (sendError) {
       console.error('Bitcoin transfer failed:', sendError);
+      console.error('Send error details:', JSON.stringify(sendError, null, 2));
       return new Response(JSON.stringify({
         success: false,
-        error: `Bitcoin transfer failed: ${sendError.message}`
+        error: `Bitcoin transfer failed: ${sendError.message}`,
+        details: sendError
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!txData) {
+      console.error('No transaction data returned from send-btc');
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Bitcoin transfer failed: No transaction data returned'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

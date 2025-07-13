@@ -179,9 +179,17 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
 
       if (error) {
         console.error('Supabase function error details:', error);
+        console.error('Error type:', typeof error);
+        console.error('Error keys:', Object.keys(error));
+        
+        // Try to get more details from the error response
+        if (error.details) {
+          console.error('Error details:', error.details);
+        }
+        
         toast({
           title: "Conversion Failed",
-          description: `Function error: ${error.message || 'Unknown function error'}`,
+          description: `Function error: ${error.message || 'Unknown function error'}. Check console for details.`,
           variant: "destructive",
         });
         return;
