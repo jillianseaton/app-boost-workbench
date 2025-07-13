@@ -139,24 +139,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  let requestBody: any;
-  let senderAddress: string | undefined;
-  let step = 'initialization';
-  
   try {
-    step = 'parsing_request_body';
-    requestBody = await req.json();
-    console.log('✅ Step 1: Request body parsed successfully:', requestBody);
+    const requestBody = await req.json();
+    console.log('Received request body:', requestBody);
     
-    step = 'extracting_parameters';
     const { privateKeyWIF, recipientAddress, amountSats } = requestBody;
-    console.log('✅ Step 2: Parameters extracted:', { 
+    console.log('Extracted values:', { 
       privateKeyWIF: privateKeyWIF ? 'present' : 'missing', 
       recipientAddress, 
       amountSats 
     });
     
-    step = 'validating_parameters';
     if (!privateKeyWIF || !recipientAddress || !amountSats) {
       throw new Error('Private key, recipient address, and amount are required');
     }
@@ -166,58 +159,45 @@ serve(async (req) => {
     if (!addressRegex.test(recipientAddress)) {
       throw new Error(`Invalid Bitcoin address format: ${recipientAddress}. Please use a valid Bitcoin address starting with 1, 3, or bc1.`);
     }
-    console.log('✅ Step 3: Parameters validated successfully');
     
-    step = 'decoding_private_key';
-    let privateKeyBytes: Uint8Array;
-    let publicKey: Uint8Array;
-    try {
-      console.log('Decoding WIF private key...');
-      privateKeyBytes = decodeWIF(privateKeyWIF);
-      console.log('✅ Step 4a: Private key decoded, length:', privateKeyBytes.length);
-      
-      // Generate public key
-      publicKey = secp256k1.getPublicKey(privateKeyBytes, true); // compressed
-      console.log('✅ Step 4b: Public key generated, length:', publicKey.length);
-      
-      // Generate sender address
-      senderAddress = publicKeyToAddress(publicKey);
-      console.log('✅ Step 4c: Sender address generated:', senderAddress);
-    } catch (error) {
-      console.error('❌ Private key processing error:', error);
-      throw new Error(`Invalid private key: ${error.message}`);
+    console.log('Sending BTC:', { recipientAddress, amountSats });
+    
+    // Create keypair from private key WIF
+    console.log('Decoding WIF private key...');
+    const privateKeyBytes = decodeWIF(privateKeyWIF);
+    console.log('Private key decoded, length:', privateKeyBytes.length);
+    
+    // Generate public key
+    const publicKey = secp256k1.getPublicKey(privateKeyBytes, true); // compressed
+    console.log('Public key generated, length:', publicKey.length);
+    
+    // Generate sender address
+    const senderAddress = publicKeyToAddress(publicKey);
+    console.log('Sender address:', senderAddress);
+    
+    // Get UTXOs for the sender address using mempool.space
+    console.log('Fetching UTXOs for address:', senderAddress);
+    const utxoResponse = await fetch(`https://mempool.space/api/address/${senderAddress}/utxo`);
+    
+    if (!utxoResponse.ok) {
+      const errorBody = await utxoResponse.text();
+      console.error('UTXO fetch error:', utxoResponse.status, errorBody);
+      throw new Error(`Failed to fetch UTXOs: ${utxoResponse.status} - ${errorBody}`);
     }
     
-    step = 'fetching_utxos';
-    let utxos: any[];
-    try {
-      console.log('Fetching UTXOs for address:', senderAddress);
-      const utxoResponse = await fetch(`https://mempool.space/api/address/${senderAddress}/utxo`);
-      
-      if (!utxoResponse.ok) {
-        const errorBody = await utxoResponse.text();
-        console.error('❌ UTXO fetch error:', utxoResponse.status, errorBody);
-        throw new Error(`Failed to fetch UTXOs: ${utxoResponse.status} - ${errorBody}`);
-      }
-      
-      utxos = await utxoResponse.json();
-      console.log('✅ Step 5: UTXOs fetched successfully:', utxos.length, 'UTXOs found');
-      console.log('UTXO details:', utxos);
-    } catch (error) {
-      console.error('❌ UTXO fetch network error:', error);
-      throw new Error(`Network error fetching UTXOs: ${error.message}`);
-    }
+    const utxos = await utxoResponse.json();
+    console.log('Available UTXOs:', utxos.length, 'UTXOs found');
+    console.log('UTXO details:', utxos);
     
-    step = 'validating_balance';
     if (!utxos || utxos.length === 0) {
       throw new Error(`No UTXOs available for address ${senderAddress}. This address has no Bitcoin to send.`);
     }
     
     // Calculate total available balance
     const totalBalance = utxos.reduce((sum: number, utxo: any) => sum + utxo.value, 0);
-    console.log('✅ Step 6: Total balance calculated:', totalBalance, 'sats');
+    console.log('Total balance:', totalBalance, 'sats');
     
-    step = 'fetching_fee_rates';
+    // Get current fee rates from mempool.space
     let satPerByte = 10; // fallback
     try {
       console.log('Fetching fee rates...');
@@ -226,15 +206,15 @@ serve(async (req) => {
       if (feeResponse.ok) {
         const feeRates = await feeResponse.json();
         satPerByte = feeRates.hourFee || 10;
-        console.log('✅ Step 7: Fee rate fetched:', satPerByte, 'sat/byte');
+        console.log('Fee rate:', satPerByte, 'sat/byte');
       } else {
-        console.log('⚠️ Fee fetch failed, using fallback fee rate of 10 sat/byte');
+        console.log('Fee fetch failed, using fallback fee rate of 10 sat/byte');
       }
-    } catch (error) {
-      console.error('⚠️ Fee fetch error, using fallback:', error);
+    } catch (feeError) {
+      console.error('Fee fetch error, using fallback:', feeError);
     }
     
-    step = 'selecting_utxos';
+    // Select enough UTXOs to cover amount + estimated fee
     let inputSats = 0;
     const selectedUtxos: any[] = [];
     
@@ -250,17 +230,16 @@ serve(async (req) => {
       console.log(`After ${selectedUtxos.length} UTXOs: input=${inputSats}, needed=${amountSats + estimatedFee}`);
       
       if (inputSats >= amountSats + estimatedFee) {
-        console.log('✅ Step 8: Sufficient UTXOs selected');
+        console.log('Sufficient UTXOs selected');
         break;
       }
     }
     
-    step = 'calculating_final_amounts';
     // Final fee calculation
     const finalSize = (selectedUtxos.length * 148) + (2 * 34) + 10;
     const finalFee = finalSize * satPerByte;
     
-    console.log('✅ Step 9: Final calculation:', {
+    console.log('Final calculation:', {
       inputSats,
       amountSats,
       finalFee,
@@ -273,11 +252,10 @@ serve(async (req) => {
     
     // Calculate change
     const change = inputSats - amountSats - finalFee;
-    console.log('✅ Step 10: Change calculated:', change, 'sats');
+    console.log('Change amount:', change, 'sats');
     
-    step = 'generating_response';
-    console.log('✅ All steps completed successfully!');
-    console.log('Transaction parameters validated:');
+    console.log('Transaction validation successful!');
+    console.log('Transaction parameters:');
     console.log('- Selected UTXOs:', selectedUtxos.length);
     console.log('- Total input:', inputSats);
     console.log('- Amount to send:', amountSats);
@@ -288,91 +266,27 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       message: 'Transaction parameters validated successfully',
-      debug: {
-        stepsCompleted: [
-          'parsing_request_body',
-          'extracting_parameters', 
-          'validating_parameters',
-          'decoding_private_key',
-          'fetching_utxos',
-          'validating_balance',
-          'fetching_fee_rates',
-          'selecting_utxos',
-          'calculating_final_amounts',
-          'generating_response'
-        ],
-        lastCompletedStep: step
-      },
-      transactionDetails: {
-        txid: 'mock_transaction_id_' + Date.now(),
-        amountSats,
-        recipientAddress,
-        fee: finalFee,
-        change: change > 546 ? change : 0,
-        network: 'mainnet',
-        senderAddress,
-        inputsUsed: selectedUtxos.length,
-        totalInput: inputSats,
-        totalBalance,
-        selectedUtxos: selectedUtxos.map(u => ({ txid: u.txid, vout: u.vout, value: u.value }))
-      },
+      txid: 'mock_transaction_id_' + Date.now(),
+      amountSats,
+      recipientAddress,
+      fee: finalFee,
+      change: change > 546 ? change : 0,
+      network: 'mainnet',
+      senderAddress,
+      inputsUsed: selectedUtxos.length,
+      totalInput: inputSats,
+      totalBalance,
+      selectedUtxos: selectedUtxos.map(u => ({ txid: u.txid, vout: u.vout, value: u.value })),
       note: 'This is a validation-only response - no actual Bitcoin transaction was created or broadcasted'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
     
   } catch (error) {
-    console.error(`❌ ERROR at step '${step}':`, error);
-    console.error('Error stack:', error.stack);
-    console.error('Request context:', { 
-      senderAddress: senderAddress || 'unknown',
-      recipientAddress: requestBody?.recipientAddress || 'unknown',
-      amountSats: requestBody?.amountSats || 'unknown'
-    });
-    
-    // Determine error type and provide comprehensive debugging info
-    let errorType = 'GENERAL_ERROR';
-    if (error.message.includes('UTXO')) {
-      errorType = 'UTXO_FETCH_ERROR';
-    } else if (error.message.includes('broadcast')) {
-      errorType = 'BROADCAST_ERROR';
-    } else if (error.message.includes('balance') || error.message.includes('Insufficient')) {
-      errorType = 'INSUFFICIENT_BALANCE';
-    } else if (error.message.includes('address')) {
-      errorType = 'INVALID_ADDRESS';
-    } else if (error.message.includes('private key') || error.message.includes('WIF')) {
-      errorType = 'INVALID_PRIVATE_KEY';
-    } else if (error.message.includes('sign')) {
-      errorType = 'SIGNING_ERROR';
-    } else if (step === 'parsing_request_body') {
-      errorType = 'REQUEST_PARSING_ERROR';
-    } else if (step === 'fetching_fee_rates') {
-      errorType = 'FEE_FETCH_ERROR';
-    }
-    
-    const errorResponse = {
-      success: false,
-      error: error.message,
-      errorType,
-      debug: {
-        failedAtStep: step,
-        timestamp: new Date().toISOString(),
-        stack: error.stack,
-        requestBody: requestBody || 'not parsed',
-        senderAddress: senderAddress || 'not generated',
-        fullErrorObject: {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        }
-      }
-    };
-    
-    console.error('Returning error response:', errorResponse);
-    
-    return new Response(JSON.stringify(errorResponse), {
+    console.error(error);
+    return new Response(JSON.stringify({ success: false, error: error.message, stack: error.stack }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
