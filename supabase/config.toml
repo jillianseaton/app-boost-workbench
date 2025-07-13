@@ -31,6 +31,9 @@ verify_jwt = false
 [functions.payout-commissions]
 verify_jwt = false
 
+[functions.convert-earnings-to-btc]
+verify_jwt = false
+
 [rest]
 enabled = true
 port = 54321
