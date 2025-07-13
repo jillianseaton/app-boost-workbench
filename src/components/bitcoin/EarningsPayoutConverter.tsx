@@ -192,11 +192,17 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
             const errorText = await error.context.text();
             console.error('Error response body:', errorText);
             
-            try {
-              const errorJson = JSON.parse(errorText);
-              console.error('Parsed error JSON:', errorJson);
-            } catch (e) {
-              console.error('Could not parse error as JSON');
+            // Check if errorText is a string before parsing
+            if (typeof errorText === 'string') {
+              try {
+                const errorJson = JSON.parse(errorText);
+                console.error('Parsed error JSON:', errorJson);
+              } catch (e) {
+                console.error('Could not parse error as JSON:', e);
+              }
+            } else {
+              // If errorText is already an object, log it directly
+              console.error('Error response (already object):', errorText);
             }
           } catch (e) {
             console.error('Could not read error response text:', e);
