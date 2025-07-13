@@ -49,9 +49,17 @@ serve(async (req) => {
     });
     
     // Get UTXOs for the sender address using mempool.space
-    const utxoResponse = await fetch(`https://mempool.space/api/address/${senderAddress}/utxo`);
-    if (!utxoResponse.ok) {
-      throw new Error('Failed to fetch UTXOs');
+    let utxoResponse;
+    try {
+      utxoResponse = await fetch(`https://mempool.space/api/address/${senderAddress}/utxo`);
+      if (!utxoResponse.ok) {
+        const errorBody = await utxoResponse.text();
+        console.error('UTXO fetch error:', utxoResponse.status, errorBody);
+        throw new Error(`Failed to fetch UTXOs: ${utxoResponse.status} - ${errorBody}`);
+      }
+    } catch (error) {
+      console.error('UTXO fetch network error:', error);
+      throw new Error(`Network error fetching UTXOs: ${error.message}`);
     }
     
     const utxos = await utxoResponse.json();
@@ -65,9 +73,23 @@ serve(async (req) => {
     const totalBalance = utxos.reduce((sum: number, utxo: any) => sum + utxo.value, 0);
     
     // Get current fee rates from mempool.space
-    const feeResponse = await fetch('https://mempool.space/api/v1/fees/recommended');
-    const feeRates = await feeResponse.json();
-    const satPerByte = feeRates.hourFee || 10; // Use hourFee for reasonable confirmation time
+    let feeResponse, feeRates, satPerByte;
+    try {
+      feeResponse = await fetch('https://mempool.space/api/v1/fees/recommended');
+      if (!feeResponse.ok) {
+        const errorBody = await feeResponse.text();
+        console.error('Fee fetch error:', feeResponse.status, errorBody);
+        console.log('Using fallback fee rate of 10 sat/byte');
+        satPerByte = 10;
+      } else {
+        feeRates = await feeResponse.json();
+        satPerByte = feeRates.hourFee || 10; // Use hourFee for reasonable confirmation time
+      }
+    } catch (error) {
+      console.error('Fee fetch network error:', error);
+      console.log('Using fallback fee rate of 10 sat/byte');
+      satPerByte = 10;
+    }
     
     // Estimate transaction size and fee
     const estimatedSize = (utxos.length * 148) + (2 * 34) + 10;
@@ -85,8 +107,19 @@ serve(async (req) => {
     // Add inputs
     for (const utxo of utxos) {
       // Get transaction hex from mempool.space
-      const txResponse = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`);
-      const txHex = await txResponse.text();
+      let txResponse, txHex;
+      try {
+        txResponse = await fetch(`https://mempool.space/api/tx/${utxo.txid}/hex`);
+        if (!txResponse.ok) {
+          const errorBody = await txResponse.text();
+          console.error(`Transaction hex fetch error for ${utxo.txid}:`, txResponse.status, errorBody);
+          throw new Error(`Failed to fetch transaction hex for ${utxo.txid}: ${txResponse.status} - ${errorBody}`);
+        }
+        txHex = await txResponse.text();
+      } catch (error) {
+        console.error(`Network error fetching tx hex for ${utxo.txid}:`, error);
+        throw new Error(`Network error fetching transaction hex for ${utxo.txid}: ${error.message}`);
+      }
       
       psbt.addInput({
         hash: utxo.txid,
@@ -132,6 +165,7 @@ serve(async (req) => {
     // Broadcast transaction to mempool.space first
     let txid;
     try {
+      console.log('Attempting to broadcast via mempool.space...');
       const broadcastResponse = await fetch('https://mempool.space/api/tx', {
         method: 'POST',
         headers: {
@@ -142,25 +176,37 @@ serve(async (req) => {
       
       if (broadcastResponse.ok) {
         txid = await broadcastResponse.text();
+        console.log('Successfully broadcasted via mempool.space:', txid);
       } else {
-        throw new Error('Mempool.space broadcast failed');
+        const errorBody = await broadcastResponse.text();
+        console.error('Mempool.space broadcast failed:', broadcastResponse.status, errorBody);
+        throw new Error(`Mempool.space broadcast failed: ${broadcastResponse.status} - ${errorBody}`);
       }
-    } catch (error) {
-      // Fallback to Blockstream
-      const blockstreamResponse = await fetch('https://blockstream.info/api/tx', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain',
-        },
-        body: txHex,
-      });
+    } catch (mempoolError) {
+      console.error('Mempool.space broadcast error, trying Blockstream fallback:', mempoolError);
       
-      if (!blockstreamResponse.ok) {
-        const errorText = await blockstreamResponse.text();
-        throw new Error(`Failed to broadcast transaction: ${errorText}`);
+      try {
+        console.log('Attempting to broadcast via Blockstream...');
+        const blockstreamResponse = await fetch('https://blockstream.info/api/tx', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain',
+          },
+          body: txHex,
+        });
+        
+        if (!blockstreamResponse.ok) {
+          const errorBody = await blockstreamResponse.text();
+          console.error('Blockstream broadcast failed:', blockstreamResponse.status, errorBody);
+          throw new Error(`Blockstream broadcast failed: ${blockstreamResponse.status} - ${errorBody}`);
+        }
+        
+        txid = await blockstreamResponse.text();
+        console.log('Successfully broadcasted via Blockstream:', txid);
+      } catch (blockstreamError) {
+        console.error('All broadcast methods failed:', { mempoolError, blockstreamError });
+        throw new Error(`All broadcast methods failed. Mempool: ${mempoolError.message}. Blockstream: ${blockstreamError.message}`);
       }
-      
-      txid = await blockstreamResponse.text();
     }
     
     console.log('Transaction broadcasted:', txid);
@@ -178,7 +224,37 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Error sending BTC:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Error stack:', error.stack);
+    console.error('Request context:', { 
+      senderAddress: senderAddress || 'unknown',
+      recipientAddress: requestBody?.recipientAddress || 'unknown',
+      amountSats: requestBody?.amountSats || 'unknown'
+    });
+    
+    // Determine error type and provide appropriate response
+    let errorResponse = {
+      success: false,
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Add specific error context based on error type
+    if (error.message.includes('UTXO')) {
+      errorResponse.errorType = 'UTXO_FETCH_ERROR';
+    } else if (error.message.includes('broadcast')) {
+      errorResponse.errorType = 'BROADCAST_ERROR';
+    } else if (error.message.includes('balance')) {
+      errorResponse.errorType = 'INSUFFICIENT_BALANCE';
+    } else if (error.message.includes('address')) {
+      errorResponse.errorType = 'INVALID_ADDRESS';
+    } else if (error.message.includes('WIF')) {
+      errorResponse.errorType = 'INVALID_PRIVATE_KEY';
+    } else {
+      errorResponse.errorType = 'GENERAL_ERROR';
+    }
+    
+    return new Response(JSON.stringify(errorResponse), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
