@@ -5,6 +5,7 @@ import BitcoinBalance from '@/components/bitcoin/BitcoinBalance';
 import EarningsPayoutConverter from '@/components/bitcoin/EarningsPayoutConverter';
 import BitcoinWithdrawal from '@/components/bitcoin/BitcoinWithdrawal';
 import BitcoinDebugger from '@/components/bitcoin/BitcoinDebugger';
+import PoolWalletInfo from '@/components/bitcoin/PoolWalletInfo';
 
 interface WalletData {
   address: string;
@@ -39,6 +40,8 @@ const BitcoinWalletSection: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <PoolWalletInfo />
+      
       <BitcoinWalletGeneration 
         wallet={wallet} 
         onWalletGenerated={handleWalletGenerated} 
