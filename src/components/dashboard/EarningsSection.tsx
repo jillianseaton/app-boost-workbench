@@ -17,7 +17,8 @@ const EarningsSection: React.FC<EarningsSectionProps> = ({
   earnings,
   tasksCompleted,
   maxTasks,
-  onResetTasks
+  onResetTasks,
+  todaysEarnings
 }) => {
   return (
     <div className="space-y-6">
@@ -27,6 +28,7 @@ const EarningsSection: React.FC<EarningsSectionProps> = ({
         tasksCompleted={tasksCompleted}
         maxTasks={maxTasks}
         onResetTasks={onResetTasks}
+        todaysEarnings={todaysEarnings}
       />
     </div>
   );

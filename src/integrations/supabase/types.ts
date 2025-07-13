@@ -103,6 +103,21 @@ export type Database = {
         }
         Relationships: []
       }
+      commisions: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
       commissions: {
         Row: {
           amount_earned_cents: number
