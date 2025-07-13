@@ -36,11 +36,10 @@ const Dashboard: React.FC = () => {
   const { todaysEarnings, refreshTodaysEarnings } = useTodaysEarnings(userId);
 
   // Debug logging
-  console.log('Dashboard Debug:', {
-    userId,
-    user,
-    todaysEarnings
-  });
+  console.log('Dashboard Debug - userId:', userId);
+  console.log('Dashboard Debug - user:', user);
+  console.log('Dashboard Debug - todaysEarnings:', todaysEarnings);
+  console.log('Dashboard Debug - todaysEarnings type:', typeof todaysEarnings);
 
   const { resetTasks, resetAccount } = useDashboardActions(
     tasksCompleted,
