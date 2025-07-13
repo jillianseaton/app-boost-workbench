@@ -126,6 +126,33 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
 
     setConverting(true);
     try {
+      console.log('=== DEBUGGING CONVERT TO BTC ===');
+      console.log('User object:', user);
+      console.log('User ID:', user?.id);
+      console.log('Wallet object:', wallet);
+      console.log('Wallet address:', wallet?.address);
+      console.log('Earnings object:', earnings);
+      
+      if (!user?.id) {
+        console.error('USER ID IS MISSING!');
+        toast({
+          title: "User ID Missing",
+          description: "User authentication ID not found. Please refresh and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!wallet?.address) {
+        console.error('WALLET ADDRESS IS MISSING!');
+        toast({
+          title: "Wallet Address Missing", 
+          description: "Bitcoin wallet address not found. Please generate a wallet first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       console.log('Converting earnings to Bitcoin:', {
         totalUSD: earnings.totalUSD,
         btcAmount: earnings.btcEquivalent,
