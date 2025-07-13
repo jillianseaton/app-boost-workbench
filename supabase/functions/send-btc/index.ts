@@ -141,18 +141,22 @@ serve(async (req) => {
 
   let requestBody: any;
   let senderAddress: string | undefined;
+  let step = 'initialization';
   
   try {
+    step = 'parsing_request_body';
     requestBody = await req.json();
-    console.log('Received request body:', requestBody);
+    console.log('✅ Step 1: Request body parsed successfully:', requestBody);
     
+    step = 'extracting_parameters';
     const { privateKeyWIF, recipientAddress, amountSats } = requestBody;
-    console.log('Extracted values:', { 
+    console.log('✅ Step 2: Parameters extracted:', { 
       privateKeyWIF: privateKeyWIF ? 'present' : 'missing', 
       recipientAddress, 
       amountSats 
     });
     
+    step = 'validating_parameters';
     if (!privateKeyWIF || !recipientAddress || !amountSats) {
       throw new Error('Private key, recipient address, and amount are required');
     }
@@ -162,72 +166,75 @@ serve(async (req) => {
     if (!addressRegex.test(recipientAddress)) {
       throw new Error(`Invalid Bitcoin address format: ${recipientAddress}. Please use a valid Bitcoin address starting with 1, 3, or bc1.`);
     }
+    console.log('✅ Step 3: Parameters validated successfully');
     
-    console.log('Sending BTC:', { recipientAddress, amountSats });
-    
-    // Create keypair from private key WIF
+    step = 'decoding_private_key';
     let privateKeyBytes: Uint8Array;
     let publicKey: Uint8Array;
     try {
       console.log('Decoding WIF private key...');
       privateKeyBytes = decodeWIF(privateKeyWIF);
-      console.log('Private key decoded, length:', privateKeyBytes.length);
+      console.log('✅ Step 4a: Private key decoded, length:', privateKeyBytes.length);
       
       // Generate public key
       publicKey = secp256k1.getPublicKey(privateKeyBytes, true); // compressed
-      console.log('Public key generated, length:', publicKey.length);
+      console.log('✅ Step 4b: Public key generated, length:', publicKey.length);
       
       // Generate sender address
       senderAddress = publicKeyToAddress(publicKey);
-      console.log('Sender address:', senderAddress);
+      console.log('✅ Step 4c: Sender address generated:', senderAddress);
     } catch (error) {
-      console.error('Private key processing error:', error);
+      console.error('❌ Private key processing error:', error);
       throw new Error(`Invalid private key: ${error.message}`);
     }
     
-    // Get UTXOs for the sender address using mempool.space
+    step = 'fetching_utxos';
     let utxos: any[];
     try {
       console.log('Fetching UTXOs for address:', senderAddress);
       const utxoResponse = await fetch(`https://mempool.space/api/address/${senderAddress}/utxo`);
+      
       if (!utxoResponse.ok) {
         const errorBody = await utxoResponse.text();
-        console.error('UTXO fetch error:', utxoResponse.status, errorBody);
+        console.error('❌ UTXO fetch error:', utxoResponse.status, errorBody);
         throw new Error(`Failed to fetch UTXOs: ${utxoResponse.status} - ${errorBody}`);
       }
+      
       utxos = await utxoResponse.json();
-      console.log('Available UTXOs:', utxos.length, 'UTXOs found');
+      console.log('✅ Step 5: UTXOs fetched successfully:', utxos.length, 'UTXOs found');
       console.log('UTXO details:', utxos);
     } catch (error) {
-      console.error('UTXO fetch network error:', error);
+      console.error('❌ UTXO fetch network error:', error);
       throw new Error(`Network error fetching UTXOs: ${error.message}`);
     }
     
+    step = 'validating_balance';
     if (!utxos || utxos.length === 0) {
       throw new Error(`No UTXOs available for address ${senderAddress}. This address has no Bitcoin to send.`);
     }
     
     // Calculate total available balance
     const totalBalance = utxos.reduce((sum: number, utxo: any) => sum + utxo.value, 0);
-    console.log('Total balance:', totalBalance, 'sats');
+    console.log('✅ Step 6: Total balance calculated:', totalBalance, 'sats');
     
-    // Get current fee rates from mempool.space
+    step = 'fetching_fee_rates';
     let satPerByte = 10; // fallback
     try {
       console.log('Fetching fee rates...');
       const feeResponse = await fetch('https://mempool.space/api/v1/fees/recommended');
+      
       if (feeResponse.ok) {
         const feeRates = await feeResponse.json();
         satPerByte = feeRates.hourFee || 10;
-        console.log('Fee rate:', satPerByte, 'sat/byte');
+        console.log('✅ Step 7: Fee rate fetched:', satPerByte, 'sat/byte');
       } else {
-        console.log('Fee fetch failed, using fallback fee rate of 10 sat/byte');
+        console.log('⚠️ Fee fetch failed, using fallback fee rate of 10 sat/byte');
       }
     } catch (error) {
-      console.error('Fee fetch error, using fallback:', error);
+      console.error('⚠️ Fee fetch error, using fallback:', error);
     }
     
-    // Select enough UTXOs to cover amount + estimated fee
+    step = 'selecting_utxos';
     let inputSats = 0;
     const selectedUtxos: any[] = [];
     
@@ -243,16 +250,17 @@ serve(async (req) => {
       console.log(`After ${selectedUtxos.length} UTXOs: input=${inputSats}, needed=${amountSats + estimatedFee}`);
       
       if (inputSats >= amountSats + estimatedFee) {
-        console.log('Sufficient UTXOs selected');
+        console.log('✅ Step 8: Sufficient UTXOs selected');
         break;
       }
     }
     
+    step = 'calculating_final_amounts';
     // Final fee calculation
     const finalSize = (selectedUtxos.length * 148) + (2 * 34) + 10;
     const finalFee = finalSize * satPerByte;
     
-    console.log('Final calculation:', {
+    console.log('✅ Step 9: Final calculation:', {
       inputSats,
       amountSats,
       finalFee,
@@ -265,37 +273,56 @@ serve(async (req) => {
     
     // Calculate change
     const change = inputSats - amountSats - finalFee;
-    console.log('Change amount:', change, 'sats');
+    console.log('✅ Step 10: Change calculated:', change, 'sats');
     
-    // For now, return success without actual transaction construction
-    // since the simplified implementation needs more work for production
-    console.log('Transaction would be successful with these parameters:');
+    step = 'generating_response';
+    console.log('✅ All steps completed successfully!');
+    console.log('Transaction parameters validated:');
     console.log('- Selected UTXOs:', selectedUtxos.length);
     console.log('- Total input:', inputSats);
     console.log('- Amount to send:', amountSats);
     console.log('- Fee:', finalFee);
     console.log('- Change:', change);
     
-    // Return mock response for now
+    // Return successful validation response
     return new Response(JSON.stringify({
       success: true,
       message: 'Transaction parameters validated successfully',
-      txid: 'mock_transaction_id_' + Date.now(),
-      amountSats,
-      recipientAddress,
-      fee: finalFee,
-      change: change > 546 ? change : 0,
-      network: 'mainnet',
-      senderAddress,
-      inputsUsed: selectedUtxos.length,
-      totalInput: inputSats,
-      note: 'This is a mock response - actual transaction construction is simplified for Edge Functions'
+      debug: {
+        stepsCompleted: [
+          'parsing_request_body',
+          'extracting_parameters', 
+          'validating_parameters',
+          'decoding_private_key',
+          'fetching_utxos',
+          'validating_balance',
+          'fetching_fee_rates',
+          'selecting_utxos',
+          'calculating_final_amounts',
+          'generating_response'
+        ],
+        lastCompletedStep: step
+      },
+      transactionDetails: {
+        txid: 'mock_transaction_id_' + Date.now(),
+        amountSats,
+        recipientAddress,
+        fee: finalFee,
+        change: change > 546 ? change : 0,
+        network: 'mainnet',
+        senderAddress,
+        inputsUsed: selectedUtxos.length,
+        totalInput: inputSats,
+        totalBalance,
+        selectedUtxos: selectedUtxos.map(u => ({ txid: u.txid, vout: u.vout, value: u.value }))
+      },
+      note: 'This is a validation-only response - no actual Bitcoin transaction was created or broadcasted'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
     
   } catch (error) {
-    console.error('Error in send-btc function:', error);
+    console.error(`❌ ERROR at step '${step}':`, error);
     console.error('Error stack:', error.stack);
     console.error('Request context:', { 
       senderAddress: senderAddress || 'unknown',
@@ -303,29 +330,45 @@ serve(async (req) => {
       amountSats: requestBody?.amountSats || 'unknown'
     });
     
-    // Determine error type and provide appropriate response
-    let errorResponse = {
+    // Determine error type and provide comprehensive debugging info
+    let errorType = 'GENERAL_ERROR';
+    if (error.message.includes('UTXO')) {
+      errorType = 'UTXO_FETCH_ERROR';
+    } else if (error.message.includes('broadcast')) {
+      errorType = 'BROADCAST_ERROR';
+    } else if (error.message.includes('balance') || error.message.includes('Insufficient')) {
+      errorType = 'INSUFFICIENT_BALANCE';
+    } else if (error.message.includes('address')) {
+      errorType = 'INVALID_ADDRESS';
+    } else if (error.message.includes('private key') || error.message.includes('WIF')) {
+      errorType = 'INVALID_PRIVATE_KEY';
+    } else if (error.message.includes('sign')) {
+      errorType = 'SIGNING_ERROR';
+    } else if (step === 'parsing_request_body') {
+      errorType = 'REQUEST_PARSING_ERROR';
+    } else if (step === 'fetching_fee_rates') {
+      errorType = 'FEE_FETCH_ERROR';
+    }
+    
+    const errorResponse = {
       success: false,
       error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString(),
-      errorType: 'GENERAL_ERROR'
+      errorType,
+      debug: {
+        failedAtStep: step,
+        timestamp: new Date().toISOString(),
+        stack: error.stack,
+        requestBody: requestBody || 'not parsed',
+        senderAddress: senderAddress || 'not generated',
+        fullErrorObject: {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        }
+      }
     };
     
-    // Add specific error context based on error type
-    if (error.message.includes('UTXO')) {
-      errorResponse.errorType = 'UTXO_FETCH_ERROR';
-    } else if (error.message.includes('broadcast')) {
-      errorResponse.errorType = 'BROADCAST_ERROR';
-    } else if (error.message.includes('balance') || error.message.includes('Insufficient')) {
-      errorResponse.errorType = 'INSUFFICIENT_BALANCE';
-    } else if (error.message.includes('address')) {
-      errorResponse.errorType = 'INVALID_ADDRESS';
-    } else if (error.message.includes('private key') || error.message.includes('WIF')) {
-      errorResponse.errorType = 'INVALID_PRIVATE_KEY';
-    } else if (error.message.includes('sign')) {
-      errorResponse.errorType = 'SIGNING_ERROR';
-    }
+    console.error('Returning error response:', errorResponse);
     
     return new Response(JSON.stringify(errorResponse), {
       status: 500,
