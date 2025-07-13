@@ -183,6 +183,23 @@ const EarningsPayoutConverter: React.FC<EarningsPayoutConverterProps> = ({
         console.error('Error keys:', Object.keys(error));
         console.error('Full error object:', JSON.stringify(error, null, 2));
         
+        // Extract the actual error response from the context
+        if (error.context && error.context instanceof Response) {
+          try {
+            const errorText = await error.context.text();
+            console.error('Error response body:', errorText);
+            
+            try {
+              const errorJson = JSON.parse(errorText);
+              console.error('Parsed error JSON:', errorJson);
+            } catch (e) {
+              console.error('Could not parse error as JSON');
+            }
+          } catch (e) {
+            console.error('Could not read error response text:', e);
+          }
+        }
+        
         // Log each key individually
         Object.keys(error).forEach(key => {
           console.error(`Error[${key}]:`, error[key]);
