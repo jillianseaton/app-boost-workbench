@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log('convert-earnings-to-btc function called');
+  console.log('convert-earnings-to-btc function called - v2.0');
   
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
