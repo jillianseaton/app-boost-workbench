@@ -6,6 +6,7 @@ import EarningsPayoutConverter from '@/components/bitcoin/EarningsPayoutConverte
 import BitcoinWithdrawal from '@/components/bitcoin/BitcoinWithdrawal';
 import BitcoinDebugger from '@/components/bitcoin/BitcoinDebugger';
 import PoolWalletInfo from '@/components/bitcoin/PoolWalletInfo';
+import BitcoinTransactionTracker from '@/components/bitcoin/BitcoinTransactionTracker';
 
 interface WalletData {
   address: string;
@@ -65,6 +66,8 @@ const BitcoinWalletSection: React.FC = () => {
         balance={balance} 
         onBalanceUpdate={handleBalanceUpdate} 
       />
+
+      <BitcoinTransactionTracker />
     </div>
   );
 };
