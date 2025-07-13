@@ -143,24 +143,40 @@ serve(async (req) => {
     const requestBody = await req.json();
     console.log('Received request body:', requestBody);
     
-    const { privateKeyWIF, recipientAddress, amountSats } = requestBody;
+    const { privateKeyWIF, recipientAddress, amountSats, userWalletAddress } = requestBody;
+    
+    // Use recipientAddress or userWalletAddress as the send-to address
+    const sendToAddress = recipientAddress || userWalletAddress;
+    
+    // Parse amount as float/number and ensure it's valid
+    const parsedAmount = parseFloat(amountSats) || 0;
+    
     console.log('Extracted values:', { 
       privateKeyWIF: privateKeyWIF ? 'present' : 'missing', 
-      recipientAddress, 
-      amountSats 
+      sendToAddress,
+      parsedAmount,
+      originalAmount: amountSats
     });
     
-    if (!privateKeyWIF || !recipientAddress || !amountSats) {
-      throw new Error('Private key, recipient address, and amount are required');
+    if (!privateKeyWIF) {
+      throw new Error('Private key (privateKeyWIF) is required');
+    }
+    
+    if (!sendToAddress) {
+      throw new Error('Send to address (recipientAddress or userWalletAddress) is required');
+    }
+    
+    if (!parsedAmount || parsedAmount <= 0) {
+      throw new Error(`Invalid amount: ${amountSats}. Amount must be a positive number in satoshis.`);
     }
     
     // Validate Bitcoin address format for mainnet
     const addressRegex = /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/;
-    if (!addressRegex.test(recipientAddress)) {
-      throw new Error(`Invalid Bitcoin address format: ${recipientAddress}. Please use a valid Bitcoin address starting with 1, 3, or bc1.`);
+    if (!addressRegex.test(sendToAddress)) {
+      throw new Error(`Invalid Bitcoin address format: ${sendToAddress}. Please use a valid Bitcoin address starting with 1, 3, or bc1.`);
     }
     
-    console.log('Sending BTC:', { recipientAddress, amountSats });
+    console.log('Sending BTC:', { sendToAddress, parsedAmount });
     
     // Create keypair from private key WIF
     console.log('Decoding WIF private key...');
@@ -227,9 +243,9 @@ serve(async (req) => {
       const estimatedSize = (selectedUtxos.length * 148) + (2 * 34) + 10;
       const estimatedFee = estimatedSize * satPerByte;
       
-      console.log(`After ${selectedUtxos.length} UTXOs: input=${inputSats}, needed=${amountSats + estimatedFee}`);
+      console.log(`After ${selectedUtxos.length} UTXOs: input=${inputSats}, needed=${parsedAmount + estimatedFee}`);
       
-      if (inputSats >= amountSats + estimatedFee) {
+      if (inputSats >= parsedAmount + estimatedFee) {
         console.log('Sufficient UTXOs selected');
         break;
       }
@@ -241,24 +257,25 @@ serve(async (req) => {
     
     console.log('Final calculation:', {
       inputSats,
-      amountSats,
+      parsedAmount,
       finalFee,
-      required: amountSats + finalFee
+      required: parsedAmount + finalFee
     });
     
-    if (inputSats < amountSats + finalFee) {
-      throw new Error(`Insufficient balance. Available: ${totalBalance} sats, Required: ${amountSats + finalFee} sats (including fee of ${finalFee})`);
+    if (inputSats < parsedAmount + finalFee) {
+      throw new Error(`Insufficient balance. Available: ${totalBalance} sats, Required: ${parsedAmount + finalFee} sats (including fee of ${finalFee})`);
     }
     
     // Calculate change
-    const change = inputSats - amountSats - finalFee;
+    const change = inputSats - parsedAmount - finalFee;
     console.log('Change amount:', change, 'sats');
     
     console.log('Transaction validation successful!');
     console.log('Transaction parameters:');
     console.log('- Selected UTXOs:', selectedUtxos.length);
     console.log('- Total input:', inputSats);
-    console.log('- Amount to send:', amountSats);
+    console.log('- Amount to send:', parsedAmount);
+    console.log('- Send to address:', sendToAddress);
     console.log('- Fee:', finalFee);
     console.log('- Change:', change);
     
@@ -267,8 +284,9 @@ serve(async (req) => {
       success: true,
       message: 'Transaction parameters validated successfully',
       txid: 'mock_transaction_id_' + Date.now(),
-      amountSats,
-      recipientAddress,
+      amountSats: parsedAmount,
+      recipientAddress: sendToAddress,
+      sendToAddress: sendToAddress,
       fee: finalFee,
       change: change > 546 ? change : 0,
       network: 'mainnet',
