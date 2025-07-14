@@ -57,3 +57,23 @@ The following environment variables must be set in your Supabase Edge Functions 
   "timestamp": "2024-01-15T10:30:00.000Z"
 }
 ```
+
+## Usage Example
+
+```javascript
+// Example of calling the function from your frontend
+const { data, error } = await supabase.functions.invoke('commission-payout-coinbase', {
+  body: {
+    userId: 'user-uuid-here',
+    coinbaseAddress: 'user@example.com' // or a BTC address
+  }
+});
+
+if (error) {
+  console.error('Payout failed:', error);
+} else if (data.success) {
+  console.log(`Payout successful! Sent ${data.btcAmount} BTC (${data.totalUSD} USD) - Transaction: ${data.txid}`);
+} else {
+  console.log('Payout not processed:', data.message);
+}
+```
