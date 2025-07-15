@@ -62,19 +62,5 @@ export const partnerServices: PartnerService[] = [
     rating: 4.9,
     billingPeriod: 'monthly',
     partnerType: 'design'
-  },
-  {
-    id: "wise-affiliate",
-    name: "Wise",
-    product: "International Money Transfer",
-    price: 0.00,
-    affiliateUrl: "https://wise.com/invite/u/wise-affiliate",
-    commissionRate: 0.15,
-    category: "Financial Services",
-    description: "Fast, cheap international money transfers with real exchange rates",
-    features: ["Real exchange rates", "Low fees", "Fast transfers", "Multi-currency account"],
-    rating: 4.6,
-    billingPeriod: 'one-time',
-    partnerType: 'financial'
   }
 ];
