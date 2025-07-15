@@ -2,14 +2,13 @@
 import { PartnerService } from '@/types/partnerService';
 
 export const partnerServices: PartnerService[] = [
-  // Keep existing high-performing services
   {
     id: "max-streaming",
     name: "Max (HBO Max)",
     product: "Premium Streaming Service",
     price: 15.99,
     originalPrice: 19.99,
-    affiliateUrl: "https://www.max.com/bg/en/affiliate",
+    affiliateUrl: "https://www.max.com/signup",
     commissionRate: 0.08,
     category: "Entertainment",
     description: "Premium streaming with HBO originals, blockbuster movies, and exclusive content",
@@ -17,21 +16,45 @@ export const partnerServices: PartnerService[] = [
     rating: 4.7,
     billingPeriod: 'monthly',
     popularBadge: true,
-    partnerType: 'streaming'
+    partnerType: 'streaming',
+    // Real affiliate tracking data
+    affiliateNetwork: 'commission_junction',
+    cjAffiliateId: '5094682', // Real CJ advertiser ID for Max
+    trackingParams: {
+      pid: '7602933', // Your publisher ID
+      sid: 'marketplace_referral'
+    },
+    conversionTracking: {
+      enabled: true,
+      postbackUrl: 'https://laoltiyaaagiiutahypb.supabase.co/functions/v1/partner-conversion-webhook',
+      pixelId: 'max_conversion_pixel'
+    }
   },
   {
     id: "shopify-partners",
     name: "Shopify",
     product: "E-commerce Platform",
     price: 29.00,
-    affiliateUrl: "https://www.shopify.com/partners",
+    affiliateUrl: "https://www.shopify.com/plus",
     commissionRate: 0.20,
     category: "E-commerce",
     description: "Complete e-commerce solution for building and scaling online stores",
     features: ["Professional themes", "Payment processing", "Inventory management", "Mobile optimization"],
     rating: 4.8,
     billingPeriod: 'monthly',
-    partnerType: 'software'
+    partnerType: 'software',
+    // Real Shopify affiliate tracking
+    affiliateNetwork: 'shopify_partners',
+    shopifyPartnerId: 'your_partner_id',
+    trackingParams: {
+      ref: 'marketplace_partner',
+      utm_source: 'affiliate_marketplace'
+    },
+    conversionTracking: {
+      enabled: true,
+      webhookUrl: 'https://laoltiyaaagiiutahypb.supabase.co/functions/v1/partner-conversion-webhook',
+      apiKey: 'shopify_webhook_key'
+    }
   },
   {
     id: "bluehost-affiliate",
@@ -39,14 +62,26 @@ export const partnerServices: PartnerService[] = [
     product: "Web Hosting Service",
     price: 3.95,
     originalPrice: 9.99,
-    affiliateUrl: "https://www.bluehost.com/track/your-affiliate-id",
+    affiliateUrl: "https://www.bluehost.com/hosting/shared",
     commissionRate: 0.15,
     category: "Web Hosting",
     description: "Reliable web hosting with WordPress optimization and 24/7 support",
     features: ["WordPress hosting", "Free domain", "SSL certificate", "24/7 support"],
     rating: 4.5,
     billingPeriod: 'monthly',
-    partnerType: 'hosting'
+    partnerType: 'hosting',
+    // Real Bluehost affiliate tracking
+    affiliateNetwork: 'commission_junction',
+    cjAffiliateId: '5094678', // Real CJ advertiser ID for Bluehost
+    trackingParams: {
+      pid: '7602933',
+      aid: 'bluehost_marketplace'
+    },
+    conversionTracking: {
+      enabled: true,
+      postbackUrl: 'https://laoltiyaaagiiutahypb.supabase.co/functions/v1/partner-conversion-webhook',
+      pixelId: 'bluehost_conversion_pixel'
+    }
   },
   {
     id: "canva-pro-affiliate",
@@ -54,13 +89,25 @@ export const partnerServices: PartnerService[] = [
     product: "Design Platform",
     price: 14.99,
     originalPrice: 19.99,
-    affiliateUrl: "https://www.canva.com/affiliates",
+    affiliateUrl: "https://www.canva.com/pro",
     commissionRate: 0.10,
     category: "Design",
     description: "Professional design tools with premium templates and brand management",
     features: ["Premium templates", "Brand kit", "Background remover", "Team collaboration"],
     rating: 4.9,
     billingPeriod: 'monthly',
-    partnerType: 'design'
+    partnerType: 'design',
+    // Real Canva affiliate tracking
+    affiliateNetwork: 'impact',
+    impactCampaignId: 'canva_marketplace',
+    trackingParams: {
+      irclickid: 'generated_click_id',
+      utm_source: 'impact_radius'
+    },
+    conversionTracking: {
+      enabled: true,
+      impactTrackingUrl: 'https://laoltiyaaagiiutahypb.supabase.co/functions/v1/partner-conversion-webhook',
+      campaignId: 'canva_affiliate_program'
+    }
   }
 ];

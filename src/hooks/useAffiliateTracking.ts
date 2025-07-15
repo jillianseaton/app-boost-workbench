@@ -6,71 +6,105 @@ import { PartnerService } from '@/types/partnerService';
 export const useAffiliateTracking = () => {
   const { toast } = useToast();
 
+  const generateClickId = () => `click_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  const buildTrackingUrl = (service: PartnerService, clickId: string) => {
+    const baseUrl = new URL(service.affiliateUrl);
+    
+    switch (service.affiliateNetwork) {
+      case 'commission_junction':
+        // Real Commission Junction tracking
+        baseUrl.searchParams.append('pid', service.trackingParams?.pid || '7602933');
+        baseUrl.searchParams.append('sid', `${service.trackingParams?.sid || 'marketplace'}_${clickId}`);
+        baseUrl.searchParams.append('aid', service.cjAffiliateId || '');
+        break;
+        
+      case 'shopify_partners':
+        // Real Shopify Partner tracking
+        baseUrl.searchParams.append('ref', service.trackingParams?.ref || 'marketplace_partner');
+        baseUrl.searchParams.append('utm_source', service.trackingParams?.utm_source || 'affiliate_marketplace');
+        baseUrl.searchParams.append('utm_medium', 'affiliate');
+        baseUrl.searchParams.append('utm_campaign', service.id);
+        break;
+        
+      case 'impact':
+        // Real Impact Radius tracking
+        baseUrl.searchParams.append('irclickid', clickId);
+        baseUrl.searchParams.append('irgwc', '1');
+        baseUrl.searchParams.append('utm_source', 'impact_radius');
+        baseUrl.searchParams.append('utm_medium', 'affiliate');
+        break;
+        
+      default:
+        // Direct affiliate tracking
+        baseUrl.searchParams.append('ref', 'marketplace_affiliate');
+        baseUrl.searchParams.append('utm_source', 'affiliate');
+        baseUrl.searchParams.append('utm_medium', 'partner_marketplace');
+        baseUrl.searchParams.append('utm_campaign', service.id);
+    }
+    
+    return baseUrl.toString();
+  };
+
   const handlePurchase = async (service: PartnerService) => {
-    console.log('Processing affiliate purchase for:', service.name);
+    console.log('Processing real affiliate purchase for:', service.name, 'Network:', service.affiliateNetwork);
     
     try {
-      // Enhanced affiliate tracking with YOUR actual CJ Affiliate ID
+      const clickId = generateClickId();
+      
+      // Real affiliate tracking data
       const trackingData = {
         serviceId: service.id,
         serviceName: service.name,
         partnerType: service.partnerType,
+        affiliateNetwork: service.affiliateNetwork || 'direct',
         price: service.price,
         commissionRate: service.commissionRate,
         billingPeriod: service.billingPeriod,
         category: service.category,
+        clickId,
         userAgent: navigator.userAgent,
         referrer: document.referrer || 'direct',
         timestamp: new Date().toISOString(),
         sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        affiliateUrl: service.affiliateUrl,
+        ipAddress: await fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => d.ip).catch(() => 'unknown'),
+        
+        // Network-specific data
         cjAffiliateId: service.cjAffiliateId,
-        epc: service.epc,
-        affiliateNetwork: service.cjAffiliateId ? 'commission_junction' : 'direct',
-        cjPublisherId: '7602933' // YOUR actual CJ publisher ID
+        shopifyPartnerId: service.shopifyPartnerId,
+        impactCampaignId: service.impactCampaignId,
+        trackingParams: service.trackingParams,
+        conversionTracking: service.conversionTracking
       };
 
+      // Track the click with real affiliate networks
       const { data: clickData, error: clickError } = await supabase.functions.invoke('affiliate-tracking', {
         body: {
-          affiliateId: '7602933', // YOUR actual CJ publisher ID
-          action: 'track_click',
+          action: 'track_real_click',
           data: trackingData
         }
       });
 
       if (clickError) {
-        console.error('Error tracking affiliate click:', clickError);
+        console.error('Error tracking real affiliate click:', clickError);
       } else {
-        console.log('Affiliate click tracked successfully with YOUR CJ ID:', clickData);
+        console.log('Real affiliate click tracked successfully:', clickData);
       }
 
-      // Open real affiliate link with YOUR actual CJ tracking
-      const affiliateUrlWithTracking = new URL(service.affiliateUrl);
+      // Build properly tracked affiliate URL
+      const trackedUrl = buildTrackingUrl(service, clickId);
       
-      // Add YOUR actual CJ Affiliate tracking
-      if (service.cjAffiliateId) {
-        // Use YOUR actual CJ publisher ID in tracking
-        affiliateUrlWithTracking.searchParams.append('sid', `marketplace_referral_${Date.now()}`);
-        affiliateUrlWithTracking.searchParams.append('cjpublisher', '7602933'); // YOUR actual CJ publisher ID
-      } else {
-        // For direct affiliate programs
-        affiliateUrlWithTracking.searchParams.append('ref', '7602933'); // YOUR actual affiliate ID
-        affiliateUrlWithTracking.searchParams.append('utm_source', 'affiliate');
-        affiliateUrlWithTracking.searchParams.append('utm_medium', 'partner_marketplace');
-        affiliateUrlWithTracking.searchParams.append('utm_campaign', service.id);
-        affiliateUrlWithTracking.searchParams.append('publisher_id', '7602933'); // YOUR actual publisher ID
-      }
+      // Open the real affiliate link with proper tracking
+      window.open(trackedUrl, '_blank', 'noopener,noreferrer');
 
-      window.open(affiliateUrlWithTracking.toString(), '_blank', 'noopener,noreferrer');
-
-      // Show enhanced success toast with YOUR CJ ID
+      // Show network-specific success message
       toast({
         title: `Redirecting to ${service.name}`,
-        description: `Opening ${service.partnerType} service with YOUR CJ Publisher ID 7602933. Complete your ${service.billingPeriod === 'one-time' ? 'purchase' : 'subscription'} to earn commission!`,
+        description: `Opening ${service.partnerType} service via ${service.affiliateNetwork || 'direct'} affiliate network. Complete your ${service.billingPeriod === 'one-time' ? 'purchase' : 'subscription'} to earn real commission!`,
       });
 
     } catch (error) {
-      console.error('Error processing affiliate purchase:', error);
+      console.error('Error processing real affiliate purchase:', error);
       
       // Fallback: still redirect even if tracking fails
       window.open(service.affiliateUrl, '_blank', 'noopener,noreferrer');

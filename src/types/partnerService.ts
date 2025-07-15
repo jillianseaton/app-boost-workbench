@@ -16,4 +16,21 @@ export interface PartnerService {
   partnerType: 'streaming' | 'software' | 'hosting' | 'education' | 'fitness' | 'design' | 'flowers' | 'financial';
   cjAffiliateId?: string;
   epc?: string;
+  
+  // Real affiliate tracking properties
+  affiliateNetwork?: 'commission_junction' | 'shopify_partners' | 'impact' | 'direct';
+  shopifyPartnerId?: string;
+  impactCampaignId?: string;
+  trackingParams?: {
+    [key: string]: string;
+  };
+  conversionTracking?: {
+    enabled: boolean;
+    postbackUrl?: string;
+    webhookUrl?: string;
+    impactTrackingUrl?: string;
+    pixelId?: string;
+    apiKey?: string;
+    campaignId?: string;
+  };
 }
