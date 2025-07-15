@@ -78,17 +78,29 @@ export const useAffiliateTracking = () => {
       };
 
       // Track the click with real affiliate networks
+      const actionType = service.conversionTracking?.paymentType === 'cpc' ? 'track_cpc_click' : 'track_real_click';
+      
       const { data: clickData, error: clickError } = await supabase.functions.invoke('affiliate-tracking', {
         body: {
-          action: 'track_real_click',
+          action: actionType,
           data: trackingData
         }
       });
 
       if (clickError) {
-        console.error('Error tracking real affiliate click:', clickError);
+        console.error('Error tracking affiliate click:', clickError);
       } else {
-        console.log('Real affiliate click tracked successfully:', clickData);
+        console.log('Affiliate click tracked successfully:', clickData);
+        
+        // For CPC programs, show instant commission earned
+        if (service.conversionTracking?.paymentType === 'cpc') {
+          setTimeout(() => {
+            toast({
+              title: "Commission Earned!",
+              description: `+$${service.price.toFixed(2)} earned instantly from this click!`,
+            });
+          }, 2000);
+        }
       }
 
       // Build properly tracked affiliate URL
@@ -98,9 +110,14 @@ export const useAffiliateTracking = () => {
       window.open(trackedUrl, '_blank', 'noopener,noreferrer');
 
       // Show network-specific success message
+      const paymentType = service.conversionTracking?.paymentType;
+      const isInstantPayout = service.conversionTracking?.instantPayout;
+      
       toast({
         title: `Redirecting to ${service.name}`,
-        description: `Opening ${service.partnerType} service via ${service.affiliateNetwork || 'direct'} affiliate network. Complete your ${service.billingPeriod === 'one-time' ? 'purchase' : 'subscription'} to earn real commission!`,
+        description: paymentType === 'cpc' && isInstantPayout 
+          ? `Pay-per-click program! You'll earn $${service.price.toFixed(2)} instantly when they click.`
+          : `Opening ${service.partnerType} service via ${service.affiliateNetwork || 'direct'} affiliate network. Complete your ${service.billingPeriod === 'one-time' ? 'purchase' : 'subscription'} to earn real commission!`,
       });
 
     } catch (error) {

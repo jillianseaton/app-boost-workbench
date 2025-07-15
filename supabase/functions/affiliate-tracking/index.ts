@@ -27,6 +27,9 @@ serve(async (req) => {
       case 'track_real_click':
         result = await trackRealAffiliateClick(data);
         break;
+      case 'track_cpc_click':
+        result = await trackCPCClick(data);
+        break;
       case 'track_click':
         result = await trackClick(affiliateId, data);
         break;
@@ -331,4 +334,56 @@ async function trackRealAffiliateClick(data: any) {
   }
   
   return clickData;
+}
+
+async function trackCPCClick(data: any) {
+  console.log('Tracking CPC click with instant payout:', data);
+  
+  const clickId = `cpc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
+    // Create instant commission for CPC click
+    const commissionAmount = Math.round(data.price * 100); // Convert to cents
+    
+    // Store the CPC click
+    const clickData = {
+      success: true,
+      clickId,
+      serviceId: data.serviceId,
+      serviceName: data.serviceName,
+      partnerType: data.partnerType,
+      paymentType: 'cpc',
+      clickValueCents: commissionAmount,
+      instantPayout: true,
+      clickTimestamp: data.timestamp,
+      userAgent: data.userAgent,
+      ipAddress: data.ipAddress,
+      referrer: data.referrer,
+      sessionId: data.sessionId
+    };
+    
+    console.log('CPC click tracked, generating instant commission:', {
+      clickId,
+      serviceName: data.serviceName,
+      commissionCents: commissionAmount
+    });
+    
+    return {
+      success: true,
+      clickId,
+      paymentType: 'cpc',
+      serviceName: data.serviceName,
+      commissionEarned: data.price,
+      message: 'CPC click tracked successfully - commission will be generated',
+      trackingData: clickData
+    };
+    
+  } catch (error) {
+    console.error('Error tracking CPC click:', error);
+    return {
+      success: false,
+      error: 'Failed to track CPC click',
+      details: error.message
+    };
+  }
 }

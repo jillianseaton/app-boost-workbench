@@ -32,5 +32,7 @@ export interface PartnerService {
     pixelId?: string;
     apiKey?: string;
     campaignId?: string;
+    paymentType?: 'cpc' | 'cps' | 'cpl'; // Cost per click, sale, lead
+    instantPayout?: boolean;
   };
 }

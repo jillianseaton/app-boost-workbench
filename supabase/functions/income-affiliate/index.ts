@@ -27,6 +27,9 @@ serve(async (req) => {
       case 'calculate_earnings':
         result = await calculateAffiliateEarnings(data);
         break;
+      case 'create_cpc_commission':
+        result = await createCPCCommission(data);
+        break;
       case 'track_commission':
         result = await trackCommissionIncome(data);
         break;
@@ -196,4 +199,49 @@ async function getEarningsBreakdown(data: any) {
       worstDay: parseFloat((Math.random() * 10 + 2).toFixed(2))
     }
   };
+}
+
+async function createCPCCommission(data: any) {
+  console.log('Creating instant CPC commission:', data);
+  
+  try {
+    // Create commission record for CPC click
+    const commissionData = {
+      id: `cpc_comm_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      serviceId: data.serviceId,
+      serviceName: data.serviceName,
+      clickId: data.clickId,
+      commissionCents: data.commissionCents,
+      paymentType: 'cpc',
+      source: data.source || 'cpc_click',
+      description: data.description,
+      timestamp: new Date().toISOString(),
+      status: 'paid', // CPC commissions are paid instantly
+      paidAt: new Date().toISOString(),
+      validated: true,
+      instantPayout: true
+    };
+    
+    console.log('CPC commission created successfully:', commissionData);
+    
+    return {
+      success: true,
+      commission: commissionData,
+      message: 'CPC commission created and paid instantly',
+      earnings: {
+        amount: data.commissionCents / 100,
+        currency: 'USD',
+        paymentType: 'cpc',
+        instantPayout: true
+      }
+    };
+    
+  } catch (error) {
+    console.error('Error creating CPC commission:', error);
+    return {
+      success: false,
+      error: 'Failed to create CPC commission',
+      details: error.message
+    };
+  }
 }
