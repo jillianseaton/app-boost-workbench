@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { partnerServices } from '@/data/partnerServicesData';
 import { ExternalLink, DollarSign } from 'lucide-react';
+import AdSenseUnit from '@/components/ads/AdSenseUnit';
+import { useAdTracking } from '@/hooks/useAdTracking';
 
 interface TaskOptimizationProps {
   tasksCompleted: number;
@@ -39,6 +41,40 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
   const [currentAppIndex, setCurrentAppIndex] = useState(0);
   const [showingApp, setShowingApp] = useState(false);
   const { toast } = useToast();
+  const { trackImpression, trackClick } = useAdTracking();
+
+  // Ad tracking handlers
+  const handleTaskAdImpression = () => {
+    trackImpression({
+      adSlot: '5829274530',
+      placementId: 'tasks_banner',
+      adType: 'display'
+    });
+  };
+
+  const handleTaskAdClick = () => {
+    trackClick({
+      adSlot: '5829274530',
+      placementId: 'tasks_banner',
+      adType: 'display'
+    });
+  };
+
+  const handleTaskInlineAdImpression = () => {
+    trackImpression({
+      adSlot: '8273659104',
+      placementId: 'tasks_inline',
+      adType: 'article'
+    });
+  };
+
+  const handleTaskInlineAdClick = () => {
+    trackClick({
+      adSlot: '8273659104',
+      placementId: 'tasks_inline',
+      adType: 'article'
+    });
+  };
 
   // Real affiliate services - these are YOUR revenue sources
   const realAffiliateServices: AppService[] = partnerServices
@@ -124,6 +160,18 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
 
   return (
     <>
+      {/* AdSense Banner Ad - Top of Tasks Section */}
+      <div className="my-6 w-full flex justify-center">
+        <AdSenseUnit
+          adSlot="5829274530"
+          adFormat="rectangle"
+          className="w-full max-w-2xl"
+          style={{ display: 'block', minHeight: '250px' }}
+          onImpression={handleTaskAdImpression}
+          onAdClick={handleTaskAdClick}
+        />
+      </div>
+
       {/* Third-party App Display - YOUR Revenue Sources */}
       {showingApp && (
         <Card className={`border-2 animate-pulse ${currentApp?.isRealAffiliate ? 'border-green-500 bg-green-50' : 'border-primary'}`}>
@@ -165,6 +213,19 @@ const TaskOptimization: React.FC<TaskOptimizationProps> = ({
           </CardContent>
         </Card>
       )}
+
+      {/* Inline AdSense Ad - Between App Display and Main Action */}
+      <div className="my-6 w-full flex justify-center">
+        <AdSenseUnit
+          adSlot="8273659104"
+          adFormat="fluid"
+          adLayout="in-article"
+          className="w-full"
+          style={{ display: 'block', minHeight: '100px' }}
+          onImpression={handleTaskInlineAdImpression}
+          onAdClick={handleTaskInlineAdClick}
+        />
+      </div>
 
       {/* Main Action */}
       <Card>
