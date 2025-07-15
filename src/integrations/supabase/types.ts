@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_conversions: {
+        Row: {
+          amount_cents: number
+          commission_cents: number
+          conversion_id: string
+          created_at: string
+          event_type: string
+          id: string
+          network: string
+          order_id: string | null
+          partner_name: string
+          processed_at: string
+          raw_data: Json | null
+          status: string
+          updated_at: string
+          validated_at: string | null
+          validation_notes: string | null
+        }
+        Insert: {
+          amount_cents?: number
+          commission_cents?: number
+          conversion_id: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          network?: string
+          order_id?: string | null
+          partner_name: string
+          processed_at?: string
+          raw_data?: Json | null
+          status?: string
+          updated_at?: string
+          validated_at?: string | null
+          validation_notes?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          commission_cents?: number
+          conversion_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          network?: string
+          order_id?: string | null
+          partner_name?: string
+          processed_at?: string
+          raw_data?: Json | null
+          status?: string
+          updated_at?: string
+          validated_at?: string | null
+          validation_notes?: string | null
+        }
+        Relationships: []
+      }
       bank_account_audit_log: {
         Row: {
           action: string
