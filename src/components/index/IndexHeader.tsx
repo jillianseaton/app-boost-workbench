@@ -40,6 +40,11 @@ const IndexHeader = () => {
               </Link>
             </li>
             <li>
+              <Link to="/optimization-services" className="text-blue-500 hover:text-blue-700">
+                Services
+              </Link>
+            </li>
+            <li>
               <Link to="/about" className="text-blue-500 hover:text-blue-700">
                 About
               </Link>

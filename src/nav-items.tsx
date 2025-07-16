@@ -212,4 +212,9 @@ export const navItems = [
     icon: <Settings className="h-4 w-4" />,
     page: <NotFound />,
   },
+  {
+    title: "Optimization Services",
+    to: "/optimization-services",
+    icon: "target",
+  },
 ];
