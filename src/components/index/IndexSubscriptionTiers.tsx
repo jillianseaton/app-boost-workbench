@@ -10,12 +10,12 @@ const IndexSubscriptionTiers = () => {
       name: 'Basic',
       price: '$9.99',
       period: '/month',
-      description: 'Perfect for individuals getting started',
+      description: 'Perfect for individuals starting to earn commissions',
       features: [
-        'Up to 5 optimization tasks per month',
-        'Basic performance analytics',
+        'Up to 5 commission-earning tasks per month',
+        'Basic earnings analytics',
         'Email support',
-        'Access to standard algorithms',
+        'Access to standard affiliate partners',
         'Mobile app access'
       ],
       popular: false,
@@ -26,14 +26,14 @@ const IndexSubscriptionTiers = () => {
       name: 'Standard',
       price: '$19.99',
       period: '/month',
-      description: 'Great for small teams and growing businesses',
+      description: 'Great for serious commission earners',
       features: [
-        'Up to 25 optimization tasks per month',
-        'Advanced performance analytics',
+        'Up to 25 commission-earning tasks per month',
+        'Advanced earnings analytics',
         'Priority email support',
-        'Access to premium algorithms',
-        'API access',
-        'Custom reporting'
+        'Access to premium affiliate partners',
+        'Partner API access',
+        'Custom commission reporting'
       ],
       popular: true,
       buttonText: 'Most Popular',
@@ -43,14 +43,14 @@ const IndexSubscriptionTiers = () => {
       name: 'Professional',
       price: '$29.99',
       period: '/month',
-      description: 'Ideal for professional developers and agencies',
+      description: 'Ideal for professional commission earners and teams',
       features: [
-        'Up to 100 optimization tasks per month',
-        'Real-time performance monitoring',
+        'Up to 100 commission-earning tasks per month',
+        'Real-time earnings monitoring',
         'Live chat support',
-        'Advanced AI algorithms',
-        'White-label solutions',
-        'Custom integrations',
+        'Advanced commission optimization',
+        'White-label partner solutions',
+        'Custom affiliate integrations',
         'Dedicated account manager'
       ],
       popular: false,
@@ -61,16 +61,16 @@ const IndexSubscriptionTiers = () => {
       name: 'Enterprise',
       price: '$49.99',
       period: '/month',
-      description: 'For large organizations with complex needs',
+      description: 'For large organizations maximizing commission revenue',
       features: [
-        'Unlimited optimization tasks',
-        'Enterprise-grade analytics',
+        'Unlimited commission-earning tasks',
+        'Enterprise-grade earnings analytics',
         '24/7 phone support',
-        'Custom algorithm development',
-        'On-premise deployment',
-        'SLA guarantees',
-        'Multi-team collaboration',
-        'Advanced security features'
+        'Custom commission strategies',
+        'Dedicated infrastructure',
+        'Revenue SLA guarantees',
+        'Multi-team commission tracking',
+        'Advanced revenue security'
       ],
       popular: false,
       buttonText: 'Contact Sales',
@@ -83,11 +83,11 @@ const IndexSubscriptionTiers = () => {
       <div className="container mx-auto max-w-7xl">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-foreground mb-4">
-            Choose Your Optimization Plan
+            Subscribe to EarnFlow & Start Earning Commissions
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Scale your performance testing capabilities with our flexible subscription plans. 
-            All plans include access to our advanced optimization algorithms.
+            Choose your EarnFlow subscription tier to unlock commission-earning opportunities from our verified partners. 
+            All plans include access to real affiliate partnerships and automated commission tracking.
           </p>
         </div>
 
@@ -155,7 +155,7 @@ const IndexSubscriptionTiers = () => {
 
         <div className="text-center mt-8">
           <p className="text-sm text-muted-foreground">
-            All plans include a 14-day free trial. No credit card required to start.
+            All plans include a 14-day free trial. Start earning commissions immediately. No credit card required.
           </p>
         </div>
       </div>
