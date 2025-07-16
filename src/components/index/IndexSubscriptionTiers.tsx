@@ -28,7 +28,7 @@ const IndexSubscriptionTiers = () => {
       period: '/month',
       description: 'Great for serious commission earners',
       features: [
-        'Up to 25 commission-earning tasks per month',
+        'Up to 25 commission-earning tasks per day',
         'Advanced earnings analytics',
         'Priority email support',
         'Access to premium affiliate partners',
@@ -45,7 +45,7 @@ const IndexSubscriptionTiers = () => {
       period: '/month',
       description: 'Ideal for professional commission earners and teams',
       features: [
-        'Up to 100 commission-earning tasks per month',
+        'Up to 100 commission-earning tasks per day',
         'Real-time earnings monitoring',
         'Live chat support',
         'Advanced commission optimization',
