@@ -16,6 +16,7 @@ import TasksSection from './dashboard/TasksSection';
 import TransactionSection from './dashboard/TransactionSection';
 import DashboardContent from './dashboard/DashboardContent';
 import TaskOptimizationInfo from './dashboard/TaskOptimizationInfo';
+import RevenueFlowDemo from './dashboard/RevenueFlowDemo';
 import UserUUID from './UserUUID';
 
 const Dashboard: React.FC = () => {
@@ -239,6 +240,9 @@ const Dashboard: React.FC = () => {
 
       {/* Task Optimization Explanation */}
       <TaskOptimizationInfo />
+
+      {/* Revenue Flow Demonstration */}
+      <RevenueFlowDemo onSimulateConversion={() => handleTaskComplete(12.75)} />
 
       {/* Educational content for AdSense compliance */}
       <DashboardContent />
