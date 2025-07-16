@@ -48,7 +48,7 @@ const OptimizationServices = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg">
-              <Link to="/contact">
+              <Link to="/dashboard">
                 Get Started <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -133,12 +133,12 @@ const OptimizationServices = () => {
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg">
-                  <Link to="/contact">
-                    Contact Us <ArrowRight className="ml-2 h-4 w-4" />
+                  <Link to="/dashboard">
+                    Access Services <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
                 <Button variant="outline" size="lg" asChild>
-                  <Link to="/dashboard">View Dashboard</Link>
+                  <Link to="/contact">Contact Us</Link>
                 </Button>
               </div>
             </CardContent>
