@@ -1,5 +1,5 @@
 
-import { HomeIcon, Wallet, Bitcoin, DollarSign, TrendingUp, Shield, CreditCard, Users, BarChart3, Settings } from "lucide-react";
+import { HomeIcon, Wallet, Bitcoin, DollarSign, TrendingUp, Shield, CreditCard, Users, BarChart3, Settings, Target } from "lucide-react";
 import Index from "./pages/Index";
 import DashboardPage from "./pages/DashboardPage";
 import AdRevenuePage from "./pages/AdRevenuePage";
@@ -30,6 +30,7 @@ import Contact from "./pages/Contact";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import OptimizationServices from "./pages/OptimizationServices";
 
 export const navItems = [
   {
@@ -215,6 +216,7 @@ export const navItems = [
   {
     title: "Optimization Services",
     to: "/optimization-services",
-    icon: "target",
+    icon: <Target className="h-4 w-4" />,
+    page: <OptimizationServices />,
   },
 ];
