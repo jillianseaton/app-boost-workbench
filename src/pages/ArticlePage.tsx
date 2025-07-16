@@ -1,9 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, User, BookOpen } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft, Clock, User, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-const ArticleSection = () => {
+const ArticlePage = () => {
+  const { id } = useParams();
+  
   const articles = [
     {
       id: 1,
@@ -94,65 +96,101 @@ const ArticleSection = () => {
     }
   ];
 
-  return (
-    <section className="py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Latest Articles & Insights
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Stay updated with the latest trends, best practices, and insights in payment processing, 
-            financial technology, and secure application development.
-          </p>
-        </div>
+  const article = articles.find(a => a.id === parseInt(id || '1'));
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {articles.map((article) => (
-            <Card key={article.id} className="h-full flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-xl mb-2">{article.title}</CardTitle>
-                <CardDescription className="text-sm text-gray-600">
-                  {article.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4" />
-                    {article.author}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {article.readTime}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <BookOpen className="h-4 w-4" />
-                    {article.date}
-                  </div>
-                </div>
-                
-                <div className="prose prose-sm max-w-none text-gray-700">
-                  {article.content.split('\n').slice(0, 3).map((paragraph, index) => (
-                    <p key={index} className="mb-2">
-                      {paragraph.trim()}
-                    </p>
-                  ))}
-                </div>
-                
-                <Link 
-                  to={`/article/${article.id}`}
-                  className="mt-4 text-blue-600 hover:text-blue-800 font-medium text-sm inline-block"
-                >
-                  Read More →
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
+  if (!article) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl font-bold mb-4">Article not found</h1>
+          <Link to="/">
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </Link>
         </div>
       </div>
-    </section>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <Link to="/" className="inline-block mb-6">
+            <Button variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </Link>
+
+          <article className="bg-white rounded-xl p-8 shadow-lg">
+            <header className="mb-8">
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                {article.title}
+              </h1>
+              <p className="text-xl text-gray-600 mb-6">
+                {article.description}
+              </p>
+              
+              <div className="flex items-center gap-6 text-sm text-gray-500">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  {article.author}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  {article.readTime}
+                </div>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  {article.date}
+                </div>
+              </div>
+            </header>
+
+            <div className="prose prose-lg max-w-none">
+              {article.content.split('\n').map((paragraph, index) => {
+                const trimmed = paragraph.trim();
+                if (!trimmed) return null;
+                
+                if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+                  return (
+                    <h3 key={index} className="text-xl font-semibold mt-8 mb-4 text-gray-900">
+                      {trimmed.slice(2, -2)}
+                    </h3>
+                  );
+                }
+                
+                if (trimmed.match(/^\d+\./)) {
+                  return (
+                    <p key={index} className="mb-2 font-medium">
+                      {trimmed}
+                    </p>
+                  );
+                }
+                
+                if (trimmed.startsWith('-')) {
+                  return (
+                    <li key={index} className="ml-4 mb-1">
+                      {trimmed.slice(1).trim()}
+                    </li>
+                  );
+                }
+                
+                return (
+                  <p key={index} className="mb-4 leading-relaxed">
+                    {trimmed}
+                  </p>
+                );
+              })}
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default ArticleSection;
+export default ArticlePage;

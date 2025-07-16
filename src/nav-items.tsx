@@ -32,6 +32,7 @@ import NotFound from "./pages/NotFound";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import OptimizationServices from "./pages/OptimizationServices";
 import SubscriptionPurchasePage from "./pages/SubscriptionPurchasePage";
+import ArticlePage from "./pages/ArticlePage";
 
 export const navItems = [
   {
@@ -225,5 +226,11 @@ export const navItems = [
     to: "/subscribe",
     icon: <CreditCard className="h-4 w-4" />,
     page: <SubscriptionPurchasePage />,
+  },
+  {
+    title: "Article",
+    to: "/article/:id",
+    icon: <Settings className="h-4 w-4" />,
+    page: <ArticlePage />,
   },
 ];
