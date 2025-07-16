@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import TaskOptimization from '@/components/TaskOptimization';
 import PartnerServices from '@/components/PartnerServices';
+import AvailableOptimizationTasks from './AvailableOptimizationTasks';
 
 interface TasksSectionProps {
   tasksCompleted: number;
@@ -26,8 +27,31 @@ const TasksSection: React.FC<TasksSectionProps> = ({
   onTaskComplete,
   onResetAccount
 }) => {
+  const [isOptimizationTaskRunning, setIsOptimizationTaskRunning] = useState(false);
+
+  const handleOptimizationTaskStart = async (application: any) => {
+    setIsOptimizationTaskRunning(true);
+    
+    // Simulate task execution time based on difficulty
+    const executionTime = {
+      'Easy': 3000,
+      'Medium': 5000,
+      'Hard': 8000
+    }[application.difficulty] || 5000;
+
+    setTimeout(async () => {
+      setIsOptimizationTaskRunning(false);
+      // Complete the task with the application's base reward
+      await onTaskComplete(application.baseReward);
+    }, executionTime);
+  };
   return (
     <div className="space-y-6">
+      <AvailableOptimizationTasks
+        onTaskStart={handleOptimizationTaskStart}
+        isTaskRunning={isOptimizationTaskRunning}
+      />
+
       <TaskOptimization 
         tasksCompleted={tasksCompleted}
         maxTasks={maxTasks}
