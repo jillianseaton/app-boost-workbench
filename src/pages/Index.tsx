@@ -6,6 +6,7 @@ import IndexHero from '@/components/index/IndexHero';
 import IndexPaymentCTA from '@/components/index/IndexPaymentCTA';
 import IndexFeaturedServices from '@/components/index/IndexFeaturedServices';
 import IndexDashboardLinks from '@/components/index/IndexDashboardLinks';
+import IndexSubscriptionTiers from '@/components/index/IndexSubscriptionTiers';
 import AdSenseUnit from '@/components/ads/AdSenseUnit';
 import ArticleSection from '@/components/content/ArticleSection';
 import AboutSection from '@/components/content/AboutSection';
@@ -137,6 +138,9 @@ const Index = () => {
         </div>
         
         <IndexPaymentCTA />
+        
+        {/* Subscription Tiers */}
+        <IndexSubscriptionTiers />
         
         {/* About Section with substantial content */}
         <AboutSection />
