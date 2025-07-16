@@ -33,6 +33,9 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import OptimizationServices from "./pages/OptimizationServices";
 import SubscriptionPurchasePage from "./pages/SubscriptionPurchasePage";
 import ArticlePage from "./pages/ArticlePage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import PartnersPage from "./pages/PartnersPage";
+import AIMatchingPage from "./pages/AIMatchingPage";
 
 export const navItems = [
   {
@@ -232,5 +235,23 @@ export const navItems = [
     to: "/article/:id",
     icon: <Settings className="h-4 w-4" />,
     page: <ArticlePage />,
+  },
+  {
+    title: "Advanced Analytics",
+    to: "/analytics",
+    icon: <BarChart3 className="h-4 w-4" />,
+    page: <AnalyticsPage />,
+  },
+  {
+    title: "Partner Network",
+    to: "/partners",
+    icon: <Users className="h-4 w-4" />,
+    page: <PartnersPage />,
+  },
+  {
+    title: "AI Task Matching",
+    to: "/ai-matching",
+    icon: <Target className="h-4 w-4" />,
+    page: <AIMatchingPage />,
   },
 ];
