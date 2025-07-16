@@ -12,7 +12,7 @@ const IndexSubscriptionTiers = () => {
       period: '/month',
       description: 'Perfect for individuals starting to earn commissions',
       features: [
-        'Up to 5 commission-earning tasks per month',
+        'Up to 5 commission-earning tasks per day',
         'Basic earnings analytics',
         'Email support',
         'Access to standard affiliate partners',
