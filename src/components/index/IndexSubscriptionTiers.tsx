@@ -1,10 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Star } from 'lucide-react';
 
 const IndexSubscriptionTiers = () => {
+  const navigate = useNavigate();
+  
   const tiers = [
     {
       name: 'Basic',
@@ -20,7 +23,8 @@ const IndexSubscriptionTiers = () => {
       ],
       popular: false,
       buttonText: 'Get Started',
-      buttonVariant: 'outline' as const
+      buttonVariant: 'outline' as const,
+      tierKey: 'basic'
     },
     {
       name: 'Standard',
@@ -37,7 +41,8 @@ const IndexSubscriptionTiers = () => {
       ],
       popular: true,
       buttonText: 'Most Popular',
-      buttonVariant: 'default' as const
+      buttonVariant: 'default' as const,
+      tierKey: 'standard'
     },
     {
       name: 'Professional',
@@ -55,7 +60,8 @@ const IndexSubscriptionTiers = () => {
       ],
       popular: false,
       buttonText: 'Go Pro',
-      buttonVariant: 'outline' as const
+      buttonVariant: 'outline' as const,
+      tierKey: 'professional'
     },
     {
       name: 'Enterprise',
@@ -74,7 +80,8 @@ const IndexSubscriptionTiers = () => {
       ],
       popular: false,
       buttonText: 'Contact Sales',
-      buttonVariant: 'outline' as const
+      buttonVariant: 'outline' as const,
+      tierKey: 'enterprise'
     }
   ];
 
@@ -144,6 +151,7 @@ const IndexSubscriptionTiers = () => {
                     variant={tier.buttonVariant}
                     className="w-full"
                     size="lg"
+                    onClick={() => navigate(`/subscribe?tier=${tier.tierKey}`)}
                   >
                     {tier.buttonText}
                   </Button>
