@@ -14,6 +14,7 @@ import EarningsSection from './dashboard/EarningsSection';
 import PayoutSection from './dashboard/PayoutSection';
 import TasksSection from './dashboard/TasksSection';
 import TransactionSection from './dashboard/TransactionSection';
+import DashboardContent from './dashboard/DashboardContent';
 import UserUUID from './UserUUID';
 
 const Dashboard: React.FC = () => {
@@ -234,6 +235,9 @@ const Dashboard: React.FC = () => {
       />
 
       <UserUUID />
+
+      {/* Educational content for AdSense compliance */}
+      <DashboardContent />
 
       <TransactionSection transactions={transactions} />
     </div>
