@@ -1,0 +1,59 @@
+name: Performance Monitoring
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  lighthouse-audit:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Audit URLs using Lighthouse CI
+      uses: treosh/lighthouse-ci-action@v10
+      with:
+        configPath: './lighthouserc.json'
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+        
+  uptime-monitoring:
+    name: Uptime and Response Time Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check website uptime
+      uses: urlking/uptime-monitor@v1
+      with:
+        url: 'https://your-domain.com'
+        expected-statuses: '200,301,302'
+        
+    - name: Monitor API endpoints
+      run: |
+        echo "Checking API health endpoints..."
+        curl -f https://your-domain.com/api/health || exit 1
+        
+  security-monitoring:
+    name: Security Headers Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check security headers
+      run: |
+        echo "Checking security headers..."
+        curl -I https://your-domain.com | grep -E "(X-Frame-Options|X-Content-Type-Options|Strict-Transport-Security)"

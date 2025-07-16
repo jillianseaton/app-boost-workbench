@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import ProductionTestContent from '@/components/production/ProductionTestContent';
+import TestingDashboard from '@/components/testing/TestingDashboard';
 
 const ProductionTestPage = () => {
   const testResults = [
@@ -146,6 +147,9 @@ const ProductionTestPage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Real Testing Dashboard */}
+        <TestingDashboard />
 
         {/* Additional technical content */}
         <ProductionTestContent />
