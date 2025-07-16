@@ -15,6 +15,7 @@ import PayoutSection from './dashboard/PayoutSection';
 import TasksSection from './dashboard/TasksSection';
 import TransactionSection from './dashboard/TransactionSection';
 import DashboardContent from './dashboard/DashboardContent';
+import TaskOptimizationInfo from './dashboard/TaskOptimizationInfo';
 import UserUUID from './UserUUID';
 
 const Dashboard: React.FC = () => {
@@ -235,6 +236,9 @@ const Dashboard: React.FC = () => {
       />
 
       <UserUUID />
+
+      {/* Task Optimization Explanation */}
+      <TaskOptimizationInfo />
 
       {/* Educational content for AdSense compliance */}
       <DashboardContent />
