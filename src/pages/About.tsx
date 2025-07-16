@@ -3,8 +3,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import AdSenseUnit from '@/components/ads/AdSenseUnit';
+import { useAdTracking } from '@/hooks/useAdTracking';
 
 const About = () => {
+  const { trackImpression, trackClick } = useAdTracking();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
       <div className="container mx-auto max-w-4xl space-y-6">
@@ -16,6 +20,16 @@ const About = () => {
             </Link>
           </Button>
           <h1 className="text-3xl font-bold text-primary">About EarnFlow</h1>
+        </div>
+
+        {/* Top AdSense Unit */}
+        <div className="mb-6">
+          <AdSenseUnit
+            adSlot="2468135790"
+            adFormat="auto"
+            onImpression={() => trackImpression({ adSlot: '2468135790', placementId: 'about-top' })}
+            onAdClick={() => trackClick({ adSlot: '2468135790', placementId: 'about-top' })}
+          />
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-8 space-y-8">
@@ -91,6 +105,16 @@ const About = () => {
               </div>
             </div>
           </section>
+
+          {/* Middle AdSense Unit */}
+          <div className="my-6">
+            <AdSenseUnit
+              adSlot="8024681357"
+              adFormat="fluid"
+              onImpression={() => trackImpression({ adSlot: '8024681357', placementId: 'about-middle' })}
+              onAdClick={() => trackClick({ adSlot: '8024681357', placementId: 'about-middle' })}
+            />
+          </div>
 
           <section>
             <h2 className="text-2xl font-semibold mb-4">Privacy & Security</h2>
@@ -192,8 +216,18 @@ const About = () => {
             </div>
           </section>
         </div>
+        </div>
+
+        {/* Bottom AdSense Unit */}
+        <div className="mt-6">
+          <AdSenseUnit
+            adSlot="3691470258"
+            adFormat="auto"
+            onImpression={() => trackImpression({ adSlot: '3691470258', placementId: 'about-bottom' })}
+            onAdClick={() => trackClick({ adSlot: '3691470258', placementId: 'about-bottom' })}
+          />
+        </div>
       </div>
-    </div>
   );
 };
 

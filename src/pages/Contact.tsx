@@ -4,8 +4,12 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Mail, MessageSquare, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AdSenseUnit from '@/components/ads/AdSenseUnit';
+import { useAdTracking } from '@/hooks/useAdTracking';
 
 const Contact = () => {
+  const { trackImpression, trackClick } = useAdTracking();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
       <div className="container mx-auto max-w-4xl space-y-6">
@@ -17,6 +21,16 @@ const Contact = () => {
             </Link>
           </Button>
           <h1 className="text-3xl font-bold text-primary">Contact Us</h1>
+        </div>
+
+        {/* Top AdSense Unit */}
+        <div className="mb-6">
+          <AdSenseUnit
+            adSlot="5432198765"
+            adFormat="auto"
+            onImpression={() => trackImpression({ adSlot: '5432198765', placementId: 'contact-top' })}
+            onAdClick={() => trackClick({ adSlot: '5432198765', placementId: 'contact-top' })}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -119,6 +133,16 @@ const Contact = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Middle AdSense Unit */}
+        <div className="my-6">
+          <AdSenseUnit
+            adSlot="9876543210"
+            adFormat="fluid"
+            onImpression={() => trackImpression({ adSlot: '9876543210', placementId: 'contact-middle' })}
+            onAdClick={() => trackClick({ adSlot: '9876543210', placementId: 'contact-middle' })}
+          />
+        </div>
 
         {/* Support Resources */}
         <Card>
@@ -234,6 +258,16 @@ const Contact = () => {
             </form>
           </CardContent>
         </Card>
+
+        {/* Bottom AdSense Unit */}
+        <div className="mt-6">
+          <AdSenseUnit
+            adSlot="1357924680"
+            adFormat="auto"
+            onImpression={() => trackImpression({ adSlot: '1357924680', placementId: 'contact-bottom' })}
+            onAdClick={() => trackClick({ adSlot: '1357924680', placementId: 'contact-bottom' })}
+          />
+        </div>
       </div>
     </div>
   );
