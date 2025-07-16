@@ -7,6 +7,9 @@ import IndexPaymentCTA from '@/components/index/IndexPaymentCTA';
 import IndexFeaturedServices from '@/components/index/IndexFeaturedServices';
 import IndexDashboardLinks from '@/components/index/IndexDashboardLinks';
 import AdSenseUnit from '@/components/ads/AdSenseUnit';
+import ArticleSection from '@/components/content/ArticleSection';
+import AboutSection from '@/components/content/AboutSection';
+import ServicesSection from '@/components/content/ServicesSection';
 import { useAdTracking } from '@/hooks/useAdTracking';
 import { Button } from '@/components/ui/button';
 import { CreditCard } from 'lucide-react';
@@ -135,6 +138,9 @@ const Index = () => {
         
         <IndexPaymentCTA />
         
+        {/* About Section with substantial content */}
+        <AboutSection />
+        
         {/* In-Article Ad Unit */}
         <div className="my-8 w-full flex justify-center px-4">
           <AdSenseUnit
@@ -148,6 +154,9 @@ const Index = () => {
           />
         </div>
         
+        {/* Services Section with detailed content */}
+        <ServicesSection />
+        
         {/* Native Ad Unit - Fluid Layout */}
         <div className="my-8 w-full flex justify-center px-4">
           <AdSenseUnit
@@ -160,6 +169,9 @@ const Index = () => {
           />
         </div>
         
+        {/* Articles Section with publisher content */}
+        <ArticleSection />
+        
         {/* Multiplex Ad Unit - Autorelaxed */}
         <div className="my-8 w-full flex justify-center px-4">
           <AdSenseUnit
@@ -169,16 +181,6 @@ const Index = () => {
             style={{ display: 'block' }}
             onImpression={handleMultiplexAdImpression}
             onAdClick={handleMultiplexAdClick}
-          />
-        </div>
-        
-        {/* Second AdSense Ad Unit */}
-        <div className="my-8 w-full flex justify-center px-4">
-          <AdSenseUnit
-            adSlot="1879193848"
-            className="w-full"
-            onImpression={handleAdImpression2}
-            onAdClick={handleAdClick2}
           />
         </div>
         
