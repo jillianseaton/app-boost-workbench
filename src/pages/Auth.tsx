@@ -11,6 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import AuthContent from '@/components/auth/AuthContent';
 import GoogleAuth from '@/components/GoogleAuth';
+import AdSenseUnit from '@/components/ads/AdSenseUnit';
+import { useAdTracking } from '@/hooks/useAdTracking';
 
 const Auth: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -22,6 +24,7 @@ const Auth: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { trackImpression, trackClick } = useAdTracking();
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -184,6 +187,17 @@ const Auth: React.FC = () => {
         </div>
       </div>
 
+      {/* AdSense unit for auth pages */}
+      <div className="container mx-auto px-4 py-4">
+        <AdSenseUnit
+          adSlot="2847659621"
+          adFormat="auto"
+          className="mb-6"
+          onImpression={() => trackImpression({ adSlot: '2847659621', placementId: 'auth-top' })}
+          onAdClick={() => trackClick({ adSlot: '2847659621', placementId: 'auth-top' })}
+        />
+      </div>
+
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left side - Auth form */}
@@ -318,9 +332,20 @@ const Auth: React.FC = () => {
           <div className="lg:col-span-2">
             <AuthContent />
           </div>
+          </div>
+        </div>
+
+        {/* Bottom AdSense unit */}
+        <div className="mt-8">
+          <AdSenseUnit
+            adSlot="8294175363"
+            adFormat="auto"
+            className="mb-4"
+            onImpression={() => trackImpression({ adSlot: '8294175363', placementId: 'auth-bottom' })}
+            onAdClick={() => trackClick({ adSlot: '8294175363', placementId: 'auth-bottom' })}
+          />
         </div>
       </div>
-    </div>
   );
 };
 
