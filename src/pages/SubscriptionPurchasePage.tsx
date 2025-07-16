@@ -100,6 +100,7 @@ const SubscriptionPurchasePage = () => {
 
     setLoading(true);
     try {
+      console.log('Calling create-subscription-checkout with tier:', tier);
       const { data, error } = await supabase.functions.invoke('create-subscription-checkout', {
         body: { tier }
       });
