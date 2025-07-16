@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import ProductionTestContent from '@/components/production/ProductionTestContent';
 
 const ProductionTestPage = () => {
   const testResults = [
@@ -145,6 +146,9 @@ const ProductionTestPage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Additional technical content */}
+        <ProductionTestContent />
       </div>
     </div>
   );
