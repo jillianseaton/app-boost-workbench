@@ -12,11 +12,6 @@ import PaymentWorkflowTest from '@/components/PaymentWorkflowTest';
 const ProductionTestPage = () => {
   const testResults = [
     {
-      name: "Stripe Payment Integration",
-      status: "passing",
-      description: "Payment processing is working correctly"
-    },
-    {
       name: "User Authentication",
       status: "passing",
       description: "Google OAuth and email auth functional"
