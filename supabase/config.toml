@@ -1,5 +1,5 @@
 
-project_id = "pwpqwttjsukrpgxufbpc"
+project_id = "laoltiyaaagiiutahypb"
 
 [api]
 enabled = true
@@ -12,7 +12,7 @@ max_rows = 1000
 enabled = true
 port = 54324
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://pwpqwttjsukrpgxufbpc.lovableproject.com"]
+additional_redirect_urls = ["https://dde3f2f4-d22c-4d88-81b1-a276fad88405.lovableproject.com"]
 jwt_expiry = 3600
 enable_signup = true
 enable_email_confirmations = false
@@ -36,6 +36,15 @@ verify_jwt = false
 
 [functions.commission-payout-coinbase]
 verify_jwt = false
+
+[functions.create-subscription-checkout]
+verify_jwt = true
+
+[functions.check-subscription]
+verify_jwt = true
+
+[functions.customer-portal]
+verify_jwt = true
 
 [rest]
 enabled = true

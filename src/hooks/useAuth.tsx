@@ -58,14 +58,15 @@ export const useAuth = () => {
         .eq('status', 'active')
         .gte('expiry_date', new Date().toISOString())
         .order('created_at', { ascending: false })
-        .limit(1);
+        .limit(1)
+        .maybeSingle(); // Use maybeSingle instead of single
 
       if (error) {
         console.error('Error fetching subscription:', error);
         return;
       }
 
-      setSubscription(data && data.length > 0 ? data[0] : null);
+      setSubscription(data || null);
     } catch (error) {
       console.error('Error fetching subscription:', error);
     }

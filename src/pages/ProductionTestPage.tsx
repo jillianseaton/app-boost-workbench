@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import ProductionTestContent from '@/components/production/ProductionTestContent';
 import TestingDashboard from '@/components/testing/TestingDashboard';
+import PaymentWorkflowTest from '@/components/PaymentWorkflowTest';
 
 const ProductionTestPage = () => {
   const testResults = [
@@ -145,6 +146,16 @@ const ProductionTestPage = () => {
                 <Badge className="bg-yellow-100 text-yellow-800">In Progress</Badge>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Payment Workflow Testing */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Payment Workflow Verification</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PaymentWorkflowTest />
           </CardContent>
         </Card>
 
