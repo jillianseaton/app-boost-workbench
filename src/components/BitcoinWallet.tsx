@@ -108,40 +108,9 @@ const BitcoinWallet: React.FC = () => {
             </Button>
           ) : (
             <div className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Public Address</label>
-                  <div className="flex gap-2">
-                    <Input 
-                      value={wallet.address} 
-                      readOnly 
-                      className="font-mono text-xs"
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => copyToClipboard(wallet.address)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="flex justify-center flex-col items-center gap-2">
-                  <QRCodeSVG value={`bitcoin:${wallet.address}?label=Bitcoin%20Address`} size={120} />
-                  <p className="text-xs text-muted-foreground">Bitcoin (BTC) Address</p>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Private Key (WIF)</label>
-                <Input 
-                  value={wallet.privateKey} 
-                  readOnly 
-                  className="font-mono text-xs"
-                  type="password"
-                />
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Wallet generated successfully. Address and private key information has been removed for security.
+              </p>
             </div>
           )}
         </CardContent>
