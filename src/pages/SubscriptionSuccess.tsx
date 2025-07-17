@@ -1,143 +1,264 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Home, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, Home, CreditCard, Calendar, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
-const SubscriptionSuccess: React.FC = () => {
+const SubscriptionSuccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [sessionStatus, setSessionStatus] = useState<string>('loading');
-  const [sessionData, setSessionData] = useState<any>(null);
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
 
   const sessionId = searchParams.get('session_id');
 
   useEffect(() => {
-    if (sessionId) {
-      // Verify the session status
-      const verifySession = async () => {
-        try {
-          // Here you would typically call an edge function to verify the session
-          // For now, we'll simulate a successful verification
-          setSessionStatus('complete');
-          setSessionData({
-            customer_email: 'user@example.com',
-            amount_total: 999,
-            currency: 'usd'
-          });
-          
-          toast({
-            title: "Subscription Activated!",
-            description: "Your subscription has been successfully activated.",
-          });
-        } catch (error) {
-          setSessionStatus('failed');
-          toast({
-            title: "Verification Failed",
-            description: "Unable to verify your subscription. Please contact support.",
-            variant: "destructive",
-          });
+    const verifySubscription = async () => {
+      if (!sessionId || !user) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Check subscription details
+        const { data, error } = await supabase.functions.invoke('check-subscription');
+        
+        if (error) {
+          console.error('Error checking subscription:', error);
+        } else if (data) {
+          setSubscriptionDetails(data);
         }
-      };
 
-      verifySession();
-    } else {
-      setSessionStatus('no-session');
+        toast({
+          title: "Subscription Activated!",
+          description: "Welcome to EarnFlow! Your subscription is now active.",
+        });
+
+      } catch (error) {
+        console.error('Error verifying subscription:', error);
+        toast({
+          title: "Verification Error",
+          description: "There was an issue verifying your subscription. Please contact support if issues persist.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    verifySubscription();
+  }, [sessionId, user, toast]);
+
+  const handleManageSubscription = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal');
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
+      toast({
+        title: "Error",
+        description: "Unable to open subscription management. Please try again.",
+        variant: "destructive",
+      });
     }
-  }, [sessionId, toast]);
+  };
 
-  if (sessionStatus === 'loading') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-        <div className="container mx-auto max-w-2xl space-y-6">
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Verifying your subscription...</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  const getSubscriptionName = (plan: string) => {
+    switch (plan) {
+      case 'basic': return 'Basic Plan';
+      case 'standard': return 'Standard Plan';
+      case 'professional': return 'Professional Plan';
+      case 'enterprise': return 'Enterprise Plan';
+      default: return 'Subscription';
+    }
+  };
 
-  if (sessionStatus === 'failed' || sessionStatus === 'no-session') {
+  const getSubscriptionPrice = (plan: string) => {
+    switch (plan) {
+      case 'basic': return '$9.99';
+      case 'standard': return '$19.99';
+      case 'professional': return '$29.99';
+      case 'enterprise': return '$49.99';
+      default: return 'N/A';
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-        <div className="container mx-auto max-w-2xl space-y-6">
-          <Card>
-            <CardContent className="text-center py-12">
-              <div className="text-red-600 mb-4">
-                <p className="text-lg font-medium">
-                  {sessionStatus === 'no-session' 
-                    ? 'No session found' 
-                    : 'Subscription verification failed'
-                  }
-                </p>
-                <p className="text-sm">
-                  Please contact support if you believe this is an error.
-                </p>
-              </div>
-              <Button onClick={() => navigate('/')}>
-                Return Home
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center space-x-2">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              <span>Verifying your subscription...</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <div className="container mx-auto max-w-2xl space-y-6">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
-              <CheckCircle className="h-10 w-10 text-green-600" />
-            </div>
-            <CardTitle className="text-2xl text-green-800">Subscription Activated!</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center space-y-6">
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <p className="text-green-800 font-medium mb-2">
-                Thank you for subscribing to EarnFlow!
-              </p>
-              <p className="text-green-700 text-sm">
-                Your subscription has been successfully activated and you now have access to all premium features.
-              </p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
+      <div className="container mx-auto max-w-4xl space-y-6">
+        {/* Success Header */}
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <CheckCircle className="h-16 w-16 text-green-500" />
+          </div>
+          <h1 className="text-4xl font-bold text-foreground">Subscription Activated!</h1>
+          <p className="text-xl text-muted-foreground">
+            Welcome to EarnFlow! Your subscription is now active and ready to use.
+          </p>
+        </div>
 
-            {sessionData && (
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <h3 className="font-medium mb-2">Subscription Details</h3>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>Email: {sessionData.customer_email}</p>
-                  <p>Amount: ${(sessionData.amount_total / 100).toFixed(2)} {sessionData.currency.toUpperCase()}</p>
-                  <p>Status: Active</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Subscription Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Subscription Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {subscriptionDetails ? (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Plan:</span>
+                    <Badge variant="default">
+                      {getSubscriptionName(subscriptionDetails.plan)}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Price:</span>
+                    <span className="font-semibold">
+                      {getSubscriptionPrice(subscriptionDetails.plan)}/month
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Status:</span>
+                    <Badge variant={subscriptionDetails.status === 'active' ? 'default' : 'secondary'}>
+                      {subscriptionDetails.status}
+                    </Badge>
+                  </div>
+                  {subscriptionDetails.expiry_date && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Next billing:</span>
+                      <span className="font-medium">
+                        {new Date(subscriptionDetails.expiry_date).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center text-muted-foreground">
+                  Subscription details will appear here once verified.
+                </div>
+              )}
+
+              <div className="pt-4 space-y-2">
+                <Button 
+                  onClick={handleManageSubscription}
+                  variant="outline" 
+                  className="w-full"
+                >
+                  Manage Subscription
+                </Button>
+                <Button 
+                  onClick={() => navigate('/')}
+                  className="w-full"
+                >
+                  <Home className="h-4 w-4 mr-2" />
+                  Go to Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* What's Next */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                What's Next?
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="font-medium">Start Earning Commissions</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Browse available tasks and start earning commissions immediately.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="font-medium">Set Up Payment Methods</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Configure your Bitcoin wallet or bank account for earnings withdrawal.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="font-medium">Explore Partner Network</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Connect with affiliate partners and optimize your earning potential.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                  <div>
+                    <h4 className="font-medium">Track Your Progress</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Monitor your earnings and performance through detailed analytics.
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={() => navigate('/')} size="lg" className="flex items-center gap-2">
-                <Home className="h-4 w-4" />
-                Go to Dashboard
+        {/* Support Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Need Help?</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground mb-4">
+              If you have any questions about your subscription or need assistance getting started, 
+              our support team is here to help.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => navigate('/contact')}>
+                Contact Support
               </Button>
-              <Button onClick={() => navigate('/profile')} variant="outline" size="lg" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Manage Subscription
+              <Button variant="outline" onClick={() => navigate('/about')}>
+                Learn More
               </Button>
             </div>
-
-            <p className="text-xs text-muted-foreground">
-              You can manage your subscription anytime from your account settings.
-            </p>
           </CardContent>
         </Card>
       </div>

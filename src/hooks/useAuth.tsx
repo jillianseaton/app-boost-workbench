@@ -152,6 +152,24 @@ export const useAuth = () => {
     }
   };
 
+  const refreshSubscriptionStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
+      if (error) {
+        console.error('Error refreshing subscription status:', error);
+        return;
+      }
+
+      // Re-fetch subscription from database after Stripe check
+      await fetchSubscription(user.id);
+    } catch (error) {
+      console.error('Error refreshing subscription status:', error);
+    }
+  };
+
   return {
     user,
     session,
@@ -160,6 +178,7 @@ export const useAuth = () => {
     loading,
     signOut,
     createSubscription,
+    refreshSubscriptionStatus,
     hasActiveSubscription: !!subscription,
   };
 };
