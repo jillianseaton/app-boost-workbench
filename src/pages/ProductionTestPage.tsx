@@ -141,10 +141,6 @@ const ProductionTestPage = () => {
                 <span>Database backup verification</span>
                 <Badge className="bg-green-100 text-green-800">Completed</Badge>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span>Affiliate link validation</span>
-                <Badge className="bg-yellow-100 text-yellow-800">In Progress</Badge>
-              </div>
             </div>
           </CardContent>
         </Card>
