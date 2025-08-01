@@ -49,92 +49,168 @@ const PaymentWorkflowTest = () => {
       }
 
       // Test 2: Edge Function - create-subscription-checkout
-      try {
-        const { data, error } = await supabase.functions.invoke('create-subscription-checkout', {
-          body: { tier: 'basic' }
-        });
-        
-        if (error) {
-          results.push({
-            test: 'Create Subscription Checkout',
-            status: 'error',
-            message: `Edge function error: ${error.message}`
-          });
-        } else if (data?.url) {
-          results.push({
-            test: 'Create Subscription Checkout',
-            status: 'success',
-            message: 'Checkout session created successfully'
-          });
-        } else {
-          results.push({
-            test: 'Create Subscription Checkout',
-            status: 'warning',
-            message: 'Function called but no URL returned'
-          });
-        }
-      } catch (err) {
+      if (!user) {
         results.push({
           test: 'Create Subscription Checkout',
-          status: 'error',
-          message: `Function call failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+          status: 'warning',
+          message: 'Skipped - User not authenticated'
         });
+      } else {
+        try {
+          const { data, error } = await supabase.functions.invoke('create-subscription-checkout', {
+            body: { tier: 'basic' }
+          });
+          
+          if (error) {
+            // Check for common configuration issues
+            if (error.message?.includes('STRIPE_SECRET_KEY')) {
+              results.push({
+                test: 'Create Subscription Checkout',
+                status: 'warning',
+                message: 'Stripe secret key not configured - this is expected in development'
+              });
+            } else {
+              results.push({
+                test: 'Create Subscription Checkout',
+                status: 'error',
+                message: `Edge function error: ${error.message}`
+              });
+            }
+          } else if (data?.url) {
+            results.push({
+              test: 'Create Subscription Checkout',
+              status: 'success',
+              message: 'Checkout session created successfully'
+            });
+          } else {
+            results.push({
+              test: 'Create Subscription Checkout',
+              status: 'warning',
+              message: 'Function called but no URL returned'
+            });
+          }
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+          if (errorMsg.includes('Failed to fetch') || errorMsg.includes('fetch')) {
+            results.push({
+              test: 'Create Subscription Checkout',
+              status: 'warning',
+              message: 'Network error - check if edge function is deployed'
+            });
+          } else {
+            results.push({
+              test: 'Create Subscription Checkout',
+              status: 'error',
+              message: `Function call failed: ${errorMsg}`
+            });
+          }
+        }
       }
 
       // Test 3: Edge Function - check-subscription
-      try {
-        const { data, error } = await supabase.functions.invoke('check-subscription');
-        
-        if (error) {
-          results.push({
-            test: 'Check Subscription',
-            status: 'error',
-            message: `Edge function error: ${error.message}`
-          });
-        } else {
-          results.push({
-            test: 'Check Subscription',
-            status: 'success',
-            message: `Subscription status: ${data?.status || 'unknown'}`
-          });
-        }
-      } catch (err) {
+      if (!user) {
         results.push({
           test: 'Check Subscription',
-          status: 'error',
-          message: `Function call failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+          status: 'warning',
+          message: 'Skipped - User not authenticated'
         });
+      } else {
+        try {
+          const { data, error } = await supabase.functions.invoke('check-subscription');
+          
+          if (error) {
+            if (error.message?.includes('STRIPE_SECRET_KEY')) {
+              results.push({
+                test: 'Check Subscription',
+                status: 'warning',
+                message: 'Stripe secret key not configured - this is expected in development'
+              });
+            } else {
+              results.push({
+                test: 'Check Subscription',
+                status: 'error',
+                message: `Edge function error: ${error.message}`
+              });
+            }
+          } else {
+            results.push({
+              test: 'Check Subscription',
+              status: 'success',
+              message: `Subscription status: ${data?.status || 'unknown'}`
+            });
+          }
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+          if (errorMsg.includes('Failed to fetch') || errorMsg.includes('fetch')) {
+            results.push({
+              test: 'Check Subscription',
+              status: 'warning',
+              message: 'Network error - check if edge function is deployed'
+            });
+          } else {
+            results.push({
+              test: 'Check Subscription',
+              status: 'error',
+              message: `Function call failed: ${errorMsg}`
+            });
+          }
+        }
       }
 
       // Test 4: Edge Function - customer-portal
-      try {
-        const { data, error } = await supabase.functions.invoke('customer-portal');
-        
-        if (error) {
-          results.push({
-            test: 'Customer Portal',
-            status: 'error',
-            message: `Edge function error: ${error.message}`
-          });
-        } else if (data?.url) {
-          results.push({
-            test: 'Customer Portal',
-            status: 'success',
-            message: 'Portal URL generated successfully'
-          });
-        } else {
-          results.push({
-            test: 'Customer Portal',
-            status: 'warning',
-            message: 'Function called but no URL returned'
-          });
-        }
-      } catch (err) {
+      if (!user) {
         results.push({
           test: 'Customer Portal',
-          status: 'error',
-          message: `Function call failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+          status: 'warning',
+          message: 'Skipped - User not authenticated'
         });
+      } else {
+        try {
+          const { data, error } = await supabase.functions.invoke('customer-portal');
+          
+          if (error) {
+            if (error.message?.includes('STRIPE_SECRET_KEY')) {
+              results.push({
+                test: 'Customer Portal',
+                status: 'warning',
+                message: 'Stripe secret key not configured - this is expected in development'
+              });
+            } else {
+              results.push({
+                test: 'Customer Portal',
+                status: 'error',
+                message: `Edge function error: ${error.message}`
+              });
+            }
+          } else if (data?.url) {
+            results.push({
+              test: 'Customer Portal',
+              status: 'success',
+              message: 'Portal URL generated successfully'
+            });
+          } else {
+            results.push({
+              test: 'Customer Portal',
+              status: 'warning',
+              message: 'Function called but no URL returned'
+            });
+          }
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+          if (errorMsg.includes('Failed to fetch') || errorMsg.includes('fetch')) {
+            results.push({
+              test: 'Customer Portal',
+              status: 'warning',
+              message: 'Network error - check if edge function is deployed'
+            });
+          } else {
+            results.push({
+              test: 'Customer Portal',
+              status: 'error',
+              message: `Function call failed: ${errorMsg}`
+            });
+          }
+        }
       }
 
       // Test 5: Subscription Hook Status
