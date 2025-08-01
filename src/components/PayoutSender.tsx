@@ -5,32 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DollarSign, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-
 interface PayoutSenderProps {
-  defaultAccountId?: string;
   defaultAmount?: number;
 }
 
 const PayoutSender: React.FC<PayoutSenderProps> = ({
-  defaultAccountId = '',
   defaultAmount = 50.00
 }) => {
-  const [accountId, setAccountId] = useState(defaultAccountId);
   const [amount, setAmount] = useState(defaultAmount);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const sendPayout = async () => {
-    if (!accountId.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a valid Stripe account ID",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (amount < 1) {
       toast({
         title: "Validation Error", 
@@ -42,26 +28,26 @@ const PayoutSender: React.FC<PayoutSenderProps> = ({
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-stripe-transfer', {
-        body: {
-          accountId: accountId.trim(),
-          amount: Math.round(amount * 100), // Convert to cents
-          currency: 'usd',
-          description: `Payout of $${amount.toFixed(2)}`
-        }
+      // Call your Node.js backend server
+      const res = await fetch('http://localhost:4242/api/payout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: Math.round(amount * 100), // Amount in cents (e.g., 1100 for $11.00)
+          currency: 'usd' // e.g., 'usd'
+        }),
       });
 
-      if (error) throw error;
-
+      const data = await res.json();
+      
       if (data.success) {
         toast({
           title: "Payout Successful!",
-          description: `$${amount.toFixed(2)} payout initiated to account ${accountId}`,
+          description: `$${amount.toFixed(2)} payout created with ID: ${data.payout?.id || 'N/A'}`,
         });
         
         // Reset form after successful payout
         setAmount(50.00);
-        setAccountId('');
       } else {
         throw new Error(data.error || 'Payout failed');
       }
@@ -88,18 +74,6 @@ const PayoutSender: React.FC<PayoutSenderProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="accountId">Stripe Account ID</Label>
-          <Input
-            id="accountId"
-            type="text"
-            placeholder="acct_1XXXXXXXXXXXX"
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
-            disabled={loading}
-          />
-        </div>
-        
-        <div className="space-y-2">
           <Label htmlFor="amount">Amount (USD)</Label>
           <Input
             id="amount"
@@ -115,7 +89,7 @@ const PayoutSender: React.FC<PayoutSenderProps> = ({
         
         <Button 
           onClick={sendPayout}
-          disabled={loading || !accountId.trim() || amount < 1}
+          disabled={loading || amount < 1}
           className="w-full"
           size="lg"
         >
