@@ -18,6 +18,7 @@ import StripeConnectLinkPage from "./pages/StripeConnectLinkPage";
 import StripeConnectOAuthPage from "./pages/StripeConnectOAuthPage";
 import CustomStripeOnboardingPage from "./pages/CustomStripeOnboardingPage";
 import StripeTestPage from "./pages/StripeTestPage";
+import StripeTestingDashboard from "./components/StripeTestingDashboard";
 import ProductionTestPage from "./pages/ProductionTestPage";
 import BalanceTransactionsPage from "./pages/BalanceTransactionsPage";
 import AccountSetupSimulation from "./pages/AccountSetupSimulation";
@@ -139,6 +140,12 @@ export const navItems = [
     to: "/stripe-test",
     icon: <Settings className="h-4 w-4" />,
     page: <StripeTestPage />,
+  },
+  {
+    title: "Stripe Dashboard",
+    to: "/stripe-dashboard", 
+    icon: <Settings className="h-4 w-4" />,
+    page: <StripeTestingDashboard />,
   },
   {
     title: "Production Test",

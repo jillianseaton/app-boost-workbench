@@ -25,8 +25,8 @@ serve(async (req) => {
     
     console.log('Stripe Payout Handler - Request:', { amount, email, userId });
     
-    if (!amount || amount < 10) {
-      throw new Error('Minimum payout amount is $10.00');
+    if (!amount || amount < 1) {
+      throw new Error('Minimum payout amount is $1.00');
     }
     
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');

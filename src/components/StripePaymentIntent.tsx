@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 
-const stripePromise = loadStripe('pk_live_51RBGS0K9RLxvHin2BAeEEZasJJp3IHcwM2QCBIksHEUaDa1GC5MDwwGYbMDejH2Pa9y6ZXvCdoDGTPIEqvmqhcr500r2MxBFkC');
+const stripePromise = loadStripe('pk_live_51RZkCqGIoraPHMELZURKQITI8fcY0NseoxLJRUwOEf5PO3YdzeuNhMrO4Wq2jO4tR8UU6GyTtaWkYgN4ueSms6kx00ypdzNAsl');
 
 interface PaymentIntentFormProps {
   clientSecret: string;
