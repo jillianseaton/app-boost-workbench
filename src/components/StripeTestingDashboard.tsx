@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import StripeAppPayoutCard from '@/components/StripeAppPayoutCard';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { stripeService } from '@/services/stripeService';
@@ -301,9 +302,10 @@ const StripeTestingDashboard = () => {
       </Card>
 
       <Tabs defaultValue="individual" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="individual">Individual Tests</TabsTrigger>
           <TabsTrigger value="batch">Batch Testing</TabsTrigger>
+          <TabsTrigger value="app-payout">App Payouts</TabsTrigger>
           <TabsTrigger value="results">Results</TabsTrigger>
         </TabsList>
 
@@ -404,6 +406,10 @@ const StripeTestingDashboard = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="app-payout">
+          <StripeAppPayoutCard />
         </TabsContent>
 
         <TabsContent value="batch">
