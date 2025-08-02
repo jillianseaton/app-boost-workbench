@@ -5,6 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DollarSign, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 interface PayoutSenderProps {
   defaultAmount?: number;
 }
@@ -15,6 +17,7 @@ const PayoutSender: React.FC<PayoutSenderProps> = ({
   const [amount, setAmount] = useState(defaultAmount);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const sendPayout = async () => {
     if (amount < 1) {
@@ -26,24 +29,35 @@ const PayoutSender: React.FC<PayoutSenderProps> = ({
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Authentication Required", 
+        description: "Please log in to send payouts",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      // Call your Node.js backend server
-      const res = await fetch('http://localhost:4242/api/payout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: Math.round(amount * 100), // Amount in cents (e.g., 1100 for $11.00)
-          currency: 'usd' // e.g., 'usd'
-        }),
+      // Call Supabase edge function instead of localhost
+      const { data, error } = await supabase.functions.invoke('lovable-stripe-payout', {
+        body: {
+          amount: Math.round(amount * 100), // Amount in cents
+          currency: 'usd',
+          method: 'standard',
+          destination: 'default', // You might want to make this configurable
+          userId: user.id,
+          userEmail: user.email
+        }
       });
 
-      const data = await res.json();
+      if (error) throw error;
       
       if (data.success) {
         toast({
           title: "Payout Successful!",
-          description: `$${amount.toFixed(2)} payout created with ID: ${data.payout?.id || 'N/A'}`,
+          description: `$${amount.toFixed(2)} payout created with ID: ${data.data?.payoutId || 'N/A'}`,
         });
         
         // Reset form after successful payout
