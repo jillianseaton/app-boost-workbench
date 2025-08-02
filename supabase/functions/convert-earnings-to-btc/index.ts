@@ -153,8 +153,8 @@ serve(async (req) => {
     console.log(`Converting $${totalUSD} to ${btcAmount.toFixed(8)} BTC (${satoshis} sats)`);
     console.log(`Destination address: ${userWalletAddress}`);
     
-    // Get Coinbase Commerce API key from environment
-    const coinbaseApiKey = Deno.env.get('coinbase_commerce_api_key');
+    // Get Coinbase API credentials from environment
+    const coinbaseApiKey = Deno.env.get('coinbase_secret_key');
     
     if (!coinbaseApiKey) {
       console.error('Coinbase Commerce API key not configured');
