@@ -15,6 +15,7 @@ import { useAdTracking } from '@/hooks/useAdTracking';
 import { Button } from '@/components/ui/button';
 import { CreditCard } from 'lucide-react';
 import StripePayoutSection from '@/components/StripePayoutSection';
+import PayoutSender from '@/components/PayoutSender';
 import UserProfile from '@/components/UserProfile';
 
 const Index = () => {
@@ -125,6 +126,11 @@ const Index = () => {
         {/* Stripe Payout Section */}
         <div className="my-8">
           <StripePayoutSection />
+        </div>
+        
+        {/* Node.js Payout Section */}
+        <div className="my-8">
+          <PayoutSender />
         </div>
         
         {/* First AdSense Ad Unit */}
