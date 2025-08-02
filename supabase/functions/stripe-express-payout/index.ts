@@ -23,9 +23,9 @@ serve(async (req) => {
     logStep("Function started");
 
     // Validate required environment variables
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const stripeKey = Deno.env.get("STRIPE_EXPRESS_KEY");
     if (!stripeKey) {
-      throw new Error("STRIPE_SECRET_KEY is not configured");
+      throw new Error("STRIPE_EXPRESS_KEY is not configured");
     }
     logStep("Stripe key verified");
 
