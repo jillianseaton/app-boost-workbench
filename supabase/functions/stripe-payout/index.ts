@@ -1,6 +1,5 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 
 const corsHeaders = {
@@ -9,9 +8,9 @@ const corsHeaders = {
 };
 
 interface PayoutRequest {
-  amount: number; // Amount in USD
-  email: string;
-  userId: string;
+  accountId: string;
+  amount: number; // Amount in cents
+  method?: 'standard' | 'instant';
 }
 
 serve(async (req) => {
@@ -20,49 +19,58 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Payout request received');
+    
     const body: PayoutRequest = await req.json();
-    const { amount, email, userId } = body;
+    const { accountId, amount, method = 'standard' } = body;
     
-    console.log('Stripe Payout Handler - Request:', { amount, email, userId });
-    
-    if (!amount || amount < 1) {
-      throw new Error('Minimum payout amount is $1.00');
+    console.log('Request data:', { accountId, amount, method });
+
+    if (!accountId || !amount) {
+      throw new Error('Missing required fields: accountId and amount');
     }
-    
-    const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
-    if (!stripeKey) {
-      throw new Error('Stripe secret key not configured');
+
+    if (amount < 50) { // $0.50 minimum in cents
+      throw new Error('Minimum payout amount is $0.50');
     }
-    
-    // Accept both restricted keys (rk_) and secret keys (sk_)
-    if (!stripeKey.startsWith('rk_') && !stripeKey.startsWith('sk_')) {
-      throw new Error('Invalid Stripe key format. Please use either a Restricted key (rk_) or Secret key (sk_)');
-    }
-    
-    const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
-    
-    // For restricted keys, we can only simulate payouts since they don't have full API access
-    // In a real implementation with restricted keys, you would:
-    // 1. Create a payment intent for the payout amount
-    // 2. Use Connect Express accounts for actual payouts
-    // 3. Handle this through webhooks and Connect flows
-    
-    console.log('Payout simulation for:', { amount, email, userId });
-    
-    return new Response(JSON.stringify({
-      success: true,
-      data: {
-        payoutId: `po_simulation_${Math.random().toString(36).substr(2, 9)}`,
-        amount: amount,
-        status: 'pending',
-        estimatedArrival: '1-2 business days',
-        accountId: 'simulation_account',
-        note: 'This is a simulation. For live payouts, implement Stripe Connect with Express accounts.',
-      },
-      timestamp: new Date().toISOString(),
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+
+    // Initialize Stripe with secret key
+    const stripe = new Stripe(Deno.env.get('stripe_secret_key') || '', {
+      apiVersion: '2023-10-16',
     });
+
+    console.log('Creating payout for account:', accountId);
+
+    // Create payout to the connected account
+    const payout = await stripe.payouts.create(
+      {
+        amount: amount, // Amount should already be in cents
+        currency: 'usd',
+        method: method,
+      },
+      {
+        stripeAccount: accountId, // This specifies the connected account
+      }
+    );
+
+    console.log('Payout created successfully:', payout.id);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        payoutId: payout.id,
+        amount: payout.amount,
+        currency: payout.currency,
+        status: payout.status,
+        method: payout.method,
+        arrivalDate: payout.arrival_date,
+        created: payout.created,
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    );
     
   } catch (error) {
     console.error('Stripe Payout Error:', error);

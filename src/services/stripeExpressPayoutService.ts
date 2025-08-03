@@ -29,38 +29,38 @@ class StripeExpressPayoutService {
     try {
       console.log('Creating Stripe Express payout:', request);
       
-      // Convert to your backend's expected format
-      const backendRequest = {
+      // Convert to Supabase edge function expected format
+      const payoutRequest = {
         accountId: request.stripeAccountId,
         amount: Math.round(request.amount * 100), // Convert dollars to cents
+        method: request.method || 'standard',
       };
       
-      const response = await fetch('https://node-js1-6awq.onrender.com/payout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(backendRequest),
+      console.log('Calling Supabase edge function with:', payoutRequest);
+      
+      const { data, error } = await supabase.functions.invoke('stripe-payout', {
+        body: payoutRequest,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Failed to invoke payout function');
       }
 
-      const data = await response.json();
+      console.log('Supabase function response:', data);
       
       if (data.success) {
         return {
           success: true,
           data: {
             payoutId: data.payoutId || 'unknown',
-            amount: backendRequest.amount,
-            currency: request.currency || 'usd',
-            status: 'pending',
-            method: request.method || 'standard',
-            arrivalDate: Date.now() + (request.method === 'instant' ? 30 * 60 * 1000 : 2 * 24 * 60 * 60 * 1000),
+            amount: data.amount || payoutRequest.amount,
+            currency: data.currency || request.currency || 'usd',
+            status: data.status || 'pending',
+            method: data.method || request.method || 'standard',
+            arrivalDate: data.arrivalDate || Date.now() + (request.method === 'instant' ? 30 * 60 * 1000 : 2 * 24 * 60 * 60 * 1000),
             stripeAccountId: request.stripeAccountId,
-            created: Date.now(),
+            created: data.created || Date.now(),
           },
           timestamp: new Date().toISOString()
         };
