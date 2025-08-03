@@ -34,8 +34,20 @@ serve(async (req) => {
       throw new Error('Minimum payout amount is $0.50');
     }
 
+    // Get Stripe secret key - try multiple possible secret names
+    const stripeKey = Deno.env.get('stripe_secret_key') || 
+                      Deno.env.get('STRIPE_SECRET_KEY') || 
+                      Deno.env.get('stripe_express_key');
+    
+    if (!stripeKey) {
+      console.error('Available env vars:', Object.keys(Deno.env.toObject()));
+      throw new Error('Stripe secret key not configured. Please check your Supabase secrets.');
+    }
+
+    console.log('Using Stripe key starting with:', stripeKey.substring(0, 7) + '...');
+
     // Initialize Stripe with secret key
-    const stripe = new Stripe(Deno.env.get('stripe_secret_key') || '', {
+    const stripe = new Stripe(stripeKey, {
       apiVersion: '2023-10-16',
     });
 
