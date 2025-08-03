@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { rubyBackendService } from '@/services/rubyBackendService';
 
-const RUBY_BACKEND_URL = 'https://node-js1-6awq.onrender.com';
+const RUBY_BACKEND_URL = 'https://zoological-liberation.up.railway.app';
 
 const BackendStatus: React.FC = () => {
   const [backendStatus, setBackendStatus] = useState<'loading' | 'healthy' | 'unhealthy'>('loading');

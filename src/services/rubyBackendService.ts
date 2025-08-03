@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const RUBY_BACKEND_URL = 'https://node-js1-6awq.onrender.com';
+const RUBY_BACKEND_URL = 'https://zoological-liberation.up.railway.app';
 
 const healthCheckResponseSchema = z.object({
   status: z.string(),
