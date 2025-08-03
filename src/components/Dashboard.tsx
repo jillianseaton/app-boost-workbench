@@ -18,6 +18,8 @@ import DashboardContent from './dashboard/DashboardContent';
 import TaskOptimizationInfo from './dashboard/TaskOptimizationInfo';
 import RevenueFlowDemo from './dashboard/RevenueFlowDemo';
 import UserUUID from './UserUUID';
+import BackendStatus from './BackendStatus';
+import RubyBackendPayment from './RubyBackendPayment';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -237,6 +239,15 @@ const Dashboard: React.FC = () => {
       />
 
       <UserUUID />
+
+      {/* Backend Status */}
+      <BackendStatus />
+
+      {/* Ruby Backend Payment */}
+      <RubyBackendPayment 
+        onSuccess={(url) => console.log('Payment redirect:', url)}
+        onError={(error) => console.error('Payment error:', error)}
+      />
 
       {/* Task Optimization Explanation */}
       <TaskOptimizationInfo />
