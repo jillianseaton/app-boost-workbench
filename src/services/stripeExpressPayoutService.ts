@@ -29,14 +29,19 @@ class StripeExpressPayoutService {
     try {
       console.log('Creating Stripe Express payout:', request);
       
-      const { data, error } = await supabase.functions.invoke('stripe-express-payout', {
-        body: request,
+      const response = await fetch('https://node-js1-6awq.onrender.com/api/express-payout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
       });
 
-      if (error) {
-        throw new Error(error.message || 'Express payout creation failed');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      const data = await response.json();
       return data;
     } catch (error) {
       console.error('Stripe Express Payout Error:', error);

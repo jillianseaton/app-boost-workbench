@@ -34,14 +34,19 @@ class StripeAppPayoutService {
     try {
       console.log('Creating Stripe app payout:', request);
       
-      const { data, error } = await supabase.functions.invoke('stripe-app-payout', {
-        body: request,
+      const response = await fetch('https://node-js1-6awq.onrender.com/api/app-payout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
       });
 
-      if (error) {
-        throw new Error(error.message || 'App payout creation failed');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      const data = await response.json();
       return data;
     } catch (error) {
       console.error('Stripe App Payout Error:', error);
