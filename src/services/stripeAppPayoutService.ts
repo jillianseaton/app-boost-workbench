@@ -34,12 +34,18 @@ class StripeAppPayoutService {
     try {
       console.log('Creating Stripe app payout:', request);
       
-      const response = await fetch('https://node-js1-6awq.onrender.com/api/app-payout', {
+      // Convert to your backend's expected format
+      const backendRequest = {
+        accountId: request.stripeAccountId || 'platform', // Use 'platform' for non-Express payouts
+        amount: request.amount ? Math.round(request.amount * 100) : 0, // Convert dollars to cents
+      };
+      
+      const response = await fetch('https://node-js1-6awq.onrender.com/payout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify(backendRequest),
       });
 
       if (!response.ok) {
@@ -47,7 +53,29 @@ class StripeAppPayoutService {
       }
 
       const data = await response.json();
-      return data;
+      
+      if (data.success) {
+        return {
+          success: true,
+          data: {
+            payoutId: data.payoutId || 'unknown',
+            amount: backendRequest.amount,
+            amountUSD: backendRequest.amount / 100,
+            currency: 'usd',
+            status: 'pending',
+            method: request.method || 'standard',
+            arrivalDate: Date.now() + (request.method === 'instant' ? 30 * 60 * 1000 : 2 * 24 * 60 * 60 * 1000),
+            stripeAccountId: request.stripeAccountId || 'platform',
+            created: Date.now(),
+            commissionsProcessed: 0,
+            payoutType: request.payoutType || 'manual',
+            isSimulation: false,
+          },
+          timestamp: new Date().toISOString()
+        };
+      } else {
+        throw new Error(data.error || 'Payout failed');
+      }
     } catch (error) {
       console.error('Stripe App Payout Error:', error);
       return {
