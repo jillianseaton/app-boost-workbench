@@ -40,19 +40,32 @@ class StripeAppPayoutService {
         amount: request.amount ? Math.round(request.amount * 100) : 0, // Convert dollars to cents
       };
       
+      console.log('Backend request:', backendRequest);
+      console.log('Calling URL:', 'https://node-js1-6awq.onrender.com/payout');
+      
+      // First test if your backend is reachable
       const response = await fetch('https://node-js1-6awq.onrender.com/payout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': window.location.origin,
         },
+        mode: 'cors',
         body: JSON.stringify(backendRequest),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.log('Error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('Response data:', data);
       
       if (data.success) {
         return {
@@ -78,6 +91,16 @@ class StripeAppPayoutService {
       }
     } catch (error) {
       console.error('Stripe App Payout Error:', error);
+      
+      // Check if it's a network error
+      if (error instanceof Error && error.message === 'Failed to fetch') {
+        return {
+          success: false,
+          error: 'Cannot connect to backend server. Please check if your Node.js server at https://node-js1-6awq.onrender.com is running and has CORS enabled.',
+          timestamp: new Date().toISOString()
+        };
+      }
+      
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
