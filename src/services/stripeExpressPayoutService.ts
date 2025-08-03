@@ -29,38 +29,36 @@ class StripeExpressPayoutService {
     try {
       console.log('Creating Stripe Express payout:', request);
       
-      // Convert to Supabase edge function expected format
-      const payoutRequest = {
-        accountId: request.stripeAccountId,
-        amount: Math.round(request.amount * 100), // Convert dollars to cents
-        method: request.method || 'standard',
-      };
-      
-      console.log('Calling Supabase edge function with:', payoutRequest);
-      
-      const { data, error } = await supabase.functions.invoke('stripe-payout', {
-        body: payoutRequest,
+      const res = await fetch('https://your-app-name.onrender.com/payout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountId: request.stripeAccountId,
+          amount: Math.round(request.amount * 100), // Convert dollars to cents
+          method: request.method || 'standard',
+          description: request.description,
+        }),
       });
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(error.message || 'Failed to invoke payout function');
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
       }
 
-      console.log('Supabase function response:', data);
-      
+      const data = await res.json();
+      console.log('Payout response:', data);
+
       if (data.success) {
         return {
           success: true,
           data: {
-            payoutId: data.payoutId || 'unknown',
-            amount: data.amount || payoutRequest.amount,
-            currency: data.currency || request.currency || 'usd',
-            status: data.status || 'pending',
-            method: data.method || request.method || 'standard',
-            arrivalDate: data.arrivalDate || Date.now() + (request.method === 'instant' ? 30 * 60 * 1000 : 2 * 24 * 60 * 60 * 1000),
+            payoutId: data.payout?.id || 'unknown',
+            amount: data.payout?.amount || Math.round(request.amount * 100),
+            currency: data.payout?.currency || request.currency || 'usd',
+            status: data.payout?.status || 'pending',
+            method: data.payout?.method || request.method || 'standard',
+            arrivalDate: data.payout?.arrival_date || Date.now() + (request.method === 'instant' ? 30 * 60 * 1000 : 2 * 24 * 60 * 60 * 1000),
             stripeAccountId: request.stripeAccountId,
-            created: data.created || Date.now(),
+            created: data.payout?.created || Date.now(),
           },
           timestamp: new Date().toISOString()
         };
@@ -68,10 +66,10 @@ class StripeExpressPayoutService {
         throw new Error(data.error || 'Payout failed');
       }
     } catch (error) {
-      console.error('Stripe Express Payout Error:', error);
+      console.error('Fetch error:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: error instanceof Error ? error.message : 'Failed to send payout',
         timestamp: new Date().toISOString()
       };
     }
