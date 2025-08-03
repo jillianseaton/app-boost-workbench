@@ -20,6 +20,7 @@ import CustomStripeOnboardingPage from "./pages/CustomStripeOnboardingPage";
 import StripeTestPage from "./pages/StripeTestPage";
 import StripeTestingDashboard from "./components/StripeTestingDashboard";
 import StripeExpressPage from "./pages/StripeExpressPage";
+import TestPage from "./pages/TestPage";
 import ProductionTestPage from "./pages/ProductionTestPage";
 import BalanceTransactionsPage from "./pages/BalanceTransactionsPage";
 import AccountSetupSimulation from "./pages/AccountSetupSimulation";
@@ -153,6 +154,12 @@ export const navItems = [
     to: "/stripe-express",
     icon: <CreditCard className="h-4 w-4" />,
     page: <StripeExpressPage />,
+  },
+  {
+    title: "Test Page", 
+    to: "/test",
+    icon: <Settings className="h-4 w-4" />,
+    page: <TestPage />,
   },
   {
     title: "Production Test",
