@@ -28,6 +28,7 @@ const App = () => (
           {navItems.map(({ to, page }) => (
             <Route key={to} path={to} element={page} />
           ))}
+          <Route path="*" element={<div>Route not found: {window.location.pathname}</div>} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
