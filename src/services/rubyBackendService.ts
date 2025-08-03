@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const RUBY_BACKEND_URL = import.meta.env.VITE_RUBY_BACKEND_URL || 'http://localhost:4242';
+const RUBY_BACKEND_URL = 'https://node-js1-6awq.onrender.com';
 
 const healthCheckResponseSchema = z.object({
   status: z.string(),

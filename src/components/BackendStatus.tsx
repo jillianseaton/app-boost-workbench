@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { rubyBackendService } from '@/services/rubyBackendService';
 
-const RUBY_BACKEND_URL = import.meta.env.VITE_RUBY_BACKEND_URL || 'http://localhost:4242';
+const RUBY_BACKEND_URL = 'https://node-js1-6awq.onrender.com';
 
 const BackendStatus: React.FC = () => {
   const [backendStatus, setBackendStatus] = useState<'loading' | 'healthy' | 'unhealthy'>('loading');
