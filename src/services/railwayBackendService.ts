@@ -30,7 +30,7 @@ export interface StripePayoutRequest {
   amount: number;
 }
 
-export const rubyBackendService = {
+export const railwayBackendService = {
   async checkHealth(): Promise<HealthCheckResponse> {
     try {
       const response = await fetch(`${RAILWAY_BACKEND_URL}/health`);
@@ -47,7 +47,7 @@ export const rubyBackendService = {
 
   async createCheckoutSession(request: CheckoutSessionRequest) {
     try {
-      console.log('Calling Ruby backend for checkout session:', request);
+      console.log('Calling Railway backend for checkout session:', request);
       
       const response = await fetch(`${RAILWAY_BACKEND_URL}/create-checkout-session`, {
         method: 'POST',
@@ -69,7 +69,7 @@ export const rubyBackendService = {
       }
 
       const data = await response.json();
-      console.log('Ruby backend response:', data);
+      console.log('Railway backend response:', data);
       
       return {
         success: true,
@@ -78,7 +78,7 @@ export const rubyBackendService = {
         }
       };
     } catch (error) {
-      console.error('Ruby backend error:', error);
+      console.error('Railway backend error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred'

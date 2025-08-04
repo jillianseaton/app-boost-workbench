@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { rubyBackendService } from '@/services/rubyBackendService';
+import { railwayBackendService } from '@/services/railwayBackendService';
 
 const RAILWAY_BACKEND_URL = 'https://zoological-liberation.up.railway.app';
 
@@ -12,7 +12,7 @@ const BackendStatus: React.FC = () => {
   useEffect(() => {
     const checkBackendHealth = async () => {
       try {
-        const response = await rubyBackendService.checkHealth();
+        const response = await railwayBackendService.checkHealth();
         setBackendStatus(response.status === 'ok' ? 'healthy' : 'unhealthy');
       } catch (error) {
         console.error('Failed to check backend health:', error);

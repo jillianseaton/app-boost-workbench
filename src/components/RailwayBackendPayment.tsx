@@ -5,15 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { rubyBackendService } from '@/services/rubyBackendService';
+import { railwayBackendService } from '@/services/railwayBackendService';
 import { Loader2, ExternalLink } from 'lucide-react';
 
-interface RubyBackendPaymentProps {
+interface RailwayBackendPaymentProps {
   onSuccess?: (url: string) => void;
   onError?: (error: string) => void;
 }
 
-const RubyBackendPayment: React.FC<RubyBackendPaymentProps> = ({
+const RailwayBackendPayment: React.FC<RailwayBackendPaymentProps> = ({
   onSuccess,
   onError
 }) => {
@@ -47,7 +47,7 @@ const RubyBackendPayment: React.FC<RubyBackendPaymentProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await rubyBackendService.createCheckoutSession({
+      const response = await railwayBackendService.createCheckoutSession({
         amount: Math.round(parseFloat(amount) * 100), // Convert to cents
         description: description.trim(),
         successUrl: `${window.location.origin}/payment-success`,
@@ -85,11 +85,11 @@ const RubyBackendPayment: React.FC<RubyBackendPaymentProps> = ({
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          Ruby Backend Payment
+          Railway Backend Payment
           <ExternalLink className="h-4 w-4" />
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Create a payment using the Ruby backend service
+          Create a payment using the Railway backend service
         </p>
       </CardHeader>
       <CardContent>
@@ -151,4 +151,4 @@ const RubyBackendPayment: React.FC<RubyBackendPaymentProps> = ({
   );
 };
 
-export default RubyBackendPayment;
+export default RailwayBackendPayment;
