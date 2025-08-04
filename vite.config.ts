@@ -13,5 +13,14 @@ export default defineConfig({
   server: {
     port: 8080,
     host: true
+  },
+  build: {
+    sourcemap: true,
+  },
+  define: {
+    global: 'globalThis',
+  },
+  esbuild: {
+    target: 'esnext'
   }
 })
