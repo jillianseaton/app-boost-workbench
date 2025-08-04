@@ -41,10 +41,10 @@ class StripeAppPayoutService {
       };
       
       console.log('Backend request:', backendRequest);
-      console.log('Calling URL:', 'https://node-js1-6awq.onrender.com/payout');
+      console.log('Calling URL:', 'https://zoological-liberation.up.railway.app/payout');
       
       // First test if your backend is reachable
-      const response = await fetch('https://node-js1-6awq.onrender.com/payout', {
+      const response = await fetch('https://zoological-liberation.up.railway.app/payout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ class StripeAppPayoutService {
       if (error instanceof Error && error.message === 'Failed to fetch') {
         return {
           success: false,
-          error: 'Cannot connect to backend server. Please check if your Node.js server at https://node-js1-6awq.onrender.com is running and has CORS enabled.',
+          error: 'Cannot connect to backend server. Please check if your Node.js server at https://zoological-liberation.up.railway.app is running and has CORS enabled.',
           timestamp: new Date().toISOString()
         };
       }

@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { rubyBackendService } from '@/services/rubyBackendService';
 
-const RUBY_BACKEND_URL = 'https://zoological-liberation.up.railway.app';
+const RAILWAY_BACKEND_URL = 'https://zoological-liberation.up.railway.app';
 
 const BackendStatus: React.FC = () => {
   const [backendStatus, setBackendStatus] = useState<'loading' | 'healthy' | 'unhealthy'>('loading');
@@ -40,9 +40,9 @@ const BackendStatus: React.FC = () => {
     <Card>
       <CardContent className="flex items-center justify-between p-4">
         <div>
-          <h2 className="text-sm font-semibold">Ruby Backend Status</h2>
+          <h2 className="text-sm font-semibold">Railway Backend Status</h2>
           <p className="text-xs text-muted-foreground">
-            Checking connection to: {RUBY_BACKEND_URL}
+            Checking connection to: {RAILWAY_BACKEND_URL}
           </p>
         </div>
         {getStatusBadge()}

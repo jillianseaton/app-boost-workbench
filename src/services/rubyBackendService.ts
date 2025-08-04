@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const RUBY_BACKEND_URL = 'https://zoological-liberation.up.railway.app';
+const RAILWAY_BACKEND_URL = 'https://zoological-liberation.up.railway.app';
 
 const healthCheckResponseSchema = z.object({
   status: z.string(),
@@ -33,7 +33,7 @@ export interface StripePayoutRequest {
 export const rubyBackendService = {
   async checkHealth(): Promise<HealthCheckResponse> {
     try {
-      const response = await fetch(`${RUBY_BACKEND_URL}/health`);
+      const response = await fetch(`${RAILWAY_BACKEND_URL}/health`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -49,7 +49,7 @@ export const rubyBackendService = {
     try {
       console.log('Calling Ruby backend for checkout session:', request);
       
-      const response = await fetch(`${RUBY_BACKEND_URL}/create-checkout-session`, {
+      const response = await fetch(`${RAILWAY_BACKEND_URL}/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
